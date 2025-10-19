@@ -108,10 +108,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           createdAt: serverTimestamp(),
           lastLogin: serverTimestamp(),
           activityLog: [],
+          ...additionalData,
+          // Ensure preferences with defaults, merge if additionalData has preferences
           preferences: {
-            onboardingCompleted: false
-          },
-          ...additionalData
+            onboardingCompleted: false,
+            ...additionalData.preferences
+          }
         };
 
         await setDoc(userRef, userData);
@@ -160,10 +162,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = async () => {
-    setIsGuest(false);
-    setIsAdmin(false);
-    setUserData(null);
+    // Don't manually set states - let the auth listener handle it
+    // This prevents race conditions and ensures consistency
     await signOut(auth);
+    // Reset guest mode after signout completes
+    setIsGuest(false);
   };
 
   const continueAsGuest = () => {
@@ -245,27 +248,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUserData(userData);
           setIsAdmin(userData.isAdmin);
           setIsGuest(false);
-          // CRITICAL FIX: Set loading to false after successful auth
           setLoading(false);
         } else {
           // No user is logged in
           setCurrentUser(null);
           setUserData(null);
           setIsAdmin(false);
-          // Only set loading to false if not in guest mode
-          if (!isGuest) {
-            setLoading(false);
-          }
+          // Set loading to false regardless of guest mode
+          // Guest mode is handled separately by continueAsGuest()
+          setLoading(false);
         }
       } catch (error) {
         console.error('Error in auth state change:', error);
         // Even on error, stop loading to prevent infinite spinner
         setLoading(false);
+        setCurrentUser(null);
+        setUserData(null);
+        setIsAdmin(false);
       }
     });
 
     return unsubscribe;
-  }, [isGuest]);
+    // Remove isGuest dependency to prevent listener recreation
+    // Guest mode is independent of auth state changes
+  }, []);
 
   const value: AuthContextType = {
     currentUser,
