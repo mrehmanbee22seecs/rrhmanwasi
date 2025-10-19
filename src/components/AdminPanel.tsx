@@ -403,64 +403,65 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-cream-white w-full max-w-6xl h-[90vh] rounded-luxury-lg shadow-luxury overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-2 md:p-4">
+      <div className="bg-cream-white w-full max-w-6xl h-[95vh] md:h-[90vh] rounded-lg md:rounded-luxury-lg shadow-luxury overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-logo-navy to-logo-navy-light text-cream-elegant p-6 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-logo-navy to-logo-navy-light text-cream-elegant p-4 md:p-6 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-luxury-display">Admin Panel</h2>
-            <p className="text-cream-elegant/80">Manage your Wasilah website</p>
+            <h2 className="text-xl md:text-2xl font-luxury-display">Admin Panel</h2>
+            <p className="text-xs md:text-base text-cream-elegant/80 hidden sm:block">Manage your Wasilah website</p>
           </div>
           <button
             onClick={onClose}
             className="text-cream-elegant hover:bg-white/20 p-2 rounded-full transition-colors"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5 md:w-6 md:h-6" />
           </button>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex border-b border-gray-200 bg-cream-elegant overflow-x-auto">
+        <div className="flex border-b border-gray-200 bg-cream-elegant overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400">
           {[
-            { id: 'responses', label: 'Responses', icon: MessageSquare },
-            { id: 'submissions', label: 'Submissions', icon: FileText },
-            { id: 'chats', label: 'Chats', icon: MessageSquare },
-            { id: 'content', label: 'Edit Content', icon: Edit3 },
-            { id: 'events', label: 'Manage Events', icon: Calendar },
-            { id: 'users', label: 'User Activity', icon: Users },
-            { id: 'settings', label: 'Settings', icon: Settings }
+            { id: 'responses', label: 'Responses', icon: MessageSquare, shortLabel: 'Resp' },
+            { id: 'submissions', label: 'Submissions', icon: FileText, shortLabel: 'Subs' },
+            { id: 'chats', label: 'Chats', icon: MessageSquare, shortLabel: 'Chat' },
+            { id: 'content', label: 'Edit Content', icon: Edit3, shortLabel: 'Edit' },
+            { id: 'events', label: 'Manage Events', icon: Calendar, shortLabel: 'Events' },
+            { id: 'users', label: 'User Activity', icon: Users, shortLabel: 'Users' },
+            { id: 'settings', label: 'Settings', icon: Settings, shortLabel: 'Set' }
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center px-6 py-4 font-luxury-semibold transition-colors whitespace-nowrap ${
+              className={`flex items-center px-3 md:px-6 py-3 md:py-4 font-luxury-semibold transition-colors whitespace-nowrap text-sm md:text-base ${
                 activeTab === tab.id
                   ? 'text-vibrant-orange border-b-2 border-vibrant-orange bg-cream-white'
                   : 'text-black hover:text-vibrant-orange'
               }`}
             >
-              <tab.icon className="w-5 h-5 mr-2" />
-              {tab.label}
+              <tab.icon className="w-4 h-4 md:w-5 md:h-5 md:mr-2" />
+              <span className="hidden sm:inline ml-2">{tab.label}</span>
+              <span className="sm:hidden ml-1.5">{tab.shortLabel}</span>
             </button>
           ))}
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-3 md:p-6">
           {/* Quick Actions Panel */}
-          <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-luxury border border-blue-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-luxury-heading text-black mb-1">Quick Actions</h3>
-                <p className="text-sm text-black/70">Manage chatbot and website settings</p>
+          <div className="mb-4 md:mb-6 bg-gradient-to-r from-blue-50 to-purple-50 p-3 md:p-4 rounded-lg md:rounded-luxury border border-blue-200">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex-1">
+                <h3 className="text-base md:text-lg font-luxury-heading text-black mb-1">Quick Actions</h3>
+                <p className="text-xs md:text-sm text-black/70 hidden sm:block">Manage chatbot and website settings</p>
               </div>
               <Link
                 to="/admin/kb-manager"
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-luxury hover:bg-blue-700 transition-colors font-medium"
+                className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg md:rounded-luxury hover:bg-blue-700 transition-colors font-medium text-sm md:text-base w-full sm:w-auto justify-center"
               >
-                <Database className="w-5 h-5" />
-                KB Manager
-                <ExternalLink className="w-4 h-4" />
+                <Database className="w-4 h-4 md:w-5 md:h-5" />
+                <span>KB Manager</span>
+                <ExternalLink className="w-3 h-3 md:w-4 md:h-4" />
               </Link>
             </div>
           </div>

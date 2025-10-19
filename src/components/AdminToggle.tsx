@@ -12,23 +12,23 @@ const AdminToggle: React.FC = () => {
   return (
     <button
       onClick={toggleAdminMode}
-      className={`fixed bottom-8 right-8 z-50 px-6 py-3 rounded-full shadow-lg font-luxury-semibold transition-all duration-300 hover:scale-110 ${
+      className={`fixed bottom-6 left-6 z-[60] px-4 py-2 md:px-6 md:py-3 rounded-full shadow-lg font-luxury-semibold transition-all duration-300 hover:scale-110 ${
         isAdminMode
           ? 'bg-green-500 hover:bg-green-600 text-white'
           : 'bg-gray-700 hover:bg-gray-800 text-white'
       }`}
       title={isAdminMode ? 'Exit Edit Mode' : 'Enter Edit Mode'}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 md:gap-2">
         {isAdminMode ? (
           <>
-            <Eye className="w-5 h-5" />
-            <span>Editing</span>
+            <Eye className="w-4 h-4 md:w-5 md:h-5" />
+            <span className="text-xs md:text-base">Editing</span>
           </>
         ) : (
           <>
-            <Edit3 className="w-5 h-5" />
-            <span>Edit Mode</span>
+            <Edit3 className="w-4 h-4 md:w-5 md:h-5" />
+            <span className="text-xs md:text-base">Edit Mode</span>
           </>
         )}
       </div>
