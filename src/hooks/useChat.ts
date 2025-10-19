@@ -48,6 +48,13 @@ export function useChat(userId: string | null, chatId?: string) {
   const [currentChatId, setCurrentChatId] = useState<string | null>(chatId || null);
   const [isTakeover, setIsTakeover] = useState(false);
 
+  // Sync chatId parameter with internal state
+  useEffect(() => {
+    if (chatId !== undefined) {
+      setCurrentChatId(chatId);
+    }
+  }, [chatId]);
+
   useEffect(() => {
     if (!userId) {
       setLoading(false);

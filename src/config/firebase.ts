@@ -27,3 +27,15 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 
 export default app;
+
+// Expose Firebase to window for browser console access (development only)
+if (typeof window !== 'undefined') {
+  (window as any).db = db;
+  (window as any).auth = auth;
+  (window as any).storage = storage;
+  
+  // Also expose Firestore functions for console scripts
+  import('firebase/firestore').then((firestoreModule) => {
+    (window as any).firestoreExports = firestoreModule;
+  });
+}
