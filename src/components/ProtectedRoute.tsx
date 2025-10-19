@@ -10,21 +10,25 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { currentUser, isGuest, loading, userData } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
-  // Reset onboarding modal visibility when user changes or completes onboarding
+  // Manage onboarding modal visibility when user data is available
   useEffect(() => {
-    if (!currentUser || !userData) {
-      // Reset when user logs out
-      setShowOnboarding(true);
-    } else if (userData.preferences?.onboardingCompleted) {
-      // User completed onboarding, don't show modal
+    // Reset onboarding state if no user
+    if (!currentUser) {
       setShowOnboarding(false);
-    } else if (!userData.isGuest) {
-      // New authenticated user without completed onboarding, show modal
-      setShowOnboarding(true);
+      return;
     }
-  }, [currentUser?.uid, userData?.preferences?.onboardingCompleted, userData?.isGuest]);
+
+    // Wait for userData to fully load before making decisions
+    if (!userData) {
+      return;
+    }
+
+    // Show onboarding for authenticated non-guest users who haven't completed it
+    const shouldShow = !userData.isGuest && !userData.preferences?.onboardingCompleted;
+    setShowOnboarding(shouldShow);
+  }, [currentUser, userData]);
 
   if (loading) {
     return (
@@ -37,22 +41,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  // Show onboarding for new users who haven't completed it
-  const shouldShowOnboarding = currentUser && userData && !userData.isGuest && 
-                                !userData.preferences?.onboardingCompleted && showOnboarding;
-
-  if (shouldShowOnboarding) {
-    return (
-      <>
-        {children}
-        <OnboardingModal 
-          isOpen={showOnboarding} 
-          onClose={() => setShowOnboarding(false)} 
-        />
-      </>
-    );
-  }
-
+  // Show welcome screen for unauthenticated non-guest users
   if (!currentUser && !isGuest) {
     return (
       <>
@@ -108,7 +97,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  return <>{children}</>;
+  // Render children (main app content) for authenticated or guest users
+  // Show onboarding modal overlay if needed
+  return (
+    <>
+      {children}
+      {showOnboarding && currentUser && userData && (
+        <OnboardingModal 
+          isOpen={showOnboarding} 
+          onClose={() => {
+            // Allow closing but log it for debugging
+            console.log('Onboarding modal closed by user');
+            setShowOnboarding(false);
+          }} 
+        />
+      )}
+    </>
+  );
 };
 
 export default ProtectedRoute;
