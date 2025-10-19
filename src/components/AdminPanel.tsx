@@ -7,6 +7,7 @@ import { ProjectSubmission, EventSubmission, SubmissionStatus } from '../types/s
 import { sendEmail, formatSubmissionStatusUpdateEmail } from '../utils/emailService';
 import { migrateApprovedSubmissions } from '../utils/migrateVisibility';
 import ChatsPanel from './Admin/ChatsPanel';
+import { seedKnowledgeBase } from '../utils/kbSeed';
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -558,13 +559,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
           {/* KB Manager Tab */}
           {activeTab === 'kb' && (
             <div className="space-y-6">
-              <p className="text-black/80">Use the Knowledge Base Manager to seed initial Q&A and site content so the chat can answer smartly.</p>
-              <a
-                href="/admin/kb-manager"
-                className="inline-flex items-center px-5 py-3 bg-vibrant-orange text-white rounded-luxury hover:bg-vibrant-orange-light transition-colors w-max"
-              >
-                Go to KB Manager
-              </a>
+              <p className="text-black/80">Enable the chatbot knowledge base and manage content.</p>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await seedKnowledgeBase();
+                      alert(`Knowledge Base enabled. ${res.success.length} pages seeded${res.failed.length ? `, ${res.failed.length} failed` : ''}.`);
+                    } catch (e: any) {
+                      alert('Failed to enable Knowledge Base: ' + (e?.message || 'unknown error'));
+                    }
+                  }}
+                  className="inline-flex items-center px-5 py-3 bg-vibrant-orange text-white rounded-luxury hover:bg-vibrant-orange-light transition-colors"
+                >
+                  Enable Knowledge Base
+                </button>
+                <a
+                  href="/admin/kb-manager"
+                  className="inline-flex items-center px-5 py-3 bg-logo-navy text-cream-elegant rounded-luxury hover:bg-logo-navy-light transition-colors"
+                >
+                  Go to KB Manager
+                </a>
+              </div>
             </div>
           )}
 
