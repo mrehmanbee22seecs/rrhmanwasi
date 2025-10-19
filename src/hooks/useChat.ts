@@ -15,15 +15,9 @@ import { db } from '../config/firebase';
 import { filterProfanity, checkRateLimit, generateChatTitle } from '../utils/chatHelpers';
 
 // Try to import new KB matcher, fallback to old one
-let findBestMatchKb: any = null;
-let formatResponse: any = null;
-try {
-  const kbMatcher = require('../utils/kbMatcher');
-  findBestMatchKb = kbMatcher.findBestMatch;
-  formatResponse = kbMatcher.formatResponse;
-} catch (e) {
-  console.log('Using legacy FAQ matching');
-}
+import * as kbMatcher from '../utils/kbMatcher';
+const findBestMatchKb: any = kbMatcher?.findBestMatch;
+const formatResponse: any = kbMatcher?.formatResponse;
 
 // Legacy imports
 let findBestMatch: any = null;
@@ -246,7 +240,7 @@ export function useChat(userId: string | null, chatId?: string) {
           let botMeta: any = {};
           
           // Try new intelligent KB matching first
-          if (kbPages.length > 0 && findBestMatchKb && formatResponse) {
+          if (kbPages.length > 0 && typeof findBestMatchKb === 'function' && typeof formatResponse === 'function') {
             console.log('🤖 Using intelligent KB matching');
             const match = findBestMatchKb(filteredText, kbPages, 0.4);
             const response = formatResponse(match);
