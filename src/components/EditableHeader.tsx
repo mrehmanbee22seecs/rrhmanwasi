@@ -50,8 +50,8 @@ const EditableHeader = () => {
     <>
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${
         isScrolled
-          ? 'luxury-glass-dark shadow-luxury-lg backdrop-blur-luxury'
-          : 'bg-transparent'
+          ? 'bg-gray-900/95 shadow-luxury-lg backdrop-blur-luxury'
+          : 'bg-gray-900/90'
       }`}>
         {isAdmin && (
           <EditButton onClick={() => setEditingSection('header')} />
@@ -68,10 +68,10 @@ const EditableHeader = () => {
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-xs sm:text-sm lg:text-lg font-arabic text-cream-elegant leading-tight">
+                <span className="text-xs sm:text-sm lg:text-lg font-arabic text-white leading-tight">
                   {header.arabicName}
                 </span>
-                <span className="text-lg sm:text-xl lg:text-2xl font-luxury-heading text-cream-elegant group-hover:text-vibrant-orange-light transition-colors duration-300">
+                <span className="text-lg sm:text-xl lg:text-2xl font-luxury-heading text-white group-hover:text-vibrant-orange-light transition-colors duration-300">
                   {header.englishName}
                 </span>
               </div>
@@ -171,14 +171,14 @@ const EditableHeader = () => {
               {currentUser && !isGuest && (
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="relative p-2.5 text-cream-elegant hover:text-vibrant-orange-light transition-colors active:scale-95 transform duration-200"
+                  className="relative p-2.5 text-white hover:text-vibrant-orange-light transition-colors active:scale-95 transform duration-200"
                 >
                   <User className="w-5 h-5" />
                 </button>
               )}
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2.5 rounded-lg text-cream-elegant hover:bg-logo-navy-light/60 transition-all duration-300 active:scale-95 transform"
+                className="p-2.5 rounded-lg text-white hover:bg-gray-700 transition-all duration-300 active:scale-95 transform"
               >
                 {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
@@ -187,16 +187,16 @@ const EditableHeader = () => {
 
           {isMenuOpen && (
             <div className="lg:hidden animate-fade-in-down">
-              <div className="px-4 pt-4 pb-6 space-y-2 luxury-glass-dark rounded-2xl mt-4 border border-vibrant-orange/30 shadow-2xl">
+              <div className="px-4 pt-4 pb-6 space-y-2 bg-gray-800 rounded-2xl mt-4 border border-gray-700 shadow-2xl">
                 {navigation.map((item, index) => (
                   <Link
                     key={item.name}
                     to={item.href}
                     onClick={() => setIsMenuOpen(false)}
-                    className={`block px-5 py-3.5 rounded-xl text-base font-luxury-semibold transition-all duration-300 transform active:scale-95 ${
+                    className={`block px-5 py-3.5 rounded-xl text-base font-bold transition-all duration-300 transform active:scale-95 ${
                       location.pathname === item.href
-                        ? 'text-logo-navy bg-cream-elegant shadow-md'
-                        : 'text-cream-elegant hover:text-vibrant-orange-light hover:bg-logo-navy-light/60 hover:translate-x-2'
+                        ? 'text-gray-900 bg-white shadow-md'
+                        : 'text-white hover:text-vibrant-orange-light hover:bg-gray-700 hover:translate-x-2'
                     }`}
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
@@ -209,7 +209,7 @@ const EditableHeader = () => {
                       setShowAuthModal(true);
                       setIsMenuOpen(false);
                     }}
-                    className="w-full mt-3 flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-vibrant-orange to-vibrant-orange-light text-white rounded-xl hover:shadow-lg transition-all duration-300 font-luxury-semibold active:scale-95 transform"
+                    className="w-full mt-3 flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-vibrant-orange to-vibrant-orange-light text-white rounded-xl hover:shadow-lg transition-all duration-300 font-bold active:scale-95 transform"
                   >
                     <LogIn className="w-4 h-4" />
                     <span>Sign In</span>
