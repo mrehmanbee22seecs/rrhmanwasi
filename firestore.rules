@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    function isAdmin() {
+      return isAuthenticated() &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    function isOwnerOrAdmin(userId) {
+      return isOwner(userId) || isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isOwnerOrAdmin(userId);
+      allow delete: if isAdmin();
+    }
+
+    match /project_submissions/{submissionId} {
+      allow get: if isAdmin() || (isAuthenticated() && request.auth.uid == resource.data.submittedBy) || (resource.data.status == 'approved' && resource.data.isVisible == true);
+      allow list: if isAdmin() || (isAuthenticated() && resource.data.submittedBy == request.auth.uid) || (resource.data.status == 'approved' && resource.data.isVisible == true);
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() &&
+        (request.auth.uid == resource.data.submittedBy || isAdmin());
+      allow delete: if isAuthenticated() &&
+        (request.auth.uid == resource.data.submittedBy || isAdmin());
+    }
+
+    match /event_submissions/{submissionId} {
+      allow get: if isAdmin() || (isAuthenticated() && request.auth.uid == resource.data.submittedBy) || (resource.data.status == 'approved' && resource.data.isVisible == true);
+      allow list: if isAdmin() || (isAuthenticated() && resource.data.submittedBy == request.auth.uid) || (resource.data.status == 'approved' && resource.data.isVisible == true);
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() &&
+        (request.auth.uid == resource.data.submittedBy || isAdmin());
+      allow delete: if isAuthenticated() &&
+        (request.auth.uid == resource.data.submittedBy || isAdmin());
+    }
+
+    match /hero_content/{docId} { allow read: if true; allow write: if isAdmin(); }
+    match /programs/{programId} { allow read: if true; allow write: if isAdmin(); }
+    match /testimonials/{testimonialId} { allow read: if true; allow write: if isAdmin(); }
+    match /leaders/{leaderId} { allow read: if true; allow write: if isAdmin(); }
+    match /project_leaders/{leaderId} { allow read: if true; allow write: if isAdmin(); }
+    match /event_organizers/{organizerId} { allow read: if true; allow write: if isAdmin(); }
+    match /editableContent/{docId} { allow read: if true; allow write: if isAdmin(); }
+
+    match /volunteer_applications/{applicationId} {
+      allow read: if isAuthenticated() &&
+        (request.auth.uid == resource.data.submittedBy || isAdmin());
+      allow create: if true;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /contact_messages/{messageId} {
+      allow read: if isAdmin();
+      allow create: if true;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /system/{docId} { allow read: if true; allow write: if isAuthenticated(); }
+
+    match /content/{contentId} { allow read: if true; allow write: if isAdmin(); }
+    match /page_content/{pageId} { allow read: if true; allow write: if isAdmin(); }
+
+    match /users/{userId}/chats/{chatId} {
+      allow read, write: if isOwnerOrAdmin(userId);
+    }
+
+    match /users/{userId}/chats/{chatId}/messages/{messageId} {
+      allow read, write: if isOwnerOrAdmin(userId);
+    }
+
+    match /kb/faqs/{faqId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /auditLogs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /{document=**} { allow read, write: if false; }
+  }
+}
