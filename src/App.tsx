@@ -16,6 +16,7 @@ import Volunteer from './pages/Volunteer';
 import Contact from './pages/Contact';
 import Dashboard from './pages/Dashboard';
 import CreateSubmission from './pages/CreateSubmission';
+import AdminSetup from './pages/AdminSetup';
 import ChatWidget from './components/ChatWidget';
 import DonationWidget from './components/DonationWidget';
 import AdminToggle from './components/AdminToggle';
@@ -46,6 +47,7 @@ const AppContent = () => {
           <Route path="/contact" element={<Contact />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create-submission" element={<CreateSubmission />} />
+          <Route path="/admin-setup" element={<AdminSetup />} />
         </Routes>
       </main>
       <EditableFooter />
