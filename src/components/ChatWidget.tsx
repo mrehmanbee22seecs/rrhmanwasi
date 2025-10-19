@@ -145,10 +145,10 @@ const ChatWidget = () => {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white p-4 rounded-full shadow-2xl transition-all z-50 relative hover:scale-110 group"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white p-3 sm:p-4 rounded-full shadow-2xl transition-all z-50 relative hover:scale-110 active:scale-95 group animate-bounce-subtle"
         aria-label="Open chat"
       >
-        <MessageCircle className="w-6 h-6" />
+        <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
         {hasIntelligentKb && (
           <Sparkles className="w-3 h-3 absolute -top-1 -left-1 text-yellow-300 animate-pulse" title="AI-Powered" />
         )}
@@ -185,8 +185,8 @@ const ChatWidget = () => {
 
   return (
     <div
-      className={`fixed bottom-6 right-6 bg-white rounded-lg shadow-2xl z-50 transition-all ${
-        isMinimized ? 'w-80 h-16' : showHistory ? 'w-[600px] h-[600px]' : 'w-96 h-[600px]'
+      className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 bg-white rounded-2xl shadow-2xl z-50 transition-all animate-slide-up ${
+        isMinimized ? 'w-80 sm:w-96 h-16' : showHistory ? 'w-[calc(100vw-2rem)] sm:w-[600px] h-[calc(100vh-2rem)] sm:h-[600px]' : 'w-[calc(100vw-2rem)] sm:w-96 h-[calc(100vh-2rem)] sm:h-[600px]'
       }`}
     >
       <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">

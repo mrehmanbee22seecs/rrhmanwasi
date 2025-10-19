@@ -12,7 +12,7 @@ const AdminToggle: React.FC = () => {
   return (
     <button
       onClick={toggleAdminMode}
-      className={`fixed bottom-6 left-6 z-[60] px-4 py-2 md:px-6 md:py-3 rounded-full shadow-lg font-luxury-semibold transition-all duration-300 hover:scale-110 ${
+      className={`fixed bottom-20 left-4 sm:bottom-6 sm:left-6 z-[60] px-4 py-2 md:px-6 md:py-3 rounded-full shadow-lg font-luxury-semibold transition-all duration-300 hover:scale-110 active:scale-95 ${
         isAdminMode
           ? 'bg-green-500 hover:bg-green-600 text-white'
           : 'bg-gray-700 hover:bg-gray-800 text-white'

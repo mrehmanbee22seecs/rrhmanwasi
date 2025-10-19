@@ -59,19 +59,19 @@ const EditableHeader = () => {
 
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-24">
-            <Link to="/" className="flex items-center space-x-6 group">
+            <Link to="/" className="flex items-center space-x-2 sm:space-x-4 lg:space-x-6 group">
               <div className="transform transition-transform duration-500 group-hover:scale-110">
                 <img
                   src={header.logoUrl}
                   alt="Wasilah Logo"
-                  className="w-16 h-16 object-cover rounded-2xl shadow-luxury-glow"
+                  className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 object-cover rounded-xl sm:rounded-2xl shadow-luxury-glow"
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-lg font-arabic text-cream-elegant leading-tight">
+                <span className="text-xs sm:text-sm lg:text-lg font-arabic text-cream-elegant leading-tight">
                   {header.arabicName}
                 </span>
-                <span className="text-2xl font-luxury-heading text-cream-elegant group-hover:text-vibrant-orange-light transition-colors duration-300">
+                <span className="text-lg sm:text-xl lg:text-2xl font-luxury-heading text-cream-elegant group-hover:text-vibrant-orange-light transition-colors duration-300">
                   {header.englishName}
                 </span>
               </div>
@@ -167,33 +167,54 @@ const EditableHeader = () => {
               ) : null}
             </div>
 
-            <div className="lg:hidden">
+            <div className="flex lg:hidden items-center gap-2">
+              {currentUser && !isGuest && (
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="relative p-2.5 text-cream-elegant hover:text-vibrant-orange-light transition-colors active:scale-95 transform duration-200"
+                >
+                  <User className="w-5 h-5" />
+                </button>
+              )}
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-4 rounded-luxury text-cream-elegant hover:bg-logo-navy-light/60 transition-all duration-300"
+                className="p-2.5 rounded-lg text-cream-elegant hover:bg-logo-navy-light/60 transition-all duration-300 active:scale-95 transform"
               >
-                {isMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+                {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
             </div>
           </div>
 
           {isMenuOpen && (
-            <div className="lg:hidden">
-              <div className="px-6 pt-6 pb-8 space-y-3 luxury-glass-dark rounded-luxury-lg mt-6 border-2 border-vibrant-orange/30">
-                {navigation.map((item) => (
+            <div className="lg:hidden animate-fade-in-down">
+              <div className="px-4 pt-4 pb-6 space-y-2 luxury-glass-dark rounded-2xl mt-4 border border-vibrant-orange/30 shadow-2xl">
+                {navigation.map((item, index) => (
                   <Link
                     key={item.name}
                     to={item.href}
                     onClick={() => setIsMenuOpen(false)}
-                    className={`block px-6 py-4 rounded-luxury text-base font-luxury-semibold transition-all duration-400 ${
+                    className={`block px-5 py-3.5 rounded-xl text-base font-luxury-semibold transition-all duration-300 transform active:scale-95 ${
                       location.pathname === item.href
-                        ? 'text-logo-navy bg-cream-elegant'
-                        : 'text-cream-elegant hover:text-vibrant-orange-light hover:bg-logo-navy-light/60'
+                        ? 'text-logo-navy bg-cream-elegant shadow-md'
+                        : 'text-cream-elegant hover:text-vibrant-orange-light hover:bg-logo-navy-light/60 hover:translate-x-2'
                     }`}
+                    style={{ animationDelay: `${index * 50}ms` }}
                   >
                     {item.name}
                   </Link>
                 ))}
+                {!currentUser && !isGuest && (
+                  <button
+                    onClick={() => {
+                      setShowAuthModal(true);
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full mt-3 flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-vibrant-orange to-vibrant-orange-light text-white rounded-xl hover:shadow-lg transition-all duration-300 font-luxury-semibold active:scale-95 transform"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span>Sign In</span>
+                  </button>
+                )}
               </div>
             </div>
           )}
