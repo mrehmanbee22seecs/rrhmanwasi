@@ -91,6 +91,12 @@ const EditableHeader = () => {
                   </Link>
                 )
               ))}
+              {/* Auth actions in the main menu (desktop) */}
+              {currentUser && !isGuest ? (
+                <button onClick={logout} className="nav-pill">Sign Out</button>
+              ) : (
+                <button onClick={() => setShowAuthModal(true)} className="nav-pill">Sign In</button>
+              )}
             </div>
 
             <div className="hidden lg:block relative">
@@ -205,6 +211,25 @@ const EditableHeader = () => {
                     </button>
                   </div>
                 )}
+
+                {/* Auth actions (mobile) */}
+                <div className="mt-4 pt-4 border-t border-white/20">
+                  {currentUser && !isGuest ? (
+                    <button
+                      onClick={() => { logout(); setIsMenuOpen(false); }}
+                      className="w-full block px-6 py-4 rounded-luxury text-base font-luxury-semibold bg-logo-navy-light/60 text-cream-elegant hover:bg-logo-navy-light transition-colors"
+                    >
+                      Sign Out
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { setShowAuthModal(true); setIsMenuOpen(false); }}
+                      className="w-full block px-6 py-4 rounded-luxury text-base font-luxury-semibold bg-vibrant-orange text-white hover:bg-vibrant-orange-light transition-colors"
+                    >
+                      Sign In
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           )}
