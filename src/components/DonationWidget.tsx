@@ -3,6 +3,7 @@ import { Heart, X, CreditCard, Smartphone } from 'lucide-react';
 
 const DonationWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [suppressButton, setSuppressButton] = useState(false);
   const widgetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -14,6 +15,30 @@ const DonationWidget = () => {
       });
     }
   }, [isOpen]);
+
+  // Broadcast open/close to other widgets and listen for theirs
+  useEffect(() => {
+    if (isOpen) {
+      window.dispatchEvent(new CustomEvent('widget:open', { detail: 'donation' }));
+    } else {
+      window.dispatchEvent(new CustomEvent('widget:close', { detail: 'donation' }));
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const onOpen = (e: any) => {
+      if (e?.detail !== 'donation') setSuppressButton(true);
+    };
+    const onClose = (e: any) => {
+      if (e?.detail !== 'donation') setSuppressButton(false);
+    };
+    window.addEventListener('widget:open', onOpen as any);
+    window.addEventListener('widget:close', onClose as any);
+    return () => {
+      window.removeEventListener('widget:open', onOpen as any);
+      window.removeEventListener('widget:close', onClose as any);
+    };
+  }, []);
 
   const paymentMethods = [
     {
@@ -42,16 +67,18 @@ const DonationWidget = () => {
 
   return (
     <>
-      <div className="fixed bottom-6 left-1/2 -translate-x-[calc(50%+100px)] z-50">
-        <button
-          onClick={() => setIsOpen(true)}
-          className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-4 rounded-full shadow-luxury-glow flex items-center justify-center hover:scale-110 transition-all duration-300 animate-pulse group"
-          title="Support Our Mission"
-        >
-          <Heart className="w-6 h-6 mr-2" fill="currentColor" />
-          <span className="font-luxury-semibold text-lg whitespace-nowrap">DONATE NOW!</span>
-        </button>
-      </div>
+      {!isOpen && !suppressButton && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-[calc(50%+100px)] z-50">
+          <button
+            onClick={() => setIsOpen(true)}
+            className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-4 rounded-full shadow-luxury-glow flex items-center justify-center hover:scale-110 transition-all duration-300 animate-pulse group"
+            title="Support Our Mission"
+          >
+            <Heart className="w-6 h-6 mr-2" fill="currentColor" />
+            <span className="font-luxury-semibold text-lg whitespace-nowrap">DONATE NOW!</span>
+          </button>
+        </div>
+      )}
 
       {isOpen && (
         <>

@@ -28,6 +28,7 @@ const ChatWidget = () => {
   const [kbPages, setKbPages] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const [suppressButton, setSuppressButton] = useState(false);
 
   const {
     messages,
@@ -74,6 +75,26 @@ const ChatWidget = () => {
       modalRef.current.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
     }
   }, [isOpen]);
+
+  // Broadcast open/close events and suppress our button when another widget is open
+  useEffect(() => {
+    if (isOpen) {
+      window.dispatchEvent(new CustomEvent('widget:open', { detail: 'chat' }));
+    } else {
+      window.dispatchEvent(new CustomEvent('widget:close', { detail: 'chat' }));
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const onOpen = (e: any) => { if (e?.detail !== 'chat') setSuppressButton(true); };
+    const onClose = (e: any) => { if (e?.detail !== 'chat') setSuppressButton(false); };
+    window.addEventListener('widget:open', onOpen as any);
+    window.addEventListener('widget:close', onClose as any);
+    return () => {
+      window.removeEventListener('widget:open', onOpen as any);
+      window.removeEventListener('widget:close', onClose as any);
+    };
+  }, []);
 
   // Show for both logged-in users AND guests
   if (!currentUser && !isOpen) {
@@ -151,6 +172,7 @@ const ChatWidget = () => {
 
   if (!isOpen) {
     return (
+      !suppressButton ? (
       <div className="fixed bottom-6 left-1/2 translate-x-[calc(50%+100px)] z-50">
         <button
           onClick={() => setIsOpen(true)}
@@ -171,7 +193,7 @@ const ChatWidget = () => {
             </span>
           ) : null}
         </button>
-      </div>
+      </div>) : null
     );
   }
 
