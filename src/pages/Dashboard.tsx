@@ -47,11 +47,17 @@ const Dashboard = () => {
   useEffect(() => {
     if (currentUser && userData) {
       fetchUserActivities();
-      calculateUserStats();
       const cleanup = setupRealtimeListeners();
       return cleanup;
     }
   }, [currentUser?.uid]); // Only re-run if user changes, not on every userData update
+
+  // Recalculate stats whenever submissions change
+  useEffect(() => {
+    if (currentUser && userData && submissions.length >= 0) {
+      calculateUserStats();
+    }
+  }, [submissions, currentUser?.uid, userData]);
 
   const setupRealtimeListeners = () => {
     if (!currentUser) return;
@@ -123,21 +129,75 @@ const Dashboard = () => {
   };
 
   const calculateUserStats = () => {
-    if (!userData) return;
+    if (!userData || !currentUser) return;
     
-    // Calculate stats based on user activities and preferences - FIXED VALUES
-    const activityCount = userData?.activityLog?.length || 0;
-    const interests = userData?.preferences?.interests?.length || 0;
+    // Calculate stats based on ACTUAL completed projects/events from submissions
+    const userId = currentUser.uid;
     
-    // Calculate once and set - prevent continuous updates
+    // Count approved/completed projects where user participated
+    const completedProjects = submissions.filter(sub => 
+      sub.submissionType === 'project' && 
+      (sub.status === 'approved' || sub.status === 'completed') &&
+      (sub.submittedBy === userId || (sub as any).participantIds?.includes(userId))
+    );
+    
+    // Count approved/completed events where user attended
+    const completedEvents = submissions.filter(sub => 
+      sub.submissionType === 'event' && 
+      (sub.status === 'approved' || sub.status === 'completed') &&
+      (sub.submittedBy === userId || (sub as any).attendeeIds?.includes(userId))
+    );
+    
+    // Calculate total hours from completed projects and events
+    const totalHours = [...completedProjects, ...completedEvents].reduce((sum, sub) => {
+      // Get duration in hours (default to 2 hours if not specified)
+      const hours = (sub as any).durationHours || 
+                    (parseDurationEstimate((sub as any).durationEstimate) || 2);
+      return sum + hours;
+    }, 0);
+    
+    // Calculate impact score: 10 points per project, 5 per event, 1 per 2 hours
+    const impactScore = 
+      (completedProjects.length * 10) + 
+      (completedEvents.length * 5) + 
+      Math.floor(totalHours / 2);
+    
     const calculatedStats = {
-      projectsJoined: Math.min(Math.floor(activityCount / 10), 25), // Max 25
-      eventsAttended: Math.min(Math.floor(activityCount / 15), 15), // Max 15
-      hoursVolunteered: Math.min(Math.floor(activityCount * 2.5), 120), // Max 120
-      impactScore: Math.min(activityCount * 5 + interests * 10, 100) // Max 100
+      projectsJoined: completedProjects.length,
+      eventsAttended: completedEvents.length,
+      hoursVolunteered: Math.round(totalHours),
+      impactScore: impactScore
     };
     
     setStats(calculatedStats);
+  };
+
+  // Helper function to parse duration estimate string to hours
+  const parseDurationEstimate = (estimate?: string): number => {
+    if (!estimate) return 0;
+    
+    const lower = estimate.toLowerCase();
+    
+    // Extract numbers from string
+    const numbers = lower.match(/\d+/g);
+    if (!numbers || numbers.length === 0) return 0;
+    
+    const value = parseInt(numbers[0]);
+    
+    // Convert to hours based on unit
+    if (lower.includes('hour') || lower.includes('hr')) {
+      return value;
+    } else if (lower.includes('day')) {
+      return value * 8; // 8 hours per day
+    } else if (lower.includes('week')) {
+      return value * 40; // 40 hours per week
+    } else if (lower.includes('month')) {
+      return value * 160; // ~160 hours per month
+    } else if (lower.includes('minute') || lower.includes('min')) {
+      return value / 60; // Convert minutes to hours
+    }
+    
+    return value; // Default assume hours
   };
 
   const getActivityIcon = (action: string) => {
