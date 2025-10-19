@@ -81,7 +81,7 @@ const KB_SEED_DATA = [
 ];
 
 const AdminSetup = () => {
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const [kbStatus, setKbStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [kbMessage, setKbMessage] = useState('');
   const [kbCount, setKbCount] = useState(0);
@@ -142,16 +142,16 @@ const AdminSetup = () => {
     setAdminMessage('Setting admin privileges...');
 
     try {
-      await setDoc(doc(db, 'users', user.uid), {
-        email: user.email,
-        displayName: user.displayName || user.email,
+      await setDoc(doc(db, 'users', currentUser.uid), {
+        email: currentUser.email,
+        displayName: currentUser.displayName || currentUser.email,
         isAdmin: true,
         createdAt: new Date(),
         updatedAt: new Date()
       }, { merge: true });
 
       setAdminStatus('success');
-      setAdminMessage(`✅ You (${user.email}) are now an admin! Refresh the page to see admin features.`);
+      setAdminMessage(`✅ You (${currentUser.email}) are now an admin! Refresh the page to see admin features.`);
     } catch (error: any) {
       setAdminStatus('error');
       setAdminMessage(`Error: ${error.message}`);
@@ -291,10 +291,10 @@ const AdminSetup = () => {
           <div className="mb-8 pb-8 border-b">
             <h3 className="text-lg font-semibold text-gray-900 mb-3">Option A: Make Yourself Admin</h3>
             
-            {user ? (
+            {currentUser ? (
               <>
                 <p className="text-sm text-gray-600 mb-4">
-                  Currently logged in as: <strong>{user.email}</strong>
+                  Currently logged in as: <strong>{currentUser.email}</strong>
                 </p>
                 <button
                   onClick={makeCurrentUserAdmin}

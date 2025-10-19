@@ -12,7 +12,7 @@ interface Message {
 }
 
 const ChatWidget = () => {
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -23,13 +23,13 @@ const ChatWidget = () => {
     messages,
     currentChatId,
     sendMessage,
-  } = useChat(user?.uid || null);
+  } = useChat(currentUser?.uid || null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  if (!user) return null;
+  if (!currentUser) return null;
 
   const handleSend = async () => {
     if (!inputText.trim()) return;
