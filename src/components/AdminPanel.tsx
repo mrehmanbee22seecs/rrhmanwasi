@@ -404,24 +404,35 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-2 md:p-4">
-      <div className="bg-cream-white w-full max-w-6xl h-[95vh] md:h-[90vh] rounded-lg md:rounded-luxury-lg shadow-luxury overflow-hidden flex flex-col">
+    <>
+      {/* Backdrop - Z-INDEX: 60 */}
+      <div 
+        className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* Admin Panel Modal - Z-INDEX: 70 */}
+      <div 
+        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[70] w-full max-w-6xl h-[95vh] md:h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="bg-gradient-to-r from-logo-navy to-logo-navy-light text-cream-elegant p-4 md:p-6 flex items-center justify-between">
+        <div className="flex items-center justify-between p-4 md:p-6 bg-gradient-to-r from-purple-600 to-purple-700 text-white">
           <div>
-            <h2 className="text-xl md:text-2xl font-luxury-display">Admin Panel</h2>
-            <p className="text-xs md:text-base text-cream-elegant/80 hidden sm:block">Manage your Wasilah website</p>
+            <h2 className="text-xl md:text-2xl font-bold">Admin Panel</h2>
+            <p className="text-xs md:text-base text-white/90 hidden sm:block font-medium">Manage your Wasilah website</p>
           </div>
           <button
             onClick={onClose}
-            className="text-cream-elegant hover:bg-white/20 p-2 rounded-full transition-colors"
+            className="hover:bg-white/20 p-2 rounded transition-colors"
+            title="Close"
           >
             <X className="w-5 h-5 md:w-6 md:h-6" />
           </button>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex border-b border-gray-200 bg-cream-elegant overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400">
+        <div className="flex border-b border-gray-300 bg-gray-100 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400">
           {[
             { id: 'responses', label: 'Responses', icon: MessageSquare, shortLabel: 'Resp' },
             { id: 'submissions', label: 'Submissions', icon: FileText, shortLabel: 'Subs' },
@@ -435,10 +446,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center px-3 md:px-6 py-3 md:py-4 font-luxury-semibold transition-colors whitespace-nowrap text-sm md:text-base ${
+              className={`flex items-center px-3 md:px-6 py-3 md:py-4 font-bold transition-colors whitespace-nowrap text-sm md:text-base ${
                 activeTab === tab.id
-                  ? 'text-vibrant-orange border-b-2 border-vibrant-orange bg-cream-white'
-                  : 'text-black hover:text-vibrant-orange'
+                  ? 'text-purple-600 border-b-2 border-purple-600 bg-white'
+                  : 'text-gray-900 hover:text-purple-600'
               }`}
             >
               <tab.icon className="w-4 h-4 md:w-5 md:h-5 md:mr-2" />
@@ -1011,7 +1022,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
