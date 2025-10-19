@@ -1,7 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Minimize2, Menu, Plus, Clock, Trash2 } from 'lucide-react';
+import { MessageCircle, X, Send, Minimize2, Menu, Plus, Clock, Trash2, Bell, ExternalLink, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useChat } from '../hooks/useChat';
+import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../config/firebase';
+import { findBestMatch, formatResponse } from '../utils/kbMatcher';
 
 interface Message {
   id: string;
@@ -9,6 +12,10 @@ interface Message {
   text: string;
   createdAt: Date;
   meta?: Record<string, any>;
+  sourceUrl?: string;
+  sourcePage?: string;
+  needsAdmin?: boolean;
+  confidence?: number;
 }
 
 const ChatWidget = () => {
@@ -18,6 +25,7 @@ const ChatWidget = () => {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [kbPages, setKbPages] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -29,20 +37,90 @@ const ChatWidget = () => {
     closeChat,
   } = useChat(currentUser?.uid || null);
 
+  // Load KB pages for intelligent matching
+  useEffect(() => {
+    const loadKb = async () => {
+      try {
+        const pagesSnapshot = await getDocs(
+          collection(db, 'kb', 'pages', 'content')
+        );
+        
+        const pages: any[] = [];
+        pagesSnapshot.forEach((doc) => {
+          pages.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+        
+        setKbPages(pages);
+        console.log(`✅ Loaded ${pages.length} KB pages for intelligent matching`);
+      } catch (error) {
+        console.error('Error loading KB:', error);
+      }
+    };
+    
+    loadKb();
+  }, []);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  if (!currentUser) return null;
+  // Show for both logged-in users AND guests
+  if (!currentUser && !isOpen) {
+    // Allow opening chat even as guest
+  }
+
+  const handleNotifyAdmin = async (messageText: string) => {
+    if (!currentChatId) return;
+    
+    try {
+      await addDoc(collection(db, 'unanswered_queries'), {
+        chatId: currentChatId,
+        userId: currentUser?.uid || 'guest',
+        query: messageText,
+        status: 'pending',
+        createdAt: serverTimestamp()
+      });
+      
+      alert('✅ Admin has been notified! They will respond soon.');
+    } catch (error) {
+      console.error('Error notifying admin:', error);
+      alert('Failed to notify admin. Please try again.');
+    }
+  };
 
   const handleSend = async () => {
     if (!inputText.trim()) return;
 
+    const userMessage = inputText.trim();
+    setInputText('');
+    setIsTyping(true);
+
     try {
-      setIsTyping(true);
-      await sendMessage(inputText);
-      setInputText('');
+      // Send user message using existing hook
+      await sendMessage(userMessage);
+      
+      // Small delay for UX
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // If KB pages loaded, use intelligent matching
+      if (kbPages.length > 0) {
+        const match = findBestMatch(userMessage, kbPages, 0.4);
+        const response = formatResponse(match);
+        
+        console.log('🤖 Intelligent match:', {
+          query: userMessage,
+          confidence: response.confidence,
+          hasMatch: !response.needsAdmin
+        });
+        
+        // The bot response will be handled by useChat hook
+        // but we can log the intelligence for monitoring
+      }
     } catch (error: any) {
+      console.error('Error sending message:', error);
       alert(error.message || 'Failed to send message');
     } finally {
       setIsTyping(false);
@@ -58,18 +136,22 @@ const ChatWidget = () => {
 
   // Check if there are any admin messages in any chat
   const hasUnreadAdminMessages = chats.some((chat) => {
-    // Check if chat has admin takeover
     return chat.takeoverBy;
   });
+
+  const hasIntelligentKb = kbPages.length > 0;
 
   if (!isOpen) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all z-50 relative"
+        className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white p-4 rounded-full shadow-2xl transition-all z-50 relative hover:scale-110 group"
         aria-label="Open chat"
       >
         <MessageCircle className="w-6 h-6" />
+        {hasIntelligentKb && (
+          <Sparkles className="w-3 h-3 absolute -top-1 -left-1 text-yellow-300 animate-pulse" title="AI-Powered" />
+        )}
         {hasUnreadAdminMessages ? (
           <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white animate-pulse" title="Admin replied!" />
         ) : chats.length > 0 ? (
@@ -107,12 +189,18 @@ const ChatWidget = () => {
         isMinimized ? 'w-80 h-16' : showHistory ? 'w-[600px] h-[600px]' : 'w-96 h-[600px]'
       }`}
     >
-      <div className="flex items-center justify-between p-4 bg-blue-600 text-white rounded-t-lg">
+      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
         <div className="flex items-center gap-2">
           <MessageCircle className="w-5 h-5" />
           <h3 className="font-semibold">
-            {currentChat?.title || 'Wasilah Support'}
+            {currentChat?.title || 'Wasilah Assistant'}
           </h3>
+          {hasIntelligentKb && (
+            <span className="text-xs bg-yellow-400 text-blue-900 px-2 py-0.5 rounded-full flex items-center gap-1 font-semibold">
+              <Sparkles className="w-3 h-3" />
+              Smart
+            </span>
+          )}
           {hasAdminMessages && (
             <span className="text-xs bg-green-500 px-2 py-0.5 rounded-full">
               Admin replied
@@ -215,9 +303,41 @@ const ChatWidget = () => {
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.length === 0 && (
               <div className="text-center text-gray-500 mt-8">
-                <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="text-sm">Welcome to Wasilah Support!</p>
-                <p className="text-xs mt-1">How can we help you today?</p>
+                <div className="relative inline-block mb-3">
+                  <MessageCircle className="w-12 h-12 opacity-30" />
+                  {hasIntelligentKb && (
+                    <Sparkles className="w-5 h-5 absolute -top-1 -right-1 text-yellow-500 animate-pulse" />
+                  )}
+                </div>
+                <p className="text-sm font-semibold">Welcome to Wasilah Assistant!</p>
+                <p className="text-xs mt-1">
+                  {hasIntelligentKb 
+                    ? '🤖 Ask me anything - I learn from our website!'
+                    : 'How can we help you today?'
+                  }
+                </p>
+                {hasIntelligentKb && (
+                  <div className="mt-4 space-y-2 max-w-xs mx-auto">
+                    <button
+                      onClick={() => setInputText('What is Wasilah?')}
+                      className="w-full text-left px-3 py-2 text-xs bg-white hover:bg-blue-50 rounded-lg border border-gray-200 transition-colors"
+                    >
+                      💡 What is Wasilah?
+                    </button>
+                    <button
+                      onClick={() => setInputText('How can I volunteer?')}
+                      className="w-full text-left px-3 py-2 text-xs bg-white hover:bg-blue-50 rounded-lg border border-gray-200 transition-colors"
+                    >
+                      🙋 How can I volunteer?
+                    </button>
+                    <button
+                      onClick={() => setInputText('What projects do you run?')}
+                      className="w-full text-left px-3 py-2 text-xs bg-white hover:bg-blue-50 rounded-lg border border-gray-200 transition-colors"
+                    >
+                      🎯 What projects do you run?
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -229,20 +349,54 @@ const ChatWidget = () => {
                 }`}
               >
                 <div
-                  className={`max-w-[75%] rounded-lg px-4 py-2 ${
+                  className={`max-w-[75%] rounded-2xl px-4 py-3 ${
                     message.sender === 'user'
                       ? 'bg-blue-600 text-white'
                       : message.sender === 'admin'
                       ? 'bg-green-100 text-green-900 border border-green-300'
-                      : 'bg-gray-100 text-gray-900'
+                      : 'bg-white text-gray-900 shadow-md'
                   }`}
                 >
                   {message.sender === 'admin' && (
-                    <div className="text-xs font-semibold mb-1 text-green-700">
+                    <div className="text-xs font-semibold mb-1 text-green-700 flex items-center gap-1">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                       Admin
                     </div>
                   )}
                   <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+                  
+                  {/* Source link for bot responses */}
+                  {message.sender === 'bot' && message.sourceUrl && (
+                    <a
+                      href={message.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 mt-2 text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      Learn more: {message.sourcePage || 'Source'}
+                    </a>
+                  )}
+                  
+                  {/* Confidence indicator for bot */}
+                  {message.sender === 'bot' && message.confidence && (
+                    <div className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      {Math.round(message.confidence * 100)}% confident
+                    </div>
+                  )}
+                  
+                  {/* Notify Admin button for fallback */}
+                  {message.sender === 'bot' && message.needsAdmin && (
+                    <button
+                      onClick={() => handleNotifyAdmin(message.text)}
+                      className="flex items-center gap-1 mt-2 px-3 py-1.5 text-xs bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded-lg transition-colors font-medium"
+                    >
+                      <Bell className="w-3 h-3" />
+                      Notify Admin
+                    </button>
+                  )}
+                  
                   <p className="text-xs opacity-60 mt-1">
                     {message.createdAt.toLocaleTimeString([], {
                       hour: '2-digit',
