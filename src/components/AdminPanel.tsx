@@ -424,6 +424,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
             { id: 'responses', label: 'Responses', icon: MessageSquare },
             { id: 'submissions', label: 'Submissions', icon: FileText },
             { id: 'chats', label: 'Chats', icon: MessageSquare },
+            { id: 'kb', label: 'Knowledge Base', icon: Database },
             { id: 'content', label: 'Edit Content', icon: Edit3 },
             { id: 'events', label: 'Manage Events', icon: Calendar },
             { id: 'users', label: 'User Activity', icon: Users },
@@ -551,6 +552,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* KB Manager Tab */}
+          {activeTab === 'kb' && (
+            <div className="space-y-6">
+              <p className="text-black/80">Use the Knowledge Base Manager to seed initial Q&A and site content so the chat can answer smartly.</p>
+              <a
+                href="/admin/kb-manager"
+                className="inline-flex items-center px-5 py-3 bg-vibrant-orange text-white rounded-luxury hover:bg-vibrant-orange-light transition-colors w-max"
+              >
+                Go to KB Manager
+              </a>
             </div>
           )}
 
