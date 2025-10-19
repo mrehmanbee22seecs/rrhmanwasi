@@ -194,6 +194,17 @@ const EditableHeader = () => {
                     {item.name}
                   </Link>
                 ))}
+
+                {isAdmin && (
+                  <div className="mt-4 pt-4 border-t border-white/20">
+                    <button
+                      onClick={() => { setShowAdminPanel(true); setIsMenuOpen(false); }}
+                      className="w-full block px-6 py-4 rounded-luxury text-base font-luxury-semibold bg-vibrant-orange text-white hover:bg-vibrant-orange-light transition-colors"
+                    >
+                      Open Admin Panel
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
