@@ -158,7 +158,8 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [currentTheme, setCurrentTheme] = useState<Theme>(themes[0]);
+  const defaultTheme = themes.find(t => t.id === 'github-dark-navy') || themes[0];
+  const [currentTheme, setCurrentTheme] = useState<Theme>(defaultTheme);
   const { currentUser, userData } = useAuth();
 
   useEffect(() => {
