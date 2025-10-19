@@ -94,10 +94,10 @@ export default function ChatsPanel() {
   };
 
   const handleToggleTakeover = async () => {
-    if (!selectedUserId || !selectedChatId || !user) return;
+    if (!selectedUserId || !selectedChatId || !currentUser) return;
 
     try {
-      await toggleTakeover(isTakeover ? null : user.uid);
+      await toggleTakeover(isTakeover ? null : currentUser.uid);
     } catch (error) {
       console.error('Error toggling takeover:', error);
     }

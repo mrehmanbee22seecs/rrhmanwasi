@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, MessageSquare, Mail, Calendar, Target, Settings, CreditCard as Edit3, Save, X, Plus, Trash2, Eye, EyeOff, Download, CheckCircle, XCircle, Clock, FileText, Mail as MailIcon, RefreshCw } from 'lucide-react';
+import { Users, MessageSquare, Mail, Calendar, Target, Settings, CreditCard as Edit3, Save, X, Plus, Trash2, Eye, EyeOff, Download, CheckCircle, XCircle, Clock, FileText, Mail as MailIcon, RefreshCw, Database, ExternalLink } from 'lucide-react';
 import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,6 +7,7 @@ import { ProjectSubmission, EventSubmission, SubmissionStatus } from '../types/s
 import { sendEmail, formatSubmissionStatusUpdateEmail } from '../utils/emailService';
 import { migrateApprovedSubmissions } from '../utils/migrateVisibility';
 import ChatsPanel from './Admin/ChatsPanel';
+import { Link } from 'react-router-dom';
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -419,7 +420,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex border-b border-gray-200 bg-cream-elegant">
+        <div className="flex border-b border-gray-200 bg-cream-elegant overflow-x-auto">
           {[
             { id: 'responses', label: 'Responses', icon: MessageSquare },
             { id: 'submissions', label: 'Submissions', icon: FileText },
@@ -432,7 +433,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center px-6 py-4 font-luxury-semibold transition-colors ${
+              className={`flex items-center px-6 py-4 font-luxury-semibold transition-colors whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'text-vibrant-orange border-b-2 border-vibrant-orange bg-cream-white'
                   : 'text-black hover:text-vibrant-orange'
@@ -446,6 +447,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-6">
+          {/* Quick Actions Panel */}
+          <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-luxury border border-blue-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-luxury-heading text-black mb-1">Quick Actions</h3>
+                <p className="text-sm text-black/70">Manage chatbot and website settings</p>
+              </div>
+              <Link
+                to="/admin/kb-manager"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-luxury hover:bg-blue-700 transition-colors font-medium"
+              >
+                <Database className="w-5 h-5" />
+                KB Manager
+                <ExternalLink className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+
           {/* Responses Tab */}
           {activeTab === 'responses' && (
             <div>
