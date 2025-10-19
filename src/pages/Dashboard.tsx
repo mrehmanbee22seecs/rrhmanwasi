@@ -321,7 +321,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 sm:py-12 relative overflow-hidden">
+    <div className="min-h-screen bg-cream-white py-8 sm:py-12 relative overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0 opacity-30 pointer-events-none">
         <div className="absolute top-20 left-20 w-32 h-32 bg-vibrant-orange/10 rounded-full animate-float-gentle"></div>
@@ -332,7 +332,7 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 relative z-10">
         {/* Welcome Header - Enhanced & Mobile Optimized */}
         <div className="mb-6 sm:mb-8">
-          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 relative overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 relative overflow-hidden border border-logo-navy/10">
             <div 
               className="absolute inset-0 opacity-10 pointer-events-none"
               style={{ background: currentTheme.colors.primary }}
@@ -340,18 +340,18 @@ const Dashboard = () => {
             <div className="relative z-10">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex-1">
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-modern-display text-black mb-1 sm:mb-2">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-modern-display text-logo-navy font-bold mb-1 sm:mb-2">
                     Welcome back, {userData?.displayName || currentUser?.email?.split('@')[0] || 'Friend'}! 👋
                   </h1>
-                  <p className="text-base sm:text-lg lg:text-xl text-black/70 font-elegant-body">
+                  <p className="text-base sm:text-lg lg:text-xl text-logo-navy-light font-elegant-body">
                     Ready to make a difference today?
                   </p>
                 </div>
                 <div className="text-left sm:text-right">
-                  <div className="text-2xl sm:text-3xl font-modern-display" style={{ color: currentTheme.colors.primary }}>
+                  <div className="text-2xl sm:text-3xl font-modern-display font-bold" style={{ color: currentTheme.colors.primary }}>
                     {stats.impactScore}
                   </div>
-                  <div className="text-xs sm:text-sm text-black/70">Impact Score</div>
+                  <div className="text-xs sm:text-sm text-logo-navy-light font-medium">Impact Score</div>
                 </div>
               </div>
             </div>
@@ -360,7 +360,7 @@ const Dashboard = () => {
 
         {/* Stats Cards - Enhanced & Mobile Optimized */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
-          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 text-center relative overflow-hidden group hover:shadow-xl transition-shadow">
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 text-center relative overflow-hidden group hover:shadow-xl transition-shadow border border-logo-navy/10">
             <div 
               className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4"
               style={{ backgroundColor: `${currentTheme.colors.primary}20` }}
@@ -368,10 +368,10 @@ const Dashboard = () => {
               <Target className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: currentTheme.colors.primary }} />
             </div>
             <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: currentTheme.colors.primary }}>{stats.projectsJoined}</div>
-            <div className="text-xs sm:text-sm text-black/70">Projects Joined</div>
+            <div className="text-xs sm:text-sm text-logo-navy font-medium">Projects Joined</div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 text-center relative overflow-hidden group hover:shadow-xl transition-shadow">
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 text-center relative overflow-hidden group hover:shadow-xl transition-shadow border border-logo-navy/10">
             <div 
               className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4"
               style={{ backgroundColor: `${currentTheme.colors.accent}20` }}
@@ -379,7 +379,7 @@ const Dashboard = () => {
               <Calendar className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: currentTheme.colors.accent }} />
             </div>
             <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: currentTheme.colors.accent }}>{stats.eventsAttended}</div>
-            <div className="text-xs sm:text-sm text-black/70">Events Attended</div>
+            <div className="text-xs sm:text-sm text-logo-navy font-medium">Events Attended</div>
           </div>
 
           <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 text-center relative overflow-hidden group hover:shadow-xl transition-shadow">

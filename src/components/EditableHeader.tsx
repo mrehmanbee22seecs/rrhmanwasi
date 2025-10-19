@@ -50,8 +50,8 @@ const EditableHeader = () => {
     <>
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${
         isScrolled
-          ? 'bg-gray-900/95 shadow-luxury-lg backdrop-blur-luxury'
-          : 'bg-gray-900/90'
+          ? 'bg-logo-navy/98 shadow-luxury-lg backdrop-blur-luxury'
+          : 'bg-logo-navy/95'
       }`}>
         {isAdmin && (
           <EditButton onClick={() => setEditingSection('header')} />
@@ -59,19 +59,19 @@ const EditableHeader = () => {
 
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-24">
-            <Link to="/" className="flex items-center space-x-2 sm:space-x-4 lg:space-x-6 group">
-              <div className="transform transition-transform duration-500 group-hover:scale-110">
+            <Link to="/" className="flex items-center space-x-3 sm:space-x-5 lg:space-x-6 group">
+              <div className="transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
                 <img
                   src={header.logoUrl}
                   alt="Wasilah Logo"
-                  className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 object-cover rounded-xl sm:rounded-2xl shadow-luxury-glow"
+                  className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 object-cover rounded-2xl shadow-luxury-glow ring-2 ring-logo-teal/30"
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-xs sm:text-sm lg:text-lg font-arabic text-white leading-tight">
+                <span className="text-sm sm:text-base lg:text-xl font-arabic text-cream-elegant leading-tight">
                   {header.arabicName}
                 </span>
-                <span className="text-lg sm:text-xl lg:text-2xl font-luxury-heading text-white group-hover:text-vibrant-orange-light transition-colors duration-300">
+                <span className="text-xl sm:text-2xl lg:text-3xl font-luxury-heading text-cream-elegant font-bold group-hover:text-vibrant-orange-light transition-colors duration-300">
                   {header.englishName}
                 </span>
               </div>
@@ -159,9 +159,9 @@ const EditableHeader = () => {
               ) : isGuest ? (
                 <button
                   onClick={() => setShowAuthModal(true)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-vibrant-orange text-white rounded-luxury hover:bg-vibrant-orange-light transition-colors font-luxury-semibold"
+                  className="flex items-center space-x-2 px-6 py-3 bg-vibrant-orange text-cream-elegant rounded-luxury hover:bg-vibrant-orange-light transition-colors font-luxury-semibold shadow-luxury-glow"
                 >
-                  <LogIn className="w-4 h-4" />
+                  <LogIn className="w-5 h-5" />
                   <span>Sign In</span>
                 </button>
               ) : null}
@@ -171,14 +171,14 @@ const EditableHeader = () => {
               {currentUser && !isGuest && (
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="relative p-2.5 text-white hover:text-vibrant-orange-light transition-colors active:scale-95 transform duration-200"
+                  className="relative p-2.5 text-cream-elegant hover:text-vibrant-orange-light transition-colors active:scale-95 transform duration-200"
                 >
                   <User className="w-5 h-5" />
                 </button>
               )}
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2.5 rounded-lg text-white hover:bg-gray-700 transition-all duration-300 active:scale-95 transform"
+                className="p-2.5 rounded-lg text-cream-elegant hover:bg-logo-teal transition-all duration-300 active:scale-95 transform"
               >
                 {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
@@ -187,7 +187,7 @@ const EditableHeader = () => {
 
           {isMenuOpen && (
             <div className="lg:hidden animate-fade-in-down">
-              <div className="px-4 pt-4 pb-6 space-y-2 bg-gray-800 rounded-2xl mt-4 border border-gray-700 shadow-2xl">
+              <div className="px-4 pt-4 pb-6 space-y-2 bg-logo-navy-light rounded-2xl mt-4 border border-logo-teal/30 shadow-2xl">
                 {navigation.map((item, index) => (
                   <Link
                     key={item.name}
@@ -195,8 +195,8 @@ const EditableHeader = () => {
                     onClick={() => setIsMenuOpen(false)}
                     className={`block px-5 py-3.5 rounded-xl text-base font-bold transition-all duration-300 transform active:scale-95 ${
                       location.pathname === item.href
-                        ? 'text-gray-900 bg-white shadow-md'
-                        : 'text-white hover:text-vibrant-orange-light hover:bg-gray-700 hover:translate-x-2'
+                        ? 'text-cream-elegant bg-vibrant-orange shadow-md'
+                        : 'text-cream-elegant hover:text-vibrant-orange-light hover:bg-logo-teal hover:translate-x-2'
                     }`}
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
@@ -209,7 +209,7 @@ const EditableHeader = () => {
                       setShowAuthModal(true);
                       setIsMenuOpen(false);
                     }}
-                    className="w-full mt-3 flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-vibrant-orange to-vibrant-orange-light text-white rounded-xl hover:shadow-lg transition-all duration-300 font-bold active:scale-95 transform"
+                    className="w-full mt-3 flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-vibrant-orange to-vibrant-orange-light text-cream-elegant rounded-xl hover:shadow-lg transition-all duration-300 font-bold active:scale-95 transform"
                   >
                     <LogIn className="w-4 h-4" />
                     <span>Sign In</span>

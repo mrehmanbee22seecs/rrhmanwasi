@@ -4,10 +4,10 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Logo Navy Colors - DARKER for better contrast
-        'logo-navy': '#1A2332',
-        'logo-navy-light': '#2C3E50',
-        'logo-navy-dark': '#0F1419',
+        // Logo Navy Colors - Primary backgrounds
+        'logo-navy': '#2C3E50',
+        'logo-navy-light': '#34495E',
+        'logo-navy-dark': '#1A252F',
         'logo-teal': '#16A085',
         'logo-teal-light': '#48C9B0',
         
@@ -16,17 +16,16 @@ export default {
         'vibrant-orange-light': '#F39C12',
         'vibrant-orange-dark': '#D35400',
         
-        // Elegant Neutrals - ADJUSTED for readability
-        'cream-elegant': '#FFFFFF',
-        'cream-white': '#FFFFFF',
+        // Elegant Neutrals - Proper cream/off-white for text on dark backgrounds
+        'cream-elegant': '#F8F6F0',
+        'cream-white': '#FDF8F3',
         'gold-luxury': '#D4AF37',
         'gold-light': '#F1C40F',
         
-        // Readable Text Colors - DARKER for sharp contrast
-        'text-dark': '#000000',
-        'text-medium': '#1A1A1A',
-        'text-light': '#2C2C2C',
-        'dark-readable': '#0F1419',
+        // Text Colors
+        'text-dark': '#2C3E50',
+        'text-medium': '#34495E',
+        'text-light': '#7F8C8D',
       },
       fontFamily: {
         'luxury-display': ['Playfair Display', 'serif'],
