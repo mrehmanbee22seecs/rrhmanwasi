@@ -176,11 +176,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logActivity = async (action: string, page: string, details?: any) => {
     if (currentUser && userData && !userData.isGuest) {
+      const now = new Date();
       const activityLog: ActivityLog = {
         id: Date.now().toString(),
         action,
         page,
-        timestamp: serverTimestamp(),
+        timestamp: now,
         details
       };
 

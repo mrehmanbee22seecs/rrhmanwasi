@@ -68,7 +68,7 @@ async function seedKnowledgeBase() {
     const db = getFirestore(app);
 
     console.log('Checking existing FAQs...');
-    const kbRef = collection(db, 'kb/faqs');
+    const kbRef = collection(db, 'faqs');
     const existingDocs = await getDocs(kbRef);
 
     if (existingDocs.size > 0) {
@@ -81,7 +81,7 @@ async function seedKnowledgeBase() {
     let count = 0;
 
     for (const faq of kbData) {
-      await addDoc(collection(db, 'kb/faqs'), {
+      await addDoc(collection(db, 'faqs'), {
         question: faq.question,
         answer: faq.answer,
         keywords: faq.keywords,

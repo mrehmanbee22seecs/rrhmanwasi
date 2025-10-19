@@ -79,7 +79,7 @@ service cloud.firestore {
       allow read, write: if isOwnerOrAdmin(userId);
     }
 
-    match /kb/faqs/{faqId} {
+    match /faqs/{faqId} {
       allow read: if true;
       allow write: if isAdmin();
     }
