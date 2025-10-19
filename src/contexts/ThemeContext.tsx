@@ -23,8 +23,8 @@ export interface Theme {
 
 export const themes: Theme[] = [
   {
-    id: 'github-dark-navy',
-    name: 'GitHub Dark (Navy)',
+    id: 'jet-black',
+    name: 'Jet Black',
     description: 'Sleek dark UI with navy accents',
     colors: {
       // Accent/link blue inspired by GitHub
@@ -158,7 +158,7 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const defaultTheme = themes.find(t => t.id === 'github-dark-navy') || themes[0];
+  const defaultTheme = themes.find(t => t.id === 'jet-black') || themes[0];
   const [currentTheme, setCurrentTheme] = useState<Theme>(defaultTheme);
   const { currentUser, userData } = useAuth();
 

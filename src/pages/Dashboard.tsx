@@ -628,6 +628,7 @@ const Dashboard = () => {
                     </button>
                   ))}
                 </div>
+                <div className="mt-2 text-xs text-black/60">Active theme: <span className="font-medium">{currentTheme.name}</span></div>
               </div>
 
               {/* Email Verification */}
