@@ -144,6 +144,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Send email verification
     await sendEmailVerification(user);
 
+    // Create user document with phone number
+    // The auth listener will also fire, but createUserDocument handles existing users
     await createUserDocument(user, { phoneNumber: phone });
   };
 
@@ -152,13 +154,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
-    const { user } = await signInWithPopup(auth, googleProvider);
-    await createUserDocument(user);
+    // signInWithPopup will trigger onAuthStateChanged
+    // which will handle user document creation/update
+    await signInWithPopup(auth, googleProvider);
   };
 
   const loginWithFacebook = async () => {
-    const { user } = await signInWithPopup(auth, facebookProvider);
-    await createUserDocument(user);
+    // signInWithPopup will trigger onAuthStateChanged
+    // which will handle user document creation/update
+    await signInWithPopup(auth, facebookProvider);
   };
 
   const logout = async () => {

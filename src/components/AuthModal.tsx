@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Mail, Phone, Eye, EyeOff, User, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -12,6 +12,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [authInProgress, setAuthInProgress] = useState(false);
+  const wasAuthenticatingRef = useRef(false);
   
   const [formData, setFormData] = useState({
     email: '',
@@ -21,7 +23,18 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     confirmPassword: ''
   });
 
-  const { login, signup, loginWithGoogle, loginWithFacebook, continueAsGuest } = useAuth();
+  const { login, signup, loginWithGoogle, loginWithFacebook, continueAsGuest, currentUser } = useAuth();
+
+  // Auto-close modal once authentication completes successfully
+  useEffect(() => {
+    if (authInProgress && currentUser && wasAuthenticatingRef.current) {
+      // Auth completed successfully, close modal
+      setAuthInProgress(false);
+      wasAuthenticatingRef.current = false;
+      setLoading(false);
+      onClose();
+    }
+  }, [currentUser, authInProgress, onClose]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -31,48 +44,62 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    // Check password match before starting auth
+    if (!isLogin && formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     setLoading(true);
+    setAuthInProgress(true);
+    wasAuthenticatingRef.current = true;
 
     try {
       if (isLogin) {
         await login(formData.email, formData.password);
       } else {
-        if (formData.password !== formData.confirmPassword) {
-          throw new Error('Passwords do not match');
-        }
         await signup(formData.email, formData.password, formData.displayName, formData.phone);
       }
-      onClose();
+      // Don't close immediately - let useEffect close after currentUser is set
+      // This prevents the welcome screen flash
     } catch (error: any) {
       setError(error.message);
-    } finally {
       setLoading(false);
+      setAuthInProgress(false);
+      wasAuthenticatingRef.current = false;
     }
   };
 
   const handleGoogleLogin = async () => {
     setError('');
     setLoading(true);
+    setAuthInProgress(true);
+    wasAuthenticatingRef.current = true;
     try {
       await loginWithGoogle();
-      onClose();
+      // Don't close immediately - let useEffect handle it
     } catch (error: any) {
       setError(error.message);
-    } finally {
       setLoading(false);
+      setAuthInProgress(false);
+      wasAuthenticatingRef.current = false;
     }
   };
 
   const handleFacebookLogin = async () => {
     setError('');
     setLoading(true);
+    setAuthInProgress(true);
+    wasAuthenticatingRef.current = true;
     try {
       await loginWithFacebook();
-      onClose();
+      // Don't close immediately - let useEffect handle it
     } catch (error: any) {
       setError(error.message);
-    } finally {
       setLoading(false);
+      setAuthInProgress(false);
+      wasAuthenticatingRef.current = false;
     }
   };
 
