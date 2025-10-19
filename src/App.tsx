@@ -17,6 +17,7 @@ import Contact from './pages/Contact';
 import Dashboard from './pages/Dashboard';
 import CreateSubmission from './pages/CreateSubmission';
 import AdminSetup from './pages/AdminSetup';
+import AdminKbManager from './pages/AdminKbManager';
 import ChatWidget from './components/ChatWidget';
 import DonationWidget from './components/DonationWidget';
 import AdminToggle from './components/AdminToggle';
@@ -48,6 +49,7 @@ const AppContent = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create-submission" element={<CreateSubmission />} />
           <Route path="/admin-setup" element={<AdminSetup />} />
+          <Route path="/admin/kb-manager" element={<AdminKbManager />} />
         </Routes>
       </main>
       <EditableFooter />
