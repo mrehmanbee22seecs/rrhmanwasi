@@ -143,10 +143,12 @@ const ChatWidget = () => {
 
   if (!isOpen) {
     return (
+      // Z-INDEX: 50 - Floating buttons layer
       <button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white p-3 sm:p-4 rounded-full shadow-2xl transition-all z-50 relative hover:scale-110 active:scale-95 group animate-bounce-subtle"
         aria-label="Open chat"
+        title="Chat with us"
       >
         <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
         {hasIntelligentKb && (
@@ -184,6 +186,7 @@ const ChatWidget = () => {
   const hasAdminMessages = messages.some((m) => m.sender === 'admin');
 
   return (
+    // Z-INDEX: 50 - Chat widget (same as button, but covers button when open)
     <div
       className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 bg-white rounded-2xl shadow-2xl z-50 transition-all animate-slide-up ${
         isMinimized ? 'w-80 sm:w-96 h-16' : showHistory ? 'w-[calc(100vw-2rem)] sm:w-[600px] h-[calc(100vh-2rem)] sm:h-[600px]' : 'w-[calc(100vw-2rem)] sm:w-96 h-[calc(100vh-2rem)] sm:h-[600px]'

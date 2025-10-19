@@ -10,6 +10,9 @@ const AdminToggle: React.FC = () => {
   if (!isAdmin) return null;
 
   return (
+    // Z-INDEX: 60 - Admin controls (above floating buttons at 50)
+    // Mobile: bottom-20 left-4 (below DonationWidget at bottom-32)
+    // Desktop: bottom-6 left-6 (standard positioning)
     <button
       onClick={toggleAdminMode}
       className={`fixed bottom-20 left-4 sm:bottom-6 sm:left-6 z-[60] px-4 py-2 md:px-6 md:py-3 rounded-full shadow-lg font-luxury-semibold transition-all duration-300 hover:scale-110 active:scale-95 ${
