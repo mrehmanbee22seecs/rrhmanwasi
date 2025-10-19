@@ -48,9 +48,10 @@ const Dashboard = () => {
     if (currentUser && userData) {
       fetchUserActivities();
       calculateUserStats();
-      setupRealtimeListeners();
+      const cleanup = setupRealtimeListeners();
+      return cleanup;
     }
-  }, [currentUser, userData]);
+  }, [currentUser?.uid]); // Only re-run if user changes, not on every userData update
 
   const setupRealtimeListeners = () => {
     if (!currentUser) return;
@@ -122,16 +123,21 @@ const Dashboard = () => {
   };
 
   const calculateUserStats = () => {
-    // Calculate stats based on user activities and preferences
+    if (!userData) return;
+    
+    // Calculate stats based on user activities and preferences - FIXED VALUES
     const activityCount = userData?.activityLog?.length || 0;
     const interests = userData?.preferences?.interests?.length || 0;
     
-    setStats({
-      projectsJoined: Math.floor(activityCount / 10), // Simulate projects joined
-      eventsAttended: Math.floor(activityCount / 15), // Simulate events attended
-      hoursVolunteered: Math.floor(activityCount * 2.5), // Simulate hours
-      impactScore: Math.min(100, activityCount * 5 + interests * 10) // Impact score
-    });
+    // Calculate once and set - prevent continuous updates
+    const calculatedStats = {
+      projectsJoined: Math.min(Math.floor(activityCount / 10), 25), // Max 25
+      eventsAttended: Math.min(Math.floor(activityCount / 15), 15), // Max 15
+      hoursVolunteered: Math.min(Math.floor(activityCount * 2.5), 120), // Max 120
+      impactScore: Math.min(activityCount * 5 + interests * 10, 100) // Max 100
+    };
+    
+    setStats(calculatedStats);
   };
 
   const getActivityIcon = (action: string) => {
@@ -242,7 +248,8 @@ const Dashboard = () => {
     }
   ];
 
-  if (loading) {
+  // Don't show loading if user data is available
+  if (loading && !userData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -254,103 +261,97 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 relative overflow-hidden">
+    <div className="min-h-screen bg-gray-50 py-8 sm:py-12 relative overflow-hidden">
       {/* Animated Background */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="particle-container"></div>
+      <div className="absolute inset-0 opacity-30 pointer-events-none">
         <div className="absolute top-20 left-20 w-32 h-32 bg-vibrant-orange/10 rounded-full animate-float-gentle"></div>
         <div className="absolute top-40 right-32 w-24 h-24 bg-logo-teal/10 rounded-full animate-float-gentle" style={{animationDelay: '2s'}}></div>
         <div className="absolute bottom-32 left-1/4 w-40 h-40 bg-vibrant-orange-light/5 rounded-full animate-float-gentle" style={{animationDelay: '4s'}}></div>
       </div>
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Welcome Header - Enhanced */}
-        <div className="mb-8 scroll-reveal">
-          <div className="luxury-card bg-white p-8 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 relative z-10">
+        {/* Welcome Header - Enhanced & Mobile Optimized */}
+        <div className="mb-6 sm:mb-8">
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 relative overflow-hidden">
             <div 
-              className="absolute inset-0 opacity-10"
+              className="absolute inset-0 opacity-10 pointer-events-none"
               style={{ background: currentTheme.colors.primary }}
             ></div>
-            <div className="floating-3d-luxury opacity-20"></div>
             <div className="relative z-10">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-4xl font-modern-display text-black mb-2 animate-text-reveal">
-                    Welcome back, {userData?.displayName || 'Friend'}! 👋
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex-1">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-modern-display text-black mb-1 sm:mb-2">
+                    Welcome back, {userData?.displayName || currentUser?.email?.split('@')[0] || 'Friend'}! 👋
                   </h1>
-                  <p className="text-xl text-black/70 font-elegant-body animate-text-reveal" style={{animationDelay: '0.3s'}}>
+                  <p className="text-base sm:text-lg lg:text-xl text-black/70 font-elegant-body">
                     Ready to make a difference today?
                   </p>
                 </div>
-                <div className="text-right magnetic-element group">
-                  <div className="text-3xl font-modern-display text-gradient-animated group-hover:animate-pulse-glow" style={{ color: currentTheme.colors.primary }}>
+                <div className="text-left sm:text-right">
+                  <div className="text-2xl sm:text-3xl font-modern-display" style={{ color: currentTheme.colors.primary }}>
                     {stats.impactScore}
                   </div>
-                  <div className="text-sm text-black/70 group-hover:text-gray-800 transition-colors">Impact Score</div>
+                  <div className="text-xs sm:text-sm text-black/70">Impact Score</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Stats Cards - Enhanced */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 stagger-animation">
-          <div className="luxury-card bg-white p-6 text-center floating-card magnetic-element group">
+        {/* Stats Cards - Enhanced & Mobile Optimized */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 text-center relative overflow-hidden group hover:shadow-xl transition-shadow">
             <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:animate-pulse-glow"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4"
               style={{ backgroundColor: `${currentTheme.colors.primary}20` }}
             >
-              <Target className="w-6 h-6 group-hover:animate-float-gentle" style={{ color: currentTheme.colors.primary }} />
+              <Target className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: currentTheme.colors.primary }} />
             </div>
-            <div className="text-2xl font-modern-display text-gradient-animated mb-1 group-hover:animate-pulse-glow">{stats.projectsJoined}</div>
-            <div className="text-sm text-black/70 group-hover:text-gray-800 transition-colors">Projects Joined</div>
-            <div className="absolute inset-0 bg-gradient-to-br from-vibrant-orange/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-luxury"></div>
+            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: currentTheme.colors.primary }}>{stats.projectsJoined}</div>
+            <div className="text-xs sm:text-sm text-black/70">Projects Joined</div>
           </div>
 
-          <div className="luxury-card bg-white p-6 text-center floating-card magnetic-element group">
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 text-center relative overflow-hidden group hover:shadow-xl transition-shadow">
             <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:animate-pulse-glow"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4"
               style={{ backgroundColor: `${currentTheme.colors.accent}20` }}
             >
-              <Calendar className="w-6 h-6 group-hover:animate-float-gentle" style={{ color: currentTheme.colors.accent }} />
+              <Calendar className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: currentTheme.colors.accent }} />
             </div>
-            <div className="text-2xl font-modern-display text-gradient-animated mb-1 group-hover:animate-pulse-glow">{stats.eventsAttended}</div>
-            <div className="text-sm text-black/70 group-hover:text-gray-800 transition-colors">Events Attended</div>
-            <div className="absolute inset-0 bg-gradient-to-br from-vibrant-orange/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-luxury"></div>
+            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: currentTheme.colors.accent }}>{stats.eventsAttended}</div>
+            <div className="text-xs sm:text-sm text-black/70">Events Attended</div>
           </div>
 
-          <div className="luxury-card bg-white p-6 text-center floating-card magnetic-element group">
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 text-center relative overflow-hidden group hover:shadow-xl transition-shadow">
             <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:animate-pulse-glow"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4"
               style={{ backgroundColor: `${currentTheme.colors.secondary}20` }}
             >
-              <Clock className="w-6 h-6 group-hover:animate-float-gentle" style={{ color: currentTheme.colors.secondary }} />
+              <Clock className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: currentTheme.colors.secondary }} />
             </div>
-            <div className="text-2xl font-modern-display text-gradient-animated mb-1 group-hover:animate-pulse-glow">{stats.hoursVolunteered}</div>
-            <div className="text-sm text-black/70 group-hover:text-gray-800 transition-colors">Hours Volunteered</div>
-            <div className="absolute inset-0 bg-gradient-to-br from-vibrant-orange/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-luxury"></div>
+            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: currentTheme.colors.secondary }}>{stats.hoursVolunteered}</div>
+            <div className="text-xs sm:text-sm text-black/70">Hours Volunteered</div>
           </div>
 
-          <div className="luxury-card bg-white p-6 text-center floating-card magnetic-element group">
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 text-center relative overflow-hidden group hover:shadow-xl transition-shadow">
             <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:animate-pulse-glow"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4"
               style={{ backgroundColor: `${currentTheme.colors.primary}20` }}
             >
-              <Award className="w-6 h-6 group-hover:animate-float-gentle" style={{ color: currentTheme.colors.primary }} />
+              <Award className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: currentTheme.colors.primary }} />
             </div>
-            <div className="text-2xl font-modern-display text-gradient-animated mb-1 group-hover:animate-pulse-glow">{stats.impactScore}</div>
-            <div className="text-sm text-black/70 group-hover:text-gray-800 transition-colors">Impact Score</div>
-            <div className="absolute inset-0 bg-gradient-to-br from-vibrant-orange/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-luxury"></div>
+            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: currentTheme.colors.primary }}>{stats.impactScore}</div>
+            <div className="text-xs sm:text-sm text-black/70">Impact Score</div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Quick Actions - Enhanced */}
-            <div className="luxury-card bg-white p-8 scroll-reveal">
-              <h2 className="text-2xl font-modern-display text-black mb-6">Quick Actions</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 stagger-animation">
+            {/* Quick Actions - Enhanced & Mobile Optimized */}
+            <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-black mb-4 sm:mb-6">Quick Actions</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {quickActions.map((action, index) => (
                   <Link
                     key={index}
