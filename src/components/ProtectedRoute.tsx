@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from './AuthModal';
 import OnboardingModal from './OnboardingModal';
@@ -8,10 +8,23 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { currentUser, isGuest, loading } = useAuth();
+  const { currentUser, isGuest, loading, userData } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const { userData } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(true);
+
+  // Reset onboarding modal visibility when user changes or completes onboarding
+  useEffect(() => {
+    if (!currentUser || !userData) {
+      // Reset when user logs out
+      setShowOnboarding(true);
+    } else if (userData.preferences?.onboardingCompleted) {
+      // User completed onboarding, don't show modal
+      setShowOnboarding(false);
+    } else if (!userData.isGuest) {
+      // New authenticated user without completed onboarding, show modal
+      setShowOnboarding(true);
+    }
+  }, [currentUser?.uid, userData?.preferences?.onboardingCompleted, userData?.isGuest]);
 
   if (loading) {
     return (
@@ -25,12 +38,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   // Show onboarding for new users who haven't completed it
-  if (currentUser && userData && !userData.isGuest && !userData.preferences?.onboardingCompleted) {
+  const shouldShowOnboarding = currentUser && userData && !userData.isGuest && 
+                                !userData.preferences?.onboardingCompleted && showOnboarding;
+
+  if (shouldShowOnboarding) {
     return (
       <>
         {children}
         <OnboardingModal 
-          isOpen={!userData.preferences?.onboardingCompleted} 
+          isOpen={showOnboarding} 
           onClose={() => setShowOnboarding(false)} 
         />
       </>
