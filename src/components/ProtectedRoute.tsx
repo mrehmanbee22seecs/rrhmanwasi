@@ -14,24 +14,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // Manage onboarding modal visibility when user data is available
   useEffect(() => {
+    // Reset onboarding state if no user
     if (!currentUser) {
-      // User logged out, reset onboarding state
       setShowOnboarding(false);
       return;
     }
 
+    // Wait for userData to fully load before making decisions
     if (!userData) {
-      // Wait for userData to load
       return;
     }
 
-    // Check if onboarding should be shown for authenticated non-guest users
-    if (!userData.isGuest && !userData.preferences?.onboardingCompleted) {
-      setShowOnboarding(true);
-    } else {
-      setShowOnboarding(false);
-    }
-  }, [currentUser, userData, userData?.preferences?.onboardingCompleted, userData?.isGuest]);
+    // Show onboarding for authenticated non-guest users who haven't completed it
+    const shouldShow = !userData.isGuest && !userData.preferences?.onboardingCompleted;
+    setShowOnboarding(shouldShow);
+  }, [currentUser, userData]);
 
   if (loading) {
     return (
@@ -105,10 +102,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   return (
     <>
       {children}
-      {currentUser && userData && !userData.isGuest && !userData.preferences?.onboardingCompleted && (
+      {showOnboarding && currentUser && userData && (
         <OnboardingModal 
           isOpen={showOnboarding} 
-          onClose={() => setShowOnboarding(false)} 
+          onClose={() => {
+            // Allow closing but log it for debugging
+            console.log('Onboarding modal closed by user');
+            setShowOnboarding(false);
+          }} 
         />
       )}
     </>

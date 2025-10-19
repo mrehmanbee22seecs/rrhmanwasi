@@ -88,35 +88,50 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const ADMIN_PASSWORD = 'WasilahAdmin2024!';
 
   const createUserDocument = async (user: User, additionalData: any = {}) => {
-    const userRef = doc(db, 'users', user.uid);
-    const userSnap = await getDoc(userRef);
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
 
-    if (!userSnap.exists()) {
-      const { displayName, email, photoURL } = user;
-      const isAdminUser = email === ADMIN_EMAIL;
-      
-      const userData: UserData = {
-        uid: user.uid,
-        displayName,
-        email,
-        photoURL,
-        phoneNumber: additionalData.phoneNumber || null,
-        isAdmin: isAdminUser,
-        isGuest: false,
-        createdAt: serverTimestamp(),
-        lastLogin: serverTimestamp(),
-        activityLog: [],
-        ...additionalData
-      };
+      if (!userSnap.exists()) {
+        // New user - create document
+        const { displayName, email, photoURL } = user;
+        const isAdminUser = email === ADMIN_EMAIL;
+        
+        const userData: UserData = {
+          uid: user.uid,
+          displayName,
+          email,
+          photoURL,
+          phoneNumber: additionalData.phoneNumber || null,
+          isAdmin: isAdminUser,
+          isGuest: false,
+          createdAt: serverTimestamp(),
+          lastLogin: serverTimestamp(),
+          activityLog: [],
+          preferences: {
+            onboardingCompleted: false
+          },
+          ...additionalData
+        };
 
-      await setDoc(userRef, userData);
-      return userData;
-    } else {
-      // Update last login
-      await updateDoc(userRef, {
-        lastLogin: serverTimestamp()
-      });
-      return userSnap.data() as UserData;
+        await setDoc(userRef, userData);
+        
+        // Fetch the document again to get server-resolved timestamps
+        const newUserSnap = await getDoc(userRef);
+        return newUserSnap.data() as UserData;
+      } else {
+        // Existing user - update last login
+        await updateDoc(userRef, {
+          lastLogin: serverTimestamp()
+        });
+        
+        // Fetch the updated document
+        const updatedUserSnap = await getDoc(userRef);
+        return updatedUserSnap.data() as UserData;
+      }
+    } catch (error) {
+      console.error('Error creating/updating user document:', error);
+      throw error;
     }
   };
 
@@ -197,34 +212,54 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const refreshUserData = async () => {
-    if (!currentUser) return;
-    const userRef = doc(db, 'users', currentUser.uid);
-    const userSnap = await getDoc(userRef);
-    if (userSnap.exists()) {
-      const latestData = userSnap.data() as UserData;
-      setUserData(latestData);
-      setIsAdmin(latestData.isAdmin);
+    if (!currentUser) {
+      console.warn('Cannot refresh user data: no current user');
+      return;
+    }
+    
+    try {
+      const userRef = doc(db, 'users', currentUser.uid);
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+        const latestData = userSnap.data() as UserData;
+        setUserData(latestData);
+        setIsAdmin(latestData.isAdmin);
+        console.log('User data refreshed successfully');
+      } else {
+        console.error('User document does not exist in Firestore');
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+      throw error;
     }
   };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const userData = await createUserDocument(user);
-        setCurrentUser(user);
-        setUserData(userData);
-        setIsAdmin(userData.isAdmin);
-        setIsGuest(false);
-      } else {
-        setCurrentUser(null);
-        setUserData(null);
-        setIsAdmin(false);
-        if (!isGuest) {
+      try {
+        if (user) {
+          // User is authenticated, fetch/create their data
+          const userData = await createUserDocument(user);
+          setCurrentUser(user);
+          setUserData(userData);
+          setIsAdmin(userData.isAdmin);
+          setIsGuest(false);
+          // CRITICAL FIX: Set loading to false after successful auth
           setLoading(false);
+        } else {
+          // No user is logged in
+          setCurrentUser(null);
+          setUserData(null);
+          setIsAdmin(false);
+          // Only set loading to false if not in guest mode
+          if (!isGuest) {
+            setLoading(false);
+          }
         }
-      }
-      
-      if (!isGuest) {
+      } catch (error) {
+        console.error('Error in auth state change:', error);
+        // Even on error, stop loading to prevent infinite spinner
         setLoading(false);
       }
     });

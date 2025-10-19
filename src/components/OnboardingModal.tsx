@@ -44,23 +44,34 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose }) =>
   };
 
   const handleComplete = async () => {
-    if (!currentUser || !userData) return;
+    if (!currentUser || !userData) {
+      console.error('Cannot complete onboarding: missing user data');
+      return;
+    }
 
     setLoading(true);
     try {
       const userRef = doc(db, 'users', currentUser.uid);
+      
+      // Update user document with onboarding completion
       await updateDoc(userRef, {
         displayName: displayName || userData.displayName,
         'preferences.theme': selectedTheme,
         'preferences.interests': interests,
         'preferences.onboardingCompleted': true,
-        'preferences.completedAt': new Date()
+        'preferences.completedAt': new Date(),
+        'preferences.lastUpdated': new Date()
       });
 
+      // Apply theme
       setTheme(selectedTheme);
 
-      // Ensure local auth state reflects the latest Firestore values
+      // CRITICAL: Refresh user data to ensure state is synchronized
       await refreshUserData();
+      
+      // Small delay to ensure state propagation
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       setLoading(false);
       onClose();
     } catch (error) {
@@ -79,7 +90,8 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose }) =>
         <div className="bg-gradient-to-r from-vibrant-orange to-vibrant-orange-light text-white p-6 relative">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-white hover:bg-white/20 p-2 rounded-full transition-colors"
+            disabled={loading}
+            className="absolute top-4 right-4 text-white hover:bg-white/20 p-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <X className="w-5 h-5" />
           </button>
