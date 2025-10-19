@@ -4,11 +4,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { useChat } from '../hooks/useChat';
 
 const ChatList = () => {
-  const { user } = useAuth();
-  const { chats, currentChatId, setCurrentChatId } = useChat(user?.uid || null);
+  const { currentUser } = useAuth();
+  const { chats, currentChatId, setCurrentChatId } = useChat(currentUser?.uid || null);
   const [isOpen, setIsOpen] = useState(false);
 
-  if (!user) {
+  if (!currentUser) {
     return null;
   }
 

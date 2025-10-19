@@ -20,7 +20,7 @@ interface UserChat {
 }
 
 export default function ChatsPanel() {
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const [users, setUsers] = useState<UserChat[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);

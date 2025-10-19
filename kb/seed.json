@@ -3,31 +3,36 @@
     "question": "What is Wasilah?",
     "answer": "Wasilah is a community service organization dedicated to creating positive change through education, healthcare, environmental initiatives, and community development projects. We believe in empowering communities and creating sustainable impact through volunteer-driven programs.",
     "keywords": ["wasilah", "organization", "about", "who", "what", "mission", "vision"],
-    "tags": ["general", "about"]
+    "tags": ["general", "about"],
+    "sourceUrl": "/about"
   },
   {
     "question": "How can I volunteer with Wasilah?",
     "answer": "You can volunteer by visiting our 'Join Us' page and filling out the volunteer application form. Our team will review your application and contact you within 3-5 business days with available opportunities that match your interests and skills. We welcome volunteers from all backgrounds and experience levels.",
     "keywords": ["volunteer", "join", "help", "participate", "contribute", "apply", "signup"],
-    "tags": ["volunteer", "join"]
+    "tags": ["volunteer", "join"],
+    "sourceUrl": "/volunteer"
   },
   {
     "question": "What types of projects does Wasilah run?",
     "answer": "We run various projects including education programs (tutoring, scholarship support), healthcare initiatives (free medical camps, health awareness), environmental conservation efforts (tree planting, clean-up drives), and community development projects (infrastructure, skills training). Each project is designed to create lasting positive impact in communities across Pakistan.",
     "keywords": ["projects", "programs", "initiatives", "types", "work", "activities", "services"],
-    "tags": ["projects", "general"]
+    "tags": ["projects", "general"],
+    "sourceUrl": "/projects"
   },
   {
     "question": "How can I donate or support Wasilah?",
     "answer": "You can support Wasilah through volunteering your time, spreading awareness about our cause on social media, or contributing resources and materials for specific projects. While we don't currently accept monetary donations through the website, you can contact us directly to discuss specific ways you can help make a difference in your community.",
     "keywords": ["donate", "support", "help", "contribute", "give", "funding", "sponsor"],
-    "tags": ["support", "donate"]
+    "tags": ["support", "donate"],
+    "sourceUrl": "/contact"
   },
   {
     "question": "Where is Wasilah located?",
     "answer": "We have offices in Karachi, Lahore, and Islamabad. Our projects span across multiple cities in Pakistan. Karachi Office: Main Office Complex, Clifton Block 5. Lahore Office: Model Town Extension. Islamabad Office: Blue Area Sector F-6. Visit our Contact page for detailed addresses, phone numbers, and contact information.",
     "keywords": ["location", "office", "address", "where", "city", "karachi", "lahore", "islamabad"],
-    "tags": ["contact", "location"]
+    "tags": ["contact", "location"],
+    "sourceUrl": "/contact"
   },
   {
     "question": "What events does Wasilah organize?",
