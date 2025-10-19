@@ -16,6 +16,44 @@ service cloud.firestore {
       return isOwner(userId) || isAdmin();
     }
 
+    // === NEW CHATBOT RULES ===
+    
+    // Knowledge Base - Public read, admin write
+    match /kb/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Chats - Users can read/write their own chats
+    match /chats/{chatId} {
+      allow read, write: if isAuthenticated();
+      allow create: if true; // Allow guest creation
+      
+      match /messages/{messageId} {
+        allow read, write: if isAuthenticated();
+        allow create: if true; // Allow guest messages
+      }
+    }
+    
+    // Unanswered queries - Admin only
+    match /unanswered_queries/{queryId} {
+      allow read: if isAdmin();
+      allow write: if true; // Bot can create
+    }
+    
+    // Admin notifications - Admin only
+    match /admin_notifications/{notificationId} {
+      allow read, write: if isAdmin();
+      allow create: if true; // Users can create notifications
+    }
+    
+    // System logs - Admin only
+    match /system/{document=**} {
+      allow read, write: if isAdmin();
+    }
+
+    // === EXISTING RULES ===
+    
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.auth.uid == userId;

@@ -1,8 +1,6 @@
 {
-  "name": "wasilah-chat-functions",
-  "version": "1.0.0",
-  "description": "Optional Cloud Functions for Wasilah Chat (requires Blaze plan)",
-  "main": "index.js",
+  "name": "functions",
+  "description": "Cloud Functions for Wasilah Chatbot",
   "scripts": {
     "serve": "firebase emulators:start --only functions",
     "shell": "firebase functions:shell",
@@ -13,11 +11,13 @@
   "engines": {
     "node": "18"
   },
+  "main": "updateKb.js",
   "dependencies": {
-    "firebase-admin": "^11.11.0",
-    "firebase-functions": "^4.5.0"
+    "firebase-admin": "^11.8.0",
+    "firebase-functions": "^4.3.1"
   },
   "devDependencies": {
     "firebase-functions-test": "^3.1.0"
-  }
+  },
+  "private": true
 }
