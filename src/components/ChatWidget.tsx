@@ -27,6 +27,7 @@ const ChatWidget = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [kbPages, setKbPages] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const {
     messages,
@@ -66,6 +67,13 @@ const ChatWidget = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Center the chat modal when opened (mirror DonationWidget behavior)
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      modalRef.current.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    }
+  }, [isOpen]);
 
   // Show for both logged-in users AND guests
   if (!currentUser && !isOpen) {
@@ -143,23 +151,27 @@ const ChatWidget = () => {
 
   if (!isOpen) {
     return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white p-4 rounded-full shadow-2xl transition-all z-50 relative hover:scale-110 group"
-        aria-label="Open chat"
-      >
-        <MessageCircle className="w-6 h-6" />
-        {hasIntelligentKb && (
-          <Sparkles className="w-3 h-3 absolute -top-1 -left-1 text-yellow-300 animate-pulse" title="AI-Powered" />
-        )}
-        {hasUnreadAdminMessages ? (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white animate-pulse" title="Admin replied!" />
-        ) : chats.length > 0 ? (
-          <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
-            {chats.length}
-          </span>
-        ) : null}
-      </button>
+      <div className="fixed bottom-6 left-1/2 translate-x-[calc(50%+100px)] z-50">
+        <button
+          onClick={() => setIsOpen(true)}
+          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-4 rounded-full shadow-2xl transition-all relative hover:scale-110 group"
+          aria-label="Open chat"
+          title="Chat with us"
+        >
+          <MessageCircle className="w-6 h-6 mr-2 inline" />
+          <span className="font-luxury-semibold text-lg align-middle">CHAT</span>
+          {hasIntelligentKb && (
+            <Sparkles className="w-3 h-3 absolute -top-1 -left-1 text-yellow-300 animate-pulse" title="AI-Powered" />
+          )}
+          {hasUnreadAdminMessages ? (
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white animate-pulse" title="Admin replied!" />
+          ) : chats.length > 0 ? (
+            <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
+              {chats.length}
+            </span>
+          ) : null}
+        </button>
+      </div>
     );
   }
 
@@ -184,12 +196,11 @@ const ChatWidget = () => {
   const hasAdminMessages = messages.some((m) => m.sender === 'admin');
 
   return (
-    <div
-      className={`fixed bottom-6 right-6 bg-white rounded-lg shadow-2xl z-50 transition-all ${
-        isMinimized ? 'w-80 h-16' : showHistory ? 'w-[600px] h-[600px]' : 'w-96 h-[600px]'
-      }`}
-    >
-      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
+    <>
+      {/* Modal overlay */}
+      <div className="fixed inset-0 bg-black/50 z-[60] backdrop-blur-sm" onClick={() => setIsOpen(false)} />
+      <div ref={modalRef} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-full max-w-2xl h-[80vh] max-h-[90vh] bg-white rounded-lg shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
         <div className="flex items-center gap-2">
           <MessageCircle className="w-5 h-5" />
           <h3 className="font-semibold">
@@ -236,10 +247,10 @@ const ChatWidget = () => {
             <X className="w-5 h-5" />
           </button>
         </div>
-      </div>
+        </div>
 
-      {!isMinimized && (
-        <div className="flex h-[536px]">
+        {!isMinimized && (
+          <div className="flex h-[calc(80vh-56px)]">
           {/* Chat History Sidebar */}
           {showHistory && (
             <div className="w-56 border-r flex flex-col">
@@ -460,9 +471,9 @@ const ChatWidget = () => {
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 };
 
