@@ -78,7 +78,7 @@ export function useChat(userId: string | null, chatId?: string) {
   }, [userId]);
 
   useEffect(() => {
-    const faqsRef = collection(db, 'kb/faqs');
+    const faqsRef = collection(db, 'faqs');
     const unsubscribe = onSnapshot(faqsRef, (snapshot) => {
       const faqList: FAQ[] = [];
       snapshot.forEach((doc) => {
