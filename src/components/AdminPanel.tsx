@@ -7,6 +7,7 @@ import { ProjectSubmission, EventSubmission, SubmissionStatus } from '../types/s
 import { sendEmail, formatSubmissionStatusUpdateEmail } from '../utils/emailService';
 import { migrateApprovedSubmissions } from '../utils/migrateVisibility';
 import ChatsPanel from './Admin/ChatsPanel';
+import MigrationButton from './MigrationButton';
 import { Link } from 'react-router-dom';
 
 interface AdminPanelProps {
@@ -428,6 +429,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
             { id: 'content', label: 'Edit Content', icon: Edit3, shortLabel: 'Edit' },
             { id: 'events', label: 'Manage Events', icon: Calendar, shortLabel: 'Events' },
             { id: 'users', label: 'User Activity', icon: Users, shortLabel: 'Users' },
+            { id: 'system', label: 'System', icon: Database, shortLabel: 'Sys' },
             { id: 'settings', label: 'Settings', icon: Settings, shortLabel: 'Set' }
           ].map((tab) => (
             <button
@@ -939,6 +941,72 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* System Tab - Migration & Maintenance */}
+          {activeTab === 'system' && (
+            <div>
+              <div className="mb-6">
+                <h3 className="text-2xl font-luxury-heading text-black mb-2">System Maintenance</h3>
+                <p className="text-gray-600">
+                  Run system maintenance tasks and migrations to keep data up-to-date
+                </p>
+              </div>
+
+              {/* Migration Button */}
+              <MigrationButton />
+
+              {/* System Info */}
+              <div className="bg-blue-50 rounded-2xl shadow-lg p-6 border border-blue-200">
+                <h3 className="text-xl font-bold text-black mb-4">
+                  📊 Stats System Information
+                </h3>
+                <div className="space-y-3 text-sm text-gray-700">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <strong>Stats Tracking:</strong> Active - All approved/completed submissions count toward user stats
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <strong>Real-time Updates:</strong> Enabled - Stats update automatically when submissions are approved
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <strong>Impact Formula:</strong> (Projects × 10) + (Events × 5) + (Hours ÷ 2)
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <strong>Hour Tracking:</strong> Based on durationHours field in submissions
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 p-4 bg-white rounded-lg border border-blue-300">
+                  <h4 className="font-bold text-black mb-2">📝 How to Track User Participation:</h4>
+                  <ol className="list-decimal list-inside space-y-2 text-sm">
+                    <li>
+                      <strong>For Projects:</strong> Add user ID to <code className="px-2 py-1 bg-gray-100 rounded">participantIds</code> array
+                    </li>
+                    <li>
+                      <strong>For Events:</strong> Add user ID to <code className="px-2 py-1 bg-gray-100 rounded">attendeeIds</code> array
+                    </li>
+                    <li>
+                      <strong>Approve/Complete:</strong> Change status to <code className="px-2 py-1 bg-gray-100 rounded">approved</code> or <code className="px-2 py-1 bg-gray-100 rounded">completed</code>
+                    </li>
+                    <li>
+                      <strong>Stats Update:</strong> User's Dashboard stats will update automatically in real-time
+                    </li>
+                  </ol>
+                </div>
+              </div>
             </div>
           )}
         </div>
