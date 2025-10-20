@@ -1307,3 +1307,163 @@
   color: #FFFFFF;
   box-shadow: 0 8px 25px rgba(230, 126, 34, 0.4);
 }
+
+/* --- GitHub-like Dark Theme with Navy Accents --- */
+.theme-dark {
+  --logo-navy: #161b22;
+  --logo-navy-light: #1f2937;
+  --logo-navy-dark: #0d1117;
+  --logo-teal: #1f6feb; /* repurposed to blue */
+  --logo-teal-light: #388bfd;
+  --vibrant-orange: #1f6feb; /* use blue accents instead of orange */
+  --vibrant-orange-light: #388bfd;
+  --cream-elegant: #0d1117;
+  --cream-white: #161b22;
+  --gold-luxury: #8b949e;
+  --gold-light: #c9d1d9;
+  --text-dark: #c9d1d9;
+  --text-medium: #b1bac4;
+  --text-light: #8b949e;
+
+  --color-primary: #1f6feb;      /* primary blue */
+  --color-secondary: #161b22;    /* surfaces/nav */
+  --color-accent: #388bfd;       /* hover/active */
+  --color-background: #0d1117;   /* app background */
+  --color-surface: #161b22;      /* cards */
+  --color-text: #c9d1d9;         /* primary text */
+  --color-text-light: #8b949e;   /* muted text */
+}
+
+/* Apply theme tokens to the root app container */
+.app-bg {
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
+
+.theme-dark .luxury-glass-dark {
+  backdrop-filter: blur(25px);
+  background: rgba(22, 27, 34, 0.8);
+  border: 1px solid rgba(201, 209, 217, 0.08);
+}
+
+.theme-dark .hero-luxury-bg {
+  background: linear-gradient(180deg, var(--logo-navy-dark) 0%, var(--logo-navy) 60%, var(--logo-navy) 100%);
+}
+.theme-dark .hero-luxury-bg::after {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(56, 139, 253, 0.15) 0%, transparent 60%),
+    radial-gradient(circle at 80% 70%, rgba(31, 111, 235, 0.12) 0%, transparent 60%),
+    linear-gradient(135deg, rgba(13, 17, 23, 0.9), rgba(22, 27, 34, 0.95));
+}
+
+.theme-dark .luxury-card {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid rgba(201, 209, 217, 0.12);
+}
+.theme-dark .luxury-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  border-color: rgba(56, 139, 253, 0.25);
+}
+
+.theme-dark .nav-pill {
+  background: rgba(110, 118, 129, 0.15);
+  border: 1px solid rgba(110, 118, 129, 0.3);
+  color: var(--color-text);
+}
+.theme-dark .nav-pill:hover {
+  background: rgba(56, 139, 253, 0.15);
+  border-color: rgba(56, 139, 253, 0.35);
+  color: #c9d1d9;
+  transform: translateY(-1px);
+  box-shadow: none;
+}
+.theme-dark .nav-pill.active {
+  background: rgba(31, 111, 235, 0.25);
+  border-color: rgba(56, 139, 253, 0.5);
+  color: #c9d1d9;
+}
+
+/* Ensure light section classes map to dark surfaces */
+.theme-dark .bg-cream-white,
+.theme-dark .bg-cream-elegant {
+  background-color: var(--color-surface) !important;
+}
+.theme-dark .text-black,
+.theme-dark .text-gray-700,
+.theme-dark .text-gray-600,
+.theme-dark .text-logo-navy {
+  color: var(--color-text) !important;
+}
+.theme-dark .bg-logo-navy {
+  background-color: var(--color-secondary) !important;
+}
+
+/* Improve contrast of headings/paragraphs inside remapped sections */
+.theme-dark .bg-cream-elegant p,
+.theme-dark .bg-cream-elegant h1,
+.theme-dark .bg-cream-elegant h2,
+.theme-dark .bg-cream-elegant h3,
+.theme-dark .bg-cream-elegant h4,
+.theme-dark .bg-cream-white p,
+.theme-dark .bg-cream-white h1,
+.theme-dark .bg-cream-white h2,
+.theme-dark .bg-cream-white h3,
+.theme-dark .bg-cream-white h4,
+.theme-dark .luxury-card p,
+.theme-dark .luxury-card h3,
+.theme-dark .luxury-card h4 {
+  color: var(--color-text) !important;
+}
+
+/* Map common Tailwind light utilities to dark tokens for contrast */
+.theme-dark .bg-white,
+.theme-dark .bg-gray-50,
+.theme-dark .bg-gray-100,
+.theme-dark .bg-cream-white,
+.theme-dark .bg-cream-elegant {
+  background-color: var(--color-surface) !important;
+}
+.theme-dark .text-black,
+.theme-dark .text-logo-navy,
+.theme-dark .text-gray-900,
+.theme-dark .text-gray-800 {
+  color: var(--color-text) !important;
+}
+.theme-dark .text-gray-700,
+.theme-dark .text-gray-600,
+.theme-dark .text-gray-500,
+.theme-dark .text-gray-400 {
+  color: var(--color-text-light) !important;
+}
+.theme-dark .border-gray-100,
+.theme-dark .border-gray-200 {
+  border-color: rgba(201, 209, 217, 0.12) !important;
+}
+.theme-dark .border-gray-300,
+.theme-dark .border-gray-400 {
+  border-color: rgba(201, 209, 217, 0.2) !important;
+}
+
+/* Replace orange accents with blue in dark theme */
+.theme-dark .bg-vibrant-orange { background-color: var(--color-primary) !important; }
+.theme-dark .bg-vibrant-orange-light { background-color: var(--color-accent) !important; }
+.theme-dark .text-vibrant-orange { color: var(--color-primary) !important; }
+.theme-dark .text-vibrant-orange-light { color: var(--color-accent) !important; }
+.theme-dark .border-vibrant-orange { border-color: var(--color-primary) !important; }
+.theme-dark .border-vibrant-orange\/30 { border-color: rgba(31, 111, 235, 0.3) !important; }
+
+/* Tailwind gradient token overrides for from-/to- utilities */
+.theme-dark .from-vibrant-orange { --tw-gradient-from: var(--color-primary) var(--tw-gradient-from-position); --tw-gradient-to: rgb(31 111 235 / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+.theme-dark .to-vibrant-orange-light { --tw-gradient-to: var(--color-accent) var(--tw-gradient-to-position); }
+.theme-dark .from-logo-navy { --tw-gradient-from: var(--color-secondary) var(--tw-gradient-from-position); --tw-gradient-to: rgb(22 27 34 / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+.theme-dark .to-logo-navy-light { --tw-gradient-to: var(--color-secondary) var(--tw-gradient-to-position); }
+
+/* Header brand text that uses cream colors should remain readable */
+.theme-dark .text-cream-elegant { color: var(--color-text) !important; }
+
+/* CTA and hero overlay adjustments for dark theme */
+.theme-dark .cta-parallax::before {
+  background: linear-gradient(135deg, rgba(13, 17, 23, 0.93), rgba(31, 111, 235, 0.35));
+}

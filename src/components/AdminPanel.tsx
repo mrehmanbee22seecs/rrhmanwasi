@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, MessageSquare, Mail, Calendar, Target, Settings, CreditCard as Edit3, Save, X, Plus, Trash2, Eye, EyeOff, Download, CheckCircle, XCircle, Clock, FileText, Mail as MailIcon, RefreshCw } from 'lucide-react';
+import { Users, MessageSquare, Mail, Calendar, Target, Settings, CreditCard as Edit3, Save, X, Plus, Trash2, Eye, EyeOff, Download, CheckCircle, XCircle, Clock, FileText, Mail as MailIcon, RefreshCw, Database } from 'lucide-react';
 import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,6 +7,7 @@ import { ProjectSubmission, EventSubmission, SubmissionStatus } from '../types/s
 import { sendEmail, formatSubmissionStatusUpdateEmail } from '../utils/emailService';
 import { migrateApprovedSubmissions } from '../utils/migrateVisibility';
 import ChatsPanel from './Admin/ChatsPanel';
+import { seedKnowledgeBase } from '../utils/kbSeed';
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -424,6 +425,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
             { id: 'responses', label: 'Responses', icon: MessageSquare },
             { id: 'submissions', label: 'Submissions', icon: FileText },
             { id: 'chats', label: 'Chats', icon: MessageSquare },
+            { id: 'kb', label: 'Knowledge Base', icon: Database },
             { id: 'content', label: 'Edit Content', icon: Edit3 },
             { id: 'events', label: 'Manage Events', icon: Calendar },
             { id: 'users', label: 'User Activity', icon: Users },
@@ -551,6 +553,34 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* KB Manager Tab */}
+          {activeTab === 'kb' && (
+            <div className="space-y-6">
+              <p className="text-black/80">Enable the chatbot knowledge base and manage content.</p>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await seedKnowledgeBase();
+                      alert(`Knowledge Base enabled. ${res.success.length} pages seeded${res.failed.length ? `, ${res.failed.length} failed` : ''}.`);
+                    } catch (e: any) {
+                      alert('Failed to enable Knowledge Base: ' + (e?.message || 'unknown error'));
+                    }
+                  }}
+                  className="inline-flex items-center px-5 py-3 bg-vibrant-orange text-white rounded-luxury hover:bg-vibrant-orange-light transition-colors"
+                >
+                  Enable Knowledge Base
+                </button>
+                <a
+                  href="/admin/kb-manager"
+                  className="inline-flex items-center px-5 py-3 bg-logo-navy text-cream-elegant rounded-luxury hover:bg-logo-navy-light transition-colors"
+                >
+                  Go to KB Manager
+                </a>
+              </div>
             </div>
           )}
 
