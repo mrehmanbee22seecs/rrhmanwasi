@@ -21,6 +21,14 @@ const intents: Intent[] = [
         : "Hello! I'm here to help with Wasilah. What would you like to know?",
   },
   {
+    id: 'what-is-wasilah',
+    patterns: [/^(what\s+is\s+)?w(asilah|aseela|asila)(\s+kya\s+hai)?\??$/i, /(وسیلہ)\s+(کیا|ہے)/i, /wasilah\s+kya\s+hai/i],
+    reply: (lang) =>
+      lang === 'ur'
+        ? 'وسیلہ ایک کمیونٹی سروس تنظیم ہے جو تعلیم، صحت، ماحولیات اور کمیونٹی ڈیولپمنٹ کے منصوبوں کے ذریعے مثبت تبدیلی لاتی ہے۔'
+        : 'Wasilah is a community-service organization creating impact through projects in education, healthcare, environment, and community development.',
+  },
+  {
     id: 'thanks',
     patterns: [/^(thanks|thank you|shukriya|shukria)/i, /شکریہ/i],
     reply: (lang) => (lang === 'ur' ? 'خوش رہیں! مزید مدد چاہیے تو بتائیں۔' : 'You’re welcome! Let me know if you need anything else.'),
