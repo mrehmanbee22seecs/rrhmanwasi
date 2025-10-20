@@ -1,8 +1,26 @@
-import React, { useState } from 'react';
-import { MessageCircle } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { MessageCircle, Sparkles, Menu, Plus, Clock, Trash2, Bell, ExternalLink, Minimize2, X, Send } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { useChat } from '../hooks/useChat';
+import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../config/firebase';
+import { findBestMatch, formatResponse } from '../utils/kbMatcher';
 import ChatWidgetModal from './ChatWidgetModal';
 
+interface Message {
+  id: string;
+  sender: 'user' | 'bot' | 'admin';
+  text: string;
+  createdAt: Date;
+  meta?: Record<string, any>;
+  sourceUrl?: string;
+  sourcePage?: string;
+  needsAdmin?: boolean;
+  confidence?: number;
+}
+
 const ChatWidget = () => {
+  const { currentUser } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -10,6 +28,7 @@ const ChatWidget = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [kbPages, setKbPages] = useState<any[]>([]);
   const [suppressButton, setSuppressButton] = useState(false);
+  const [rateInfo, setRateInfo] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -32,12 +51,29 @@ const ChatWidget = () => {
           pages.push({ id: doc.id, ...doc.data() });
         });
         setKbPages(pages);
+        console.log(`✅ Loaded ${pages.length} KB pages for instant responses`);
       } catch (error) {
         console.error('Error loading KB:', error);
       }
     };
     loadKb();
   }, []);
+
+  // Update rate limit display from latest message metadata
+  useEffect(() => {
+    if (messages.length > 0) {
+      const latestUserMessage = [...messages].reverse().find(m => m.sender === 'user');
+      if (latestUserMessage?.meta?.rate) {
+        const rate = latestUserMessage.meta.rate;
+        setRateInfo({
+          remaining: rate.remaining,
+          limit: rate.limit,
+          windowSec: Math.round(rate.windowMs / 1000),
+          blockedUntil: rate.resetMs > 0 ? Date.now() + rate.resetMs : undefined,
+        });
+      }
+    }
+  }, [messages]);
 
   // Keep scrolled to bottom
   useEffect(() => {
@@ -97,16 +133,7 @@ const ChatWidget = () => {
 
     try {
       await sendMessage(userMessage);
-      await new Promise(resolve => setTimeout(resolve, 800));
-      if (kbPages.length > 0) {
-        const match = findBestMatch(userMessage, kbPages, 0.4);
-        const response = formatResponse(match);
-        console.log('🤖 Intelligent match:', {
-          query: userMessage,
-          confidence: response.confidence,
-          hasMatch: !response.needsAdmin
-        });
-      }
+      // Bot response happens instantly via real-time listener - no artificial delay needed
     } catch (error: any) {
       console.error('Error sending message:', error);
       const msg: string = error?.message || 'Failed to send message';
@@ -116,7 +143,7 @@ const ChatWidget = () => {
         const seconds = parseInt(match[1], 10);
         setRateInfo((prev) => ({
           remaining: 0,
-          limit: prev?.limit || 5,
+          limit: prev?.limit || 10,
           windowSec: prev?.windowSec || 60,
           blockedUntil: Date.now() + seconds * 1000,
         }));
@@ -260,8 +287,26 @@ const ChatWidget = () => {
                     </div>
                     <p className="text-sm font-semibold">Welcome to Wasilah Assistant!</p>
                     <p className="text-xs mt-1">{hasIntelligentKb ? '🤖 Ask me anything - I learn from our website!' : 'How can we help you today?'}</p>
+                    
+                    {/* Bot Capabilities & Limitations */}
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200 max-w-md mx-auto text-left">
+                      <p className="text-xs font-semibold text-blue-900 mb-2">ℹ️ What I can help with:</p>
+                      <ul className="text-xs text-blue-800 space-y-1">
+                        <li>• Information about Wasilah projects & events</li>
+                        <li>• Volunteering opportunities & how to join</li>
+                        <li>• Contact information & office locations</li>
+                        <li>• General questions about our mission</li>
+                      </ul>
+                      <p className="text-xs font-semibold text-blue-900 mt-3 mb-1">⚡ Response Speed:</p>
+                      <p className="text-xs text-blue-800">Instant responses from our knowledge base!</p>
+                      <p className="text-xs font-semibold text-blue-900 mt-2 mb-1">📊 Usage Limit:</p>
+                      <p className="text-xs text-blue-800">10 messages per minute (prevents spam)</p>
+                      <p className="text-xs text-gray-600 mt-2 italic">💬 For complex queries, an admin can take over anytime!</p>
+                    </div>
+                    
                     {hasIntelligentKb && (
                       <div className="mt-4 space-y-2 max-w-xs mx-auto">
+                        <p className="text-xs font-semibold text-gray-700 mb-2">Quick questions:</p>
                         <button onClick={() => setInputText('What is Wasilah?')} className="w-full text-left px-3 py-2 text-xs bg-white hover:bg-blue-50 rounded-lg border border-gray-200 transition-colors">💡 What is Wasilah?</button>
                         <button onClick={() => setInputText('How can I volunteer?')} className="w-full text-left px-3 py-2 text-xs bg-white hover:bg-blue-50 rounded-lg border border-gray-200 transition-colors">🙋 How can I volunteer?</button>
                         <button onClick={() => setInputText('What projects do you run?')} className="w-full text-left px-3 py-2 text-xs bg-white hover:bg-blue-50 rounded-lg border border-gray-200 transition-colors">🎯 What projects do you run?</button>
@@ -333,6 +378,25 @@ const ChatWidget = () => {
                     )}
                   </div>
                 )}
+                
+                {/* Rate Limit Display */}
+                {rateInfo && (
+                  <div className="mb-2 px-2 py-1 bg-blue-50 rounded text-xs flex items-center justify-between">
+                    <span className="text-blue-700">
+                      {rateInfo.remaining > 0 ? (
+                        <>⚡ {rateInfo.remaining}/{rateInfo.limit} messages left this minute</>
+                      ) : rateInfo.blockedUntil && rateInfo.blockedUntil > Date.now() ? (
+                        <>⏳ Rate limit reached. Wait {Math.ceil((rateInfo.blockedUntil - Date.now()) / 1000)}s</>
+                      ) : (
+                        <>✅ Ready to send messages</>
+                      )}
+                    </span>
+                    {rateInfo.remaining <= 2 && rateInfo.remaining > 0 && (
+                      <span className="text-orange-600 font-semibold">Low!</span>
+                    )}
+                  </div>
+                )}
+                
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -346,6 +410,11 @@ const ChatWidget = () => {
                   <button onClick={handleSend} disabled={!inputText.trim() || isTyping} className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white p-2 rounded-lg transition-colors" aria-label="Send message">
                     <Send className="w-5 h-5" />
                   </button>
+                </div>
+                
+                {/* Helper text */}
+                <div className="mt-2 text-xs text-gray-500 text-center">
+                  {hasIntelligentKb ? '🤖 Instant AI responses from our knowledge base' : '💬 Ask anything about Wasilah'}
                 </div>
               </div>
             </div>

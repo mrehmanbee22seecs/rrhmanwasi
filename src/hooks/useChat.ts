@@ -9,6 +9,7 @@ import {
   updateDoc,
   serverTimestamp,
   Timestamp,
+  getDocs,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { filterProfanity, checkRateLimit, generateChatTitle } from '../utils/chatHelpers';
@@ -62,6 +63,7 @@ export function useChat(userId: string | null, chatId?: string) {
   const [loading, setLoading] = useState(true);
   const [currentChatId, setCurrentChatId] = useState<string | null>(chatId || null);
   const [isTakeover, setIsTakeover] = useState(false);
+  const [kbPages, setKbPages] = useState<any[]>([]);
 
   // Sync chatId parameter with internal state
   useEffect(() => {
@@ -99,7 +101,22 @@ export function useChat(userId: string | null, chatId?: string) {
     return () => unsubscribe();
   }, [userId]);
 
-  // FAQs and KB are deprecated for bot responses; using ApiFreeLLM instead
+  // Load KB pages for intelligent matching
+  useEffect(() => {
+    const loadKb = async () => {
+      try {
+        const pagesSnapshot = await getDocs(collection(db, 'kb', 'pages', 'content'));
+        const pages: any[] = [];
+        pagesSnapshot.forEach((doc) => {
+          pages.push({ id: doc.id, ...doc.data() });
+        });
+        setKbPages(pages);
+      } catch (error) {
+        console.error('Error loading KB:', error);
+      }
+    };
+    loadKb();
+  }, []);
 
   useEffect(() => {
     if (!userId || !currentChatId) {
@@ -199,7 +216,8 @@ export function useChat(userId: string | null, chatId?: string) {
       });
 
       if (!isAdmin && !isTakeover) {
-        setTimeout(async () => {
+        // Immediate bot response (no artificial delay)
+        (async () => {
           let botResponseText: string;
           let botMeta: any = {};
           
@@ -223,20 +241,6 @@ export function useChat(userId: string | null, chatId?: string) {
               needsAdmin: response.needsAdmin,
               matchType: 'intelligent'
             };
-            
-            // If no match, flag as unanswered for admin
-            if (response.needsAdmin) {
-              try {
-                const data = await res.json();
-                if (typeof data === 'string') aiResponse = data;
-                else if (data && typeof data.response === 'string') aiResponse = data.response;
-                else if (data && typeof data.message === 'string') aiResponse = data.message;
-              } catch (_) {
-                aiResponse = await res.text();
-              }
-
-              botText = (aiResponse || '').toString().trim();
-            }
           }
           // 3) Fallback to legacy FAQ matching
           else if (faqs.length > 0 && findBestMatch && truncateAnswer) {
@@ -276,10 +280,9 @@ export function useChat(userId: string | null, chatId?: string) {
 
           await addDoc(messagesRef, {
             sender: 'bot',
-            text: botText,
+            text: botResponseText,
             createdAt: serverTimestamp(),
-            meta: { provider: 'apifreellm' },
-            provider: 'apifreellm',
+            meta: botMeta,
           });
 
           await updateDoc(chatRef, { lastActivityAt: serverTimestamp() });

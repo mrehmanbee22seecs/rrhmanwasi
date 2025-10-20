@@ -3,7 +3,7 @@ const PROFANITY_WORDS = [
 ];
 
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const RATE_LIMIT_MAX = 5; // messages per window
+const RATE_LIMIT_MAX = 10; // messages per window (increased for better UX)
 
 const messageTimestamps = new Map<string, number[]>();
 
