@@ -1,8 +1,26 @@
-import React, { useState } from 'react';
-import { MessageCircle } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { MessageCircle, Sparkles, Menu, Plus, Clock, Trash2, Bell, ExternalLink, Minimize2, X, Send } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { useChat } from '../hooks/useChat';
+import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../config/firebase';
+import { findBestMatch, formatResponse } from '../utils/kbMatcher';
 import ChatWidgetModal from './ChatWidgetModal';
 
+interface Message {
+  id: string;
+  sender: 'user' | 'bot' | 'admin';
+  text: string;
+  createdAt: Date;
+  meta?: Record<string, any>;
+  sourceUrl?: string;
+  sourcePage?: string;
+  needsAdmin?: boolean;
+  confidence?: number;
+}
+
 const ChatWidget = () => {
+  const { currentUser } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -10,6 +28,7 @@ const ChatWidget = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [kbPages, setKbPages] = useState<any[]>([]);
   const [suppressButton, setSuppressButton] = useState(false);
+  const [rateInfo, setRateInfo] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
