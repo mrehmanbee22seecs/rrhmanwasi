@@ -216,7 +216,8 @@ export function useChat(userId: string | null, chatId?: string) {
       });
 
       if (!isAdmin && !isTakeover) {
-        setTimeout(async () => {
+        // Immediate bot response (no artificial delay)
+        (async () => {
           let botResponseText: string;
           let botMeta: any = {};
           
