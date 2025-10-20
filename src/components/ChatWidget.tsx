@@ -24,6 +24,13 @@ const ChatWidget = () => {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [rateInfo, setRateInfo] = useState<{
+    remaining: number;
+    limit: number;
+    windowSec: number;
+    blockedUntil?: number;
+  } | null>(null);
+  const [nowTs, setNowTs] = useState<number>(Date.now());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   // Load ApiFreeLLM SDK for browser usage
   useEffect(() => {
@@ -51,6 +58,31 @@ const ChatWidget = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Update rate info based on latest user message meta
+  useEffect(() => {
+    if (!messages || messages.length === 0) return;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m: any = messages[i];
+      if (m.sender === 'user' && m.meta?.rate) {
+        const { remaining, limit, windowMs, resetMs } = m.meta.rate as any;
+        setRateInfo((prev) => ({
+          remaining: typeof remaining === 'number' ? remaining : 0,
+          limit: typeof limit === 'number' ? limit : 5,
+          windowSec: Math.round((typeof windowMs === 'number' ? windowMs : 60000) / 1000),
+          blockedUntil: resetMs ? Date.now() + resetMs : prev?.blockedUntil,
+        }));
+        break;
+      }
+    }
+  }, [messages]);
+
+  // Tick timer for countdown when blocked
+  useEffect(() => {
+    if (!rateInfo?.blockedUntil) return;
+    const id = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [rateInfo?.blockedUntil]);
 
   // Show for both logged-in users AND guests
   if (!currentUser && !isOpen) {
@@ -91,7 +123,19 @@ const ChatWidget = () => {
       await new Promise(resolve => setTimeout(resolve, 800));
     } catch (error: any) {
       console.error('Error sending message:', error);
-      alert(error.message || 'Failed to send message');
+      const msg: string = error?.message || 'Failed to send message';
+      // Parse rate limit message: "Try again in Ns"
+      const match = msg.match(/Try again in (\d+)s/i);
+      if (match) {
+        const seconds = parseInt(match[1], 10);
+        setRateInfo((prev) => ({
+          remaining: 0,
+          limit: prev?.limit || 5,
+          windowSec: prev?.windowSec || 60,
+          blockedUntil: Date.now() + seconds * 1000,
+        }));
+      }
+      alert(msg);
     } finally {
       setIsTyping(false);
     }
@@ -110,6 +154,10 @@ const ChatWidget = () => {
   });
 
   const hasAi = true;
+  const blockedSeconds = rateInfo?.blockedUntil
+    ? Math.max(0, Math.ceil((rateInfo.blockedUntil - nowTs) / 1000))
+    : 0;
+  const isBlocked = blockedSeconds > 0;
 
   if (!isOpen) {
     return (
@@ -406,19 +454,36 @@ const ChatWidget = () => {
                   )}
                 </div>
               )}
+              {/* Rate limit banner and status */}
+              <div className="mb-2">
+                {isBlocked ? (
+                  <div className="text-xs bg-yellow-100 text-yellow-900 border border-yellow-200 rounded px-3 py-2">
+                    Rate limit reached. Please try again in {blockedSeconds}s.
+                  </div>
+                ) : rateInfo ? (
+                  <div className="text-[11px] text-gray-500 flex items-center justify-between">
+                    <span>
+                      Messages left this minute: {Math.max(0, rateInfo.remaining)}/{rateInfo.limit}
+                    </span>
+                    {rateInfo.remaining <= 1 && (
+                      <span className="text-yellow-700">Approaching limit</span>
+                    )}
+                  </div>
+                ) : null}
+              </div>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Type your message..."
+                  placeholder={isBlocked ? `Rate limit reached. Try again in ${blockedSeconds}s` : 'Type your message...'}
                   className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none"
-                  disabled={isTyping}
+                  disabled={isTyping || isBlocked}
                 />
                 <button
                   onClick={handleSend}
-                  disabled={!inputText.trim() || isTyping}
+                  disabled={!inputText.trim() || isTyping || isBlocked}
                   className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white p-2 rounded-lg transition-colors"
                   aria-label="Send message"
                 >

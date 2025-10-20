@@ -170,6 +170,7 @@ export function useChat(userId: string | null, chatId?: string) {
             remaining: rateCheck.remaining,
             limit: rateCheck.limit,
             windowMs: rateCheck.windowMs,
+            resetMs: rateCheck.resetMs,
           }
         },
       });
@@ -177,10 +178,11 @@ export function useChat(userId: string | null, chatId?: string) {
       const chatRef = doc(db, `users/${userId}/chats/${activeChatId}`);
       await updateDoc(chatRef, {
         lastActivityAt: serverTimestamp(),
+        aiProvider: 'apifreellm',
       });
 
       if (!isAdmin && !isTakeover) {
-        setTimeout(async () => {
+        (async () => {
           const chatRef = doc(db, `users/${userId}/chats/${activeChatId}`);
           const messagesRef = collection(db, `users/${userId}/chats/${activeChatId}/messages`);
 
@@ -235,7 +237,7 @@ export function useChat(userId: string | null, chatId?: string) {
           });
 
           await updateDoc(chatRef, { lastActivityAt: serverTimestamp() });
-        }, 1000);
+        })();
       }
     },
     [userId, currentChatId, messages, isTakeover, createNewChat]
