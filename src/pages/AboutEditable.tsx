@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { Users, Target, Heart, Award, CheckCircle, Globe, Lightbulb, Shield } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Users, Target, Heart, Award, CheckCircle, Globe, Lightbulb, Shield, ChevronDown, ChevronUp } from 'lucide-react';
 import { useContent } from '../hooks/useContent';
 import { useAuth } from '../contexts/AuthContext';
 import ContentEditor from '../components/ContentEditor';
 import EditButton from '../components/EditButton';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 const AboutEditable = () => {
   const [editingSection, setEditingSection] = useState<string | null>(null);
@@ -17,6 +19,8 @@ const AboutEditable = () => {
   const { data: whatWeDoData, createContent: createWhatWeDo, updateContent: updateWhatWeDo, deleteContent: deleteWhatWeDo } = useContent('about_what_we_do');
   const { data: team, createContent: createTeamMember, updateContent: updateTeamMember, deleteContent: deleteTeamMember } = useContent('about_team');
   const { data: impactData, upsertContent: saveImpact } = useContent('about_impact', 'main');
+  const [faqs, setFaqs] = useState<Array<{ id: string; question: string; answer: string }>>([]);
+  const [openFaqId, setOpenFaqId] = useState<string | null>(null);
 
   const getIcon = (iconName: string) => {
     const icons: Record<string, any> = { Heart, Shield, Users, Globe, Target, Award, Lightbulb };
@@ -153,6 +157,23 @@ const AboutEditable = () => {
   const whatWeDo = (whatWeDoData && whatWeDoData.length > 0) ? whatWeDoData : defaultWhatWeDo;
   const teamMembers = (team && team.length > 0) ? team : defaultTeam;
   const impact = impactData || defaultImpact;
+
+  // Load FAQs to display on About page
+  useEffect(() => {
+    const faqsRef = collection(db, 'faqs');
+    const q = query(faqsRef, orderBy('question', 'asc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items: Array<{ id: string; question: string; answer: string }> = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data() as any;
+        if (data?.question && data?.answer) {
+          items.push({ id: doc.id, question: data.question, answer: data.answer });
+        }
+      });
+      setFaqs(items);
+    });
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div className="py-12">
@@ -373,6 +394,38 @@ const AboutEditable = () => {
           </div>
         </div>
       </section>
+
+      {faqs.length > 0 && (
+        <section className="py-24 bg-cream-white">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-5xl font-luxury-display text-black mb-4">Frequently Asked Questions</h2>
+              <p className="text-lg text-text-medium font-luxury-body">Answers to common questions about Wasilah</p>
+            </div>
+            <div className="space-y-4">
+              {faqs.map((faq) => {
+                const isOpen = openFaqId === faq.id;
+                return (
+                  <div key={faq.id} className="border border-gray-200 rounded-luxury-lg bg-white overflow-hidden">
+                    <button
+                      className="w-full flex items-center justify-between text-left px-5 py-4 hover:bg-cream-soft/60 transition-colors"
+                      onClick={() => setOpenFaqId(isOpen ? null : faq.id)}
+                    >
+                      <span className="text-lg font-luxury-heading text-black pr-4">{faq.question}</span>
+                      {isOpen ? <ChevronUp className="w-5 h-5 text-text-medium" /> : <ChevronDown className="w-5 h-5 text-text-medium" />}
+                    </button>
+                    {isOpen && (
+                      <div className="px-5 pb-5 pt-0 text-text-medium font-luxury-body whitespace-pre-line">
+                        {faq.answer}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       <ContentEditor
         isOpen={editingSection === 'header'}

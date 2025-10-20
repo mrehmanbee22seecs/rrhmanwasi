@@ -109,7 +109,19 @@ const ChatWidget = () => {
       }
     } catch (error: any) {
       console.error('Error sending message:', error);
-      alert(error.message || 'Failed to send message');
+      const msg: string = error?.message || 'Failed to send message';
+      // Parse rate limit message: "Try again in Ns"
+      const match = msg.match(/Try again in (\d+)s/i);
+      if (match) {
+        const seconds = parseInt(match[1], 10);
+        setRateInfo((prev) => ({
+          remaining: 0,
+          limit: prev?.limit || 5,
+          windowSec: prev?.windowSec || 60,
+          blockedUntil: Date.now() + seconds * 1000,
+        }));
+      }
+      alert(msg);
     } finally {
       setIsTyping(false);
     }

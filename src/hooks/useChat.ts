@@ -8,7 +8,6 @@ import {
   doc,
   updateDoc,
   serverTimestamp,
-  getDocs,
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -59,8 +58,7 @@ interface FAQ {
 export function useChat(userId: string | null, chatId?: string) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
-  const [faqs, setFaqs] = useState<FAQ[]>([]);
-  const [kbPages, setKbPages] = useState<any[]>([]);
+  const [faqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentChatId, setCurrentChatId] = useState<string | null>(chatId || null);
   const [isTakeover, setIsTakeover] = useState(false);
@@ -101,54 +99,7 @@ export function useChat(userId: string | null, chatId?: string) {
     return () => unsubscribe();
   }, [userId]);
 
-  // Load FAQs (legacy system)
-  useEffect(() => {
-    const faqsRef = collection(db, 'faqs');
-    const unsubscribe = onSnapshot(faqsRef, (snapshot) => {
-      const faqList: FAQ[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        faqList.push({
-          id: doc.id,
-          question: data.question,
-          answer: data.answer,
-          keywords: data.keywords || [],
-          tags: data.tags || [],
-        });
-      });
-      setFaqs(faqList);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  // Load KB pages (new intelligent system)
-  useEffect(() => {
-    const loadKbPages = async () => {
-      try {
-        const kbSnapshot = await getDocs(
-          collection(db, 'kb', 'pages', 'content')
-        );
-        
-        const pages: any[] = [];
-        kbSnapshot.forEach((doc) => {
-          pages.push({
-            id: doc.id,
-            ...doc.data()
-          });
-        });
-        
-        setKbPages(pages);
-        if (pages.length > 0) {
-          console.log(`✅ Loaded ${pages.length} KB pages - using intelligent matching`);
-        }
-      } catch (error) {
-        console.error('Error loading KB pages:', error);
-      }
-    };
-    
-    loadKbPages();
-  }, []);
+  // FAQs and KB are deprecated for bot responses; using ApiFreeLLM instead
 
   useEffect(() => {
     if (!userId || !currentChatId) {
@@ -191,6 +142,7 @@ export function useChat(userId: string | null, chatId?: string) {
           createdAt: serverTimestamp(),
           lastActivityAt: serverTimestamp(),
           isActive: true,
+          aiProvider: 'apifreellm',
         });
 
         return chatDoc.id;
@@ -208,7 +160,10 @@ export function useChat(userId: string | null, chatId?: string) {
 
       const rateCheck = checkRateLimit(userId);
       if (!rateCheck.allowed && !isAdmin) {
-        throw new Error('Rate limit exceeded. Please wait before sending more messages.');
+        const seconds = Math.ceil(rateCheck.resetMs / 1000);
+        throw new Error(
+          `Rate limit reached: ${rateCheck.limit}/${Math.round(rateCheck.windowMs/1000)}s. Try again in ${seconds}s.`
+        );
       }
 
       const filteredText = filterProfanity(text);
@@ -227,12 +182,20 @@ export function useChat(userId: string | null, chatId?: string) {
         sender: isAdmin ? 'admin' : 'user',
         text: filteredText,
         createdAt: serverTimestamp(),
-        meta: {},
+        meta: {
+          rate: {
+            remaining: rateCheck.remaining,
+            limit: rateCheck.limit,
+            windowMs: rateCheck.windowMs,
+            resetMs: rateCheck.resetMs,
+          }
+        },
       });
 
       const chatRef = doc(db, `users/${userId}/chats/${activeChatId}`);
       await updateDoc(chatRef, {
         lastActivityAt: serverTimestamp(),
+        aiProvider: 'apifreellm',
       });
 
       if (!isAdmin && !isTakeover) {
@@ -264,16 +227,15 @@ export function useChat(userId: string | null, chatId?: string) {
             // If no match, flag as unanswered for admin
             if (response.needsAdmin) {
               try {
-                await addDoc(collection(db, 'unanswered_queries'), {
-                  chatId: activeChatId,
-                  userId,
-                  query: filteredText,
-                  status: 'pending',
-                  createdAt: serverTimestamp()
-                });
-              } catch (error) {
-                console.error('Error creating unanswered query:', error);
+                const data = await res.json();
+                if (typeof data === 'string') aiResponse = data;
+                else if (data && typeof data.response === 'string') aiResponse = data.response;
+                else if (data && typeof data.message === 'string') aiResponse = data.message;
+              } catch (_) {
+                aiResponse = await res.text();
               }
+
+              botText = (aiResponse || '').toString().trim();
             }
           }
           // 3) Fallback to legacy FAQ matching
@@ -314,16 +276,14 @@ export function useChat(userId: string | null, chatId?: string) {
 
           await addDoc(messagesRef, {
             sender: 'bot',
-            text: botResponseText,
+            text: botText,
             createdAt: serverTimestamp(),
-            meta: botMeta,
-            ...botMeta // Spread meta fields to root for easy access
+            meta: { provider: 'apifreellm' },
+            provider: 'apifreellm',
           });
 
-          await updateDoc(chatRef, {
-            lastActivityAt: serverTimestamp(),
-          });
-        }, 1000);
+          await updateDoc(chatRef, { lastActivityAt: serverTimestamp() });
+        })();
       }
     },
     [userId, currentChatId, messages, faqs, kbPages, isTakeover, createNewChat]
