@@ -13,17 +13,12 @@ import {
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { filterProfanity, checkRateLimit, generateChatTitle } from '../utils/chatHelpers';
+import { matchIntent, detectLanguage, adminOfferMessage, adminConfirmMessage } from '../utils/intents';
 
 // Try to import new KB matcher, fallback to old one
-let findBestMatchKb: any = null;
-let formatResponse: any = null;
-try {
-  const kbMatcher = require('../utils/kbMatcher');
-  findBestMatchKb = kbMatcher.findBestMatch;
-  formatResponse = kbMatcher.formatResponse;
-} catch (e) {
-  console.log('Using legacy FAQ matching');
-}
+import * as kbMatcher from '../utils/kbMatcher';
+const findBestMatchKb: any = kbMatcher?.findBestMatch;
+const formatResponse: any = kbMatcher?.formatResponse;
 
 // Legacy imports
 let findBestMatch: any = null;
@@ -245,8 +240,14 @@ export function useChat(userId: string | null, chatId?: string) {
           let botResponseText: string;
           let botMeta: any = {};
           
-          // Try new intelligent KB matching first
-          if (kbPages.length > 0 && findBestMatchKb && formatResponse) {
+          // 1) Quick intent-based replies (greetings, thanks, help) with Urdu support
+          const intent = matchIntent(filteredText);
+          if (intent.handled) {
+            botResponseText = intent.reply!;
+            botMeta = { matchType: 'intent' };
+          }
+          // 2) Intelligent KB matching
+          else if (kbPages.length > 0 && typeof findBestMatchKb === 'function' && typeof formatResponse === 'function') {
             console.log('🤖 Using intelligent KB matching');
             const match = findBestMatchKb(filteredText, kbPages, 0.4);
             const response = formatResponse(match);
@@ -275,7 +276,7 @@ export function useChat(userId: string | null, chatId?: string) {
               }
             }
           }
-          // Fallback to legacy FAQ matching
+          // 3) Fallback to legacy FAQ matching
           else if (faqs.length > 0 && findBestMatch && truncateAnswer) {
             console.log('📚 Using legacy FAQ matching');
             const recentMessages = messages.slice(-6);
@@ -290,14 +291,25 @@ export function useChat(userId: string | null, chatId?: string) {
               }
               botMeta = { faqId: match.id, matchType: 'legacy' };
             } else {
-              botResponseText = "I'm sorry — we don't have that information right now. We'll review your question and an admin will reach out to you soon.";
-              botMeta = { needsAdmin: true, matchType: 'legacy' };
+              const lang = detectLanguage(filteredText);
+              botResponseText = adminOfferMessage(lang);
+              botMeta = { needsAdminOffer: true, matchType: 'legacy' };
             }
           }
           // No matching system available
           else {
-            botResponseText = "I'm still learning! An admin will help you soon. Meanwhile, try asking about Wasilah's projects, volunteering, or events.";
-            botMeta = { needsAdmin: true, matchType: 'none' };
+            const lang = detectLanguage(filteredText);
+            botResponseText = adminOfferMessage(lang);
+            botMeta = { needsAdminOffer: true, matchType: 'none' };
+          }
+
+          // If user says 'yes' after an admin offer, auto-route to admin
+          const lastBot = messages.slice().reverse().find((m) => m.sender === 'bot');
+          const userSaidYes = /^(yes|y|haan|han|جی|ہاں)$/i.test(filteredText.trim());
+          if (lastBot && (lastBot.meta as any)?.needsAdminOffer && userSaidYes) {
+            const lang = detectLanguage(filteredText);
+            botResponseText = adminConfirmMessage(lang);
+            botMeta = { needsAdmin: true, escalated: true };
           }
 
           await addDoc(messagesRef, {

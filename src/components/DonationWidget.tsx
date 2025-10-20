@@ -3,6 +3,7 @@ import { Heart, X, CreditCard, Smartphone } from 'lucide-react';
 
 const DonationWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [suppressButton, setSuppressButton] = useState(false);
   const widgetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -14,6 +15,30 @@ const DonationWidget = () => {
       });
     }
   }, [isOpen]);
+
+  // Broadcast open/close to other widgets and listen for theirs
+  useEffect(() => {
+    if (isOpen) {
+      window.dispatchEvent(new CustomEvent('widget:open', { detail: 'donation' }));
+    } else {
+      window.dispatchEvent(new CustomEvent('widget:close', { detail: 'donation' }));
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const onOpen = (e: any) => {
+      if (e?.detail !== 'donation') setSuppressButton(true);
+    };
+    const onClose = (e: any) => {
+      if (e?.detail !== 'donation') setSuppressButton(false);
+    };
+    window.addEventListener('widget:open', onOpen as any);
+    window.addEventListener('widget:close', onClose as any);
+    return () => {
+      window.removeEventListener('widget:open', onOpen as any);
+      window.removeEventListener('widget:close', onClose as any);
+    };
+  }, []);
 
   const paymentMethods = [
     {
@@ -42,22 +67,18 @@ const DonationWidget = () => {
 
   return (
     <>
-      {/* Z-INDEX: 50 - Floating buttons layer */}
-      {/* Mobile: bottom-32 left-4 (above AdminToggle at bottom-20) */}
-      {/* Desktop: centered bottom (left-1/2 translated) */}
-      <div className="fixed bottom-32 left-4 sm:bottom-6 sm:left-1/2 sm:-translate-x-[calc(50%+100px)] z-50">
-        <button
-          onClick={() => setIsOpen(true)}
-          className="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-2 sm:px-6 sm:py-4 rounded-full shadow-luxury-glow flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 animate-pulse-glow group"
-          title="Support Our Mission"
-        >
-          <Heart className="w-5 h-5 sm:w-6 sm:h-6 mr-1 sm:mr-2" fill="currentColor" />
-          <span className="font-luxury-semibold text-sm sm:text-lg whitespace-nowrap">
-            <span className="hidden xs:inline">DONATE NOW!</span>
-            <span className="xs:hidden">DONATE</span>
-          </span>
-        </button>
-      </div>
+      {!isOpen && !suppressButton && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-[calc(50%+100px)] z-50">
+          <button
+            onClick={() => setIsOpen(true)}
+            className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-4 rounded-full shadow-luxury-glow flex items-center justify-center hover:scale-110 transition-all duration-300 animate-pulse group"
+            title="Support Our Mission"
+          >
+            <Heart className="w-6 h-6 mr-2" fill="currentColor" />
+            <span className="font-luxury-semibold text-lg whitespace-nowrap">DONATE NOW!</span>
+          </button>
+        </div>
+      )}
 
       {isOpen && (
         <>

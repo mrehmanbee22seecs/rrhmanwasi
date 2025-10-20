@@ -17,9 +17,34 @@ export interface Theme {
     textLight: string;
   };
   preview: string;
+  // When true, we apply the global `.theme-dark` class for scoped overrides
+  isDark?: boolean;
 }
 
 export const themes: Theme[] = [
+  {
+    id: 'jet-black',
+    name: 'Jet Black',
+    description: 'Sleek dark UI with navy accents',
+    colors: {
+      // Accent/link blue inspired by GitHub
+      primary: '#1f6feb',
+      // Deep navy/raised surface
+      secondary: '#161b22',
+      // Lighter blue for hovers/gradients
+      accent: '#388bfd',
+      // App background
+      background: '#0d1117',
+      // Cards/surfaces
+      surface: '#161b22',
+      // Primary text
+      text: '#c9d1d9',
+      // Muted text
+      textLight: '#8b949e'
+    },
+    preview: 'linear-gradient(135deg, #0d1117, #161b22)',
+    isDark: true
+  },
   {
     id: 'wasilah-classic',
     name: 'Wasilah Classic',
@@ -133,7 +158,8 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [currentTheme, setCurrentTheme] = useState<Theme>(themes[0]);
+  const defaultTheme = themes.find(t => t.id === 'jet-black') || themes[0];
+  const [currentTheme, setCurrentTheme] = useState<Theme>(defaultTheme);
   const { currentUser, userData } = useAuth();
 
   useEffect(() => {
@@ -147,6 +173,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
   }, [userData]);
 
+  // Apply the default theme on first mount as well
+  useEffect(() => {
+    applyTheme(currentTheme);
+  }, []);
+
   const applyTheme = (theme: Theme) => {
     const root = document.documentElement;
     root.style.setProperty('--color-primary', theme.colors.primary);
@@ -156,6 +187,13 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     root.style.setProperty('--color-surface', theme.colors.surface);
     root.style.setProperty('--color-text', theme.colors.text);
     root.style.setProperty('--color-text-light', theme.colors.textLight);
+
+    // Toggle dark class for scoped CSS overrides
+    if (theme.isDark) {
+      root.classList.add('theme-dark');
+    } else {
+      root.classList.remove('theme-dark');
+    }
   };
 
   const setTheme = async (themeId: string) => {
