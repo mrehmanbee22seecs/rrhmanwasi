@@ -21,6 +21,7 @@ export interface ProjectSubmission {
   objectives: string[];
   targetAudience?: string;
   durationEstimate?: string;
+  durationHours?: number; // Actual duration in hours
   resourceRequirements?: string[];
   skillRequirements?: string[];
   notes?: string;
@@ -33,7 +34,7 @@ export interface ProjectSubmission {
   submittedBy: string;
   submitterName: string;
   submitterEmail: string;
-  status: 'draft' | 'pending' | 'approved' | 'rejected';
+  status: 'draft' | 'pending' | 'approved' | 'rejected' | 'completed';
   isVisible?: boolean;
   submittedAt: any;
   reviewedAt?: any;
@@ -43,6 +44,8 @@ export interface ProjectSubmission {
   image?: string;
   heads?: HeadInfo[];
   auditTrail: AuditEntry[];
+  completedAt?: any; // When the user completed participation
+  participantIds?: string[]; // Users who joined/participated
 }
 
 export interface EventSubmission {
@@ -62,6 +65,7 @@ export interface EventSubmission {
   agenda: string[];
   targetAudience?: string;
   durationEstimate?: string;
+  durationHours?: number; // Actual duration in hours
   resourceRequirements?: string[];
   skillRequirements?: string[];
   notes?: string;
@@ -73,7 +77,7 @@ export interface EventSubmission {
   submittedBy: string;
   submitterName: string;
   submitterEmail: string;
-  status: 'draft' | 'pending' | 'approved' | 'rejected';
+  status: 'draft' | 'pending' | 'approved' | 'rejected' | 'completed';
   isVisible?: boolean;
   submittedAt: any;
   reviewedAt?: any;
@@ -83,6 +87,8 @@ export interface EventSubmission {
   image?: string;
   heads?: HeadInfo[];
   auditTrail: AuditEntry[];
+  completedAt?: any; // When the user completed attendance
+  attendeeIds?: string[]; // Users who registered/attended
 }
 
 export interface ChecklistItem {
@@ -114,4 +120,4 @@ export interface AuditEntry {
 }
 
 export type SubmissionType = 'project' | 'event';
-export type SubmissionStatus = 'draft' | 'pending' | 'approved' | 'rejected';
+export type SubmissionStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'completed';

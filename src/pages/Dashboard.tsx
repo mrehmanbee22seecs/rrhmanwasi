@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Calendar, Target, Heart, TrendingUp, Clock, MapPin, Users, Award, Settings, Bell, BookOpen, Activity, Star, ChevronRight, Filter, Search, Plus, FileText, Eye, CreditCard as Edit3, CheckCircle, Sparkles, Zap } from 'lucide-react';
+import { User, Calendar, Target, Heart, TrendingUp, Clock, MapPin, Users, Award, Settings, Bell, BookOpen, Activity, Star, ChevronRight, Filter, Search, Plus, FileText, Eye, CreditCard as Edit3, CheckCircle, Sparkles, Zap, Palette, Mail, RefreshCw, Lock, AlertCircle } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { collection, query, where, getDocs, orderBy, limit, onSnapshot } from 'firebase/firestore';
@@ -30,8 +30,8 @@ type SubmissionWithType = (ProjectSubmission | EventSubmission) & {
 };
 
 const Dashboard = () => {
-  const { userData, currentUser } = useAuth();
-  const { currentTheme } = useTheme();
+  const { userData, currentUser, updatePassword, resetPassword, resendEmailVerification } = useAuth();
+  const { currentTheme, setTheme, themes } = useTheme();
   const [activities, setActivities] = useState<DashboardActivity[]>([]);
   const [stats, setStats] = useState<UserStats>({
     projectsJoined: 0,
@@ -43,14 +43,25 @@ const Dashboard = () => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [submissions, setSubmissions] = useState<SubmissionWithType[]>([]);
   const [drafts, setDrafts] = useState<SubmissionWithType[]>([]);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
+  const [emailMessage, setEmailMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentUser && userData) {
       fetchUserActivities();
-      calculateUserStats();
-      setupRealtimeListeners();
+      const cleanup = setupRealtimeListeners();
+      return cleanup;
     }
-  }, [currentUser, userData]);
+  }, [currentUser?.uid]); // Only re-run if user changes, not on every userData update
+
+  // Recalculate stats whenever submissions change
+  useEffect(() => {
+    if (currentUser && userData && submissions.length >= 0) {
+      calculateUserStats();
+    }
+  }, [submissions, currentUser?.uid, userData]);
 
   const setupRealtimeListeners = () => {
     if (!currentUser) return;
@@ -122,16 +133,75 @@ const Dashboard = () => {
   };
 
   const calculateUserStats = () => {
-    // Calculate stats based on user activities and preferences
-    const activityCount = userData?.activityLog?.length || 0;
-    const interests = userData?.preferences?.interests?.length || 0;
+    if (!userData || !currentUser) return;
     
-    setStats({
-      projectsJoined: Math.floor(activityCount / 10), // Simulate projects joined
-      eventsAttended: Math.floor(activityCount / 15), // Simulate events attended
-      hoursVolunteered: Math.floor(activityCount * 2.5), // Simulate hours
-      impactScore: Math.min(100, activityCount * 5 + interests * 10) // Impact score
-    });
+    // Calculate stats based on ACTUAL completed projects/events from submissions
+    const userId = currentUser.uid;
+    
+    // Count approved/completed projects where user participated
+    const completedProjects = submissions.filter(sub => 
+      sub.submissionType === 'project' && 
+      (sub.status === 'approved' || sub.status === 'completed') &&
+      (sub.submittedBy === userId || (sub as any).participantIds?.includes(userId))
+    );
+    
+    // Count approved/completed events where user attended
+    const completedEvents = submissions.filter(sub => 
+      sub.submissionType === 'event' && 
+      (sub.status === 'approved' || sub.status === 'completed') &&
+      (sub.submittedBy === userId || (sub as any).attendeeIds?.includes(userId))
+    );
+    
+    // Calculate total hours from completed projects and events
+    const totalHours = [...completedProjects, ...completedEvents].reduce((sum, sub) => {
+      // Get duration in hours (default to 2 hours if not specified)
+      const hours = (sub as any).durationHours || 
+                    (parseDurationEstimate((sub as any).durationEstimate) || 2);
+      return sum + hours;
+    }, 0);
+    
+    // Calculate impact score: 10 points per project, 5 per event, 1 per 2 hours
+    const impactScore = 
+      (completedProjects.length * 10) + 
+      (completedEvents.length * 5) + 
+      Math.floor(totalHours / 2);
+    
+    const calculatedStats = {
+      projectsJoined: completedProjects.length,
+      eventsAttended: completedEvents.length,
+      hoursVolunteered: Math.round(totalHours),
+      impactScore: impactScore
+    };
+    
+    setStats(calculatedStats);
+  };
+
+  // Helper function to parse duration estimate string to hours
+  const parseDurationEstimate = (estimate?: string): number => {
+    if (!estimate) return 0;
+    
+    const lower = estimate.toLowerCase();
+    
+    // Extract numbers from string
+    const numbers = lower.match(/\d+/g);
+    if (!numbers || numbers.length === 0) return 0;
+    
+    const value = parseInt(numbers[0]);
+    
+    // Convert to hours based on unit
+    if (lower.includes('hour') || lower.includes('hr')) {
+      return value;
+    } else if (lower.includes('day')) {
+      return value * 8; // 8 hours per day
+    } else if (lower.includes('week')) {
+      return value * 40; // 40 hours per week
+    } else if (lower.includes('month')) {
+      return value * 160; // ~160 hours per month
+    } else if (lower.includes('minute') || lower.includes('min')) {
+      return value / 60; // Convert minutes to hours
+    }
+    
+    return value; // Default assume hours
   };
 
   const getActivityIcon = (action: string) => {
@@ -242,7 +312,8 @@ const Dashboard = () => {
     }
   ];
 
-  if (loading) {
+  // Don't show loading if user data is available
+  if (loading && !userData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -254,103 +325,97 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 relative overflow-hidden">
+    <div className="min-h-screen bg-cream-white py-8 sm:py-12 relative overflow-hidden">
       {/* Animated Background */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="particle-container"></div>
+      <div className="absolute inset-0 opacity-30 pointer-events-none">
         <div className="absolute top-20 left-20 w-32 h-32 bg-vibrant-orange/10 rounded-full animate-float-gentle"></div>
         <div className="absolute top-40 right-32 w-24 h-24 bg-logo-teal/10 rounded-full animate-float-gentle" style={{animationDelay: '2s'}}></div>
         <div className="absolute bottom-32 left-1/4 w-40 h-40 bg-vibrant-orange-light/5 rounded-full animate-float-gentle" style={{animationDelay: '4s'}}></div>
       </div>
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Welcome Header - Enhanced */}
-        <div className="mb-8 scroll-reveal">
-          <div className="luxury-card bg-white p-8 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 relative z-10">
+        {/* Welcome Header - Enhanced & Mobile Optimized */}
+        <div className="mb-6 sm:mb-8">
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 relative overflow-hidden border border-logo-navy/10">
             <div 
-              className="absolute inset-0 opacity-10"
+              className="absolute inset-0 opacity-10 pointer-events-none"
               style={{ background: currentTheme.colors.primary }}
             ></div>
-            <div className="floating-3d-luxury opacity-20"></div>
             <div className="relative z-10">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-4xl font-modern-display text-black mb-2 animate-text-reveal">
-                    Welcome back, {userData?.displayName || 'Friend'}! 👋
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex-1">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-modern-display text-logo-navy font-bold mb-1 sm:mb-2">
+                    Welcome back, {userData?.displayName || currentUser?.email?.split('@')[0] || 'Friend'}! 👋
                   </h1>
-                  <p className="text-xl text-black/70 font-elegant-body animate-text-reveal" style={{animationDelay: '0.3s'}}>
+                  <p className="text-base sm:text-lg lg:text-xl text-logo-navy-light font-elegant-body">
                     Ready to make a difference today?
                   </p>
                 </div>
-                <div className="text-right magnetic-element group">
-                  <div className="text-3xl font-modern-display text-gradient-animated group-hover:animate-pulse-glow" style={{ color: currentTheme.colors.primary }}>
+                <div className="text-left sm:text-right">
+                  <div className="text-2xl sm:text-3xl font-modern-display font-bold" style={{ color: currentTheme.colors.primary }}>
                     {stats.impactScore}
                   </div>
-                  <div className="text-sm text-black/70 group-hover:text-gray-800 transition-colors">Impact Score</div>
+                  <div className="text-xs sm:text-sm text-logo-navy-light font-medium">Impact Score</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Stats Cards - Enhanced */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 stagger-animation">
-          <div className="luxury-card bg-white p-6 text-center floating-card magnetic-element group">
+        {/* Stats Cards - Enhanced & Mobile Optimized */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 text-center relative overflow-hidden group hover:shadow-xl transition-shadow border border-logo-navy/10">
             <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:animate-pulse-glow"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4"
               style={{ backgroundColor: `${currentTheme.colors.primary}20` }}
             >
-              <Target className="w-6 h-6 group-hover:animate-float-gentle" style={{ color: currentTheme.colors.primary }} />
+              <Target className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: currentTheme.colors.primary }} />
             </div>
-            <div className="text-2xl font-modern-display text-gradient-animated mb-1 group-hover:animate-pulse-glow">{stats.projectsJoined}</div>
-            <div className="text-sm text-black/70 group-hover:text-gray-800 transition-colors">Projects Joined</div>
-            <div className="absolute inset-0 bg-gradient-to-br from-vibrant-orange/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-luxury"></div>
+            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: currentTheme.colors.primary }}>{stats.projectsJoined}</div>
+            <div className="text-xs sm:text-sm text-logo-navy font-medium">Projects Joined</div>
           </div>
 
-          <div className="luxury-card bg-white p-6 text-center floating-card magnetic-element group">
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 text-center relative overflow-hidden group hover:shadow-xl transition-shadow border border-logo-navy/10">
             <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:animate-pulse-glow"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4"
               style={{ backgroundColor: `${currentTheme.colors.accent}20` }}
             >
-              <Calendar className="w-6 h-6 group-hover:animate-float-gentle" style={{ color: currentTheme.colors.accent }} />
+              <Calendar className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: currentTheme.colors.accent }} />
             </div>
-            <div className="text-2xl font-modern-display text-gradient-animated mb-1 group-hover:animate-pulse-glow">{stats.eventsAttended}</div>
-            <div className="text-sm text-black/70 group-hover:text-gray-800 transition-colors">Events Attended</div>
-            <div className="absolute inset-0 bg-gradient-to-br from-vibrant-orange/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-luxury"></div>
+            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: currentTheme.colors.accent }}>{stats.eventsAttended}</div>
+            <div className="text-xs sm:text-sm text-logo-navy font-medium">Events Attended</div>
           </div>
 
-          <div className="luxury-card bg-white p-6 text-center floating-card magnetic-element group">
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 text-center relative overflow-hidden group hover:shadow-xl transition-shadow">
             <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:animate-pulse-glow"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4"
               style={{ backgroundColor: `${currentTheme.colors.secondary}20` }}
             >
-              <Clock className="w-6 h-6 group-hover:animate-float-gentle" style={{ color: currentTheme.colors.secondary }} />
+              <Clock className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: currentTheme.colors.secondary }} />
             </div>
-            <div className="text-2xl font-modern-display text-gradient-animated mb-1 group-hover:animate-pulse-glow">{stats.hoursVolunteered}</div>
-            <div className="text-sm text-black/70 group-hover:text-gray-800 transition-colors">Hours Volunteered</div>
-            <div className="absolute inset-0 bg-gradient-to-br from-vibrant-orange/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-luxury"></div>
+            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: currentTheme.colors.secondary }}>{stats.hoursVolunteered}</div>
+            <div className="text-xs sm:text-sm text-black/70">Hours Volunteered</div>
           </div>
 
-          <div className="luxury-card bg-white p-6 text-center floating-card magnetic-element group">
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 text-center relative overflow-hidden group hover:shadow-xl transition-shadow">
             <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:animate-pulse-glow"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4"
               style={{ backgroundColor: `${currentTheme.colors.primary}20` }}
             >
-              <Award className="w-6 h-6 group-hover:animate-float-gentle" style={{ color: currentTheme.colors.primary }} />
+              <Award className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: currentTheme.colors.primary }} />
             </div>
-            <div className="text-2xl font-modern-display text-gradient-animated mb-1 group-hover:animate-pulse-glow">{stats.impactScore}</div>
-            <div className="text-sm text-black/70 group-hover:text-gray-800 transition-colors">Impact Score</div>
-            <div className="absolute inset-0 bg-gradient-to-br from-vibrant-orange/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-luxury"></div>
+            <div className="text-xl sm:text-2xl font-bold mb-1" style={{ color: currentTheme.colors.primary }}>{stats.impactScore}</div>
+            <div className="text-xs sm:text-sm text-black/70">Impact Score</div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Quick Actions - Enhanced */}
-            <div className="luxury-card bg-white p-8 scroll-reveal">
-              <h2 className="text-2xl font-modern-display text-black mb-6">Quick Actions</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 stagger-animation">
+            {/* Quick Actions - Enhanced & Mobile Optimized */}
+            <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-black mb-4 sm:mb-6">Quick Actions</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {quickActions.map((action, index) => (
                   <Link
                     key={index}
@@ -587,6 +652,158 @@ const Dashboard = () => {
               >
                 Complete Profile
               </Link>
+            </div>
+
+            {/* Preferences & Security */}
+            <div className="luxury-card bg-white p-6 space-y-6">
+              <h3 className="text-lg font-luxury-heading text-black flex items-center gap-2">
+                <Settings className="w-4 h-4" /> Preferences & Security
+              </h3>
+
+              {/* Theme Selector */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-luxury-semibold text-black flex items-center gap-2">
+                    <Palette className="w-4 h-4" /> Theme
+                  </span>
+                  <span className="text-xs text-black/60">Current: {currentTheme.name}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {themes.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => setTheme(t.id)}
+                      className={`p-3 rounded-luxury border-2 transition-all text-left ${
+                        currentTheme.id === t.id
+                          ? 'border-vibrant-orange'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      aria-label={`Select ${t.name}`}
+                    >
+                      <div
+                        className="h-10 w-full rounded-md mb-2"
+                        style={{ background: t.preview }}
+                      />
+                      <div className="text-sm font-medium text-black">{t.name}</div>
+                      <div className="text-xs text-black/60">{t.description}</div>
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-2 text-xs text-black/60">Active theme: <span className="font-medium">{currentTheme.name}</span></div>
+              </div>
+
+              {/* Email Verification */}
+              <div className="pt-2 border-t border-gray-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-luxury-semibold text-black flex items-center gap-2">
+                    <Mail className="w-4 h-4" /> Email verification
+                  </span>
+                  {currentUser?.emailVerified ? (
+                    <span className="text-xs text-green-600 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" /> Verified
+                    </span>
+                  ) : (
+                    <span className="text-xs text-red-600 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> Not verified
+                    </span>
+                  )}
+                </div>
+                {!currentUser?.emailVerified && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        try {
+                          await resendEmailVerification();
+                          setEmailMessage('Verification email sent. Please check your inbox.');
+                        } catch (e: any) {
+                          setEmailMessage(e?.message || 'Failed to send verification email');
+                        }
+                      }}
+                      className="px-3 py-2 rounded-luxury bg-vibrant-orange text-white text-sm hover:bg-vibrant-orange-light"
+                    >
+                      Resend verification
+                    </button>
+                    <button
+                      onClick={async () => { try { await currentUser?.reload(); } catch {} }}
+                      className="px-3 py-2 rounded-luxury border-2 border-gray-200 text-sm hover:bg-gray-50 flex items-center gap-1"
+                    >
+                      <RefreshCw className="w-4 h-4" /> Refresh status
+                    </button>
+                  </div>
+                )}
+                {emailMessage && (
+                  <p className="text-xs mt-2 text-black/70">{emailMessage}</p>
+                )}
+              </div>
+
+              {/* Change Password */}
+              <div className="pt-2 border-t border-gray-200">
+                <div className="text-sm font-luxury-semibold text-black mb-2 flex items-center gap-2">
+                  <Lock className="w-4 h-4" /> Change password
+                </div>
+                <div className="space-y-2">
+                  <input
+                    type="password"
+                    className="w-full px-3 py-2 border-2 border-gray-200 rounded-luxury text-sm"
+                    placeholder="New password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                  <input
+                    type="password"
+                    className="w-full px-3 py-2 border-2 border-gray-200 rounded-luxury text-sm"
+                    placeholder="Confirm new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        setPasswordMessage(null);
+                        if (!newPassword || newPassword.length < 6) {
+                          setPasswordMessage('Password must be at least 6 characters.');
+                          return;
+                        }
+                        if (newPassword !== confirmPassword) {
+                          setPasswordMessage('Passwords do not match.');
+                          return;
+                        }
+                        try {
+                          await updatePassword(newPassword);
+                          setPasswordMessage('Password updated successfully.');
+                          setNewPassword('');
+                          setConfirmPassword('');
+                        } catch (e: any) {
+                          const msg = e?.code === 'auth/requires-recent-login'
+                            ? 'Please sign in again or use the reset link below.'
+                            : e?.message || 'Failed to update password';
+                          setPasswordMessage(msg);
+                        }
+                      }}
+                      className="px-3 py-2 rounded-luxury bg-vibrant-orange text-white text-sm hover:bg-vibrant-orange-light"
+                    >
+                      Update password
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!currentUser?.email) { setPasswordMessage('No email on account.'); return; }
+                        try {
+                          await resetPassword(currentUser.email);
+                          setPasswordMessage('Password reset email sent.');
+                        } catch (e: any) {
+                          setPasswordMessage(e?.message || 'Failed to send reset email');
+                        }
+                      }}
+                      className="px-3 py-2 rounded-luxury border-2 border-gray-200 text-sm hover:bg-gray-50"
+                    >
+                      Send reset email
+                    </button>
+                  </div>
+                  {passwordMessage && (
+                    <p className="text-xs text-black/70">{passwordMessage}</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

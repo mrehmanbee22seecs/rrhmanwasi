@@ -94,10 +94,10 @@ export default function ChatsPanel() {
   };
 
   const handleToggleTakeover = async () => {
-    if (!selectedUserId || !selectedChatId || !user) return;
+    if (!selectedUserId || !selectedChatId || !currentUser) return;
 
     try {
-      await toggleTakeover(isTakeover ? null : user.uid);
+      await toggleTakeover(isTakeover ? null : currentUser.uid);
     } catch (error) {
       console.error('Error toggling takeover:', error);
     }
@@ -113,10 +113,10 @@ export default function ChatsPanel() {
   const selectedChat = selectedUser?.chats.find((c) => c.id === selectedChatId);
 
   return (
-    <div className="h-full flex">
-      <div className="w-1/4 border-r bg-gray-50 flex flex-col">
-        <div className="p-4 border-b bg-white">
-          <h3 className="font-semibold mb-2">Users</h3>
+    <div className="h-full flex flex-col md:flex-row">
+      <div className="w-full md:w-1/4 border-r md:border-r border-b md:border-b-0 bg-gray-50 flex flex-col max-h-48 md:max-h-full">
+        <div className="p-3 md:p-4 border-b bg-white">
+          <h3 className="font-semibold mb-2 text-sm md:text-base">Users</h3>
           <div className="relative">
             <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
             <input
@@ -124,7 +124,7 @@ export default function ChatsPanel() {
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none"
+              className="w-full pl-9 pr-3 py-2 border rounded-lg text-xs md:text-sm focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none"
             />
           </div>
         </div>
@@ -157,9 +157,9 @@ export default function ChatsPanel() {
         </div>
       </div>
 
-      <div className="w-1/4 border-r bg-gray-50 flex flex-col">
-        <div className="p-4 border-b bg-white">
-          <h3 className="font-semibold">Chats</h3>
+      <div className="w-full md:w-1/4 border-r md:border-r border-b md:border-b-0 bg-gray-50 flex flex-col max-h-48 md:max-h-full">
+        <div className="p-3 md:p-4 border-b bg-white">
+          <h3 className="font-semibold text-sm md:text-base">Chats</h3>
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -190,14 +190,14 @@ export default function ChatsPanel() {
       <div className="flex-1 flex flex-col bg-white">
         {selectedChat ? (
           <>
-            <div className="p-4 border-b flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold">{selectedChat.title}</h3>
-                <p className="text-sm text-gray-500">{selectedUser?.userName}</p>
+            <div className="p-3 md:p-4 border-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-sm md:text-base truncate">{selectedChat.title}</h3>
+                <p className="text-xs md:text-sm text-gray-500 truncate">{selectedUser?.userName}</p>
               </div>
               <button
                 onClick={handleToggleTakeover}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-lg transition-colors text-xs md:text-sm whitespace-nowrap ${
                   isTakeover
                     ? 'bg-green-100 text-green-700 hover:bg-green-200'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -205,13 +205,15 @@ export default function ChatsPanel() {
               >
                 {isTakeover ? (
                   <>
-                    <ToggleRight className="w-5 h-5" />
-                    Takeover Active
+                    <ToggleRight className="w-4 h-4 md:w-5 md:h-5" />
+                    <span className="hidden sm:inline">Takeover Active</span>
+                    <span className="sm:hidden">Active</span>
                   </>
                 ) : (
                   <>
-                    <ToggleLeft className="w-5 h-5" />
-                    Enable Takeover
+                    <ToggleLeft className="w-4 h-4 md:w-5 md:h-5" />
+                    <span className="hidden sm:inline">Enable Takeover</span>
+                    <span className="sm:hidden">Enable</span>
                   </>
                 )}
               </button>

@@ -12,6 +12,23 @@ import {
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { filterProfanity, checkRateLimit, generateChatTitle } from '../utils/chatHelpers';
+import { matchIntent, detectLanguage, adminOfferMessage, adminConfirmMessage } from '../utils/intents';
+
+// Try to import new KB matcher, fallback to old one
+import * as kbMatcher from '../utils/kbMatcher';
+const findBestMatchKb: any = kbMatcher?.findBestMatch;
+const formatResponse: any = kbMatcher?.formatResponse;
+
+// Legacy imports
+let findBestMatch: any = null;
+let truncateAnswer: any = null;
+try {
+  const legacyMatch = require('../utils/matchKb');
+  findBestMatch = legacyMatch.findBestMatch;
+  truncateAnswer = legacyMatch.truncateAnswer;
+} catch (e) {
+  console.log('Legacy FAQ system not available');
+}
 
 interface Message {
   id: string;
@@ -182,33 +199,33 @@ export function useChat(userId: string | null, chatId?: string) {
       });
 
       if (!isAdmin && !isTakeover) {
-        (async () => {
-          const chatRef = doc(db, `users/${userId}/chats/${activeChatId}`);
-          const messagesRef = collection(db, `users/${userId}/chats/${activeChatId}/messages`);
-
-          const CHATBOT_PROMPT = `You are a helpful customer support AI assistant for Wasilah. Your personality traits:\n\n- Friendly and professional tone\n- Patient and understanding\n- Knowledgeable about general topics\n- Always provide actionable advice\n- If you don't know something specific about the organization, politely say so and offer to connect them with a human agent\n- Keep responses concise but informative\n- Use emojis occasionally to be friendly (but not overuse them)\n\nImportant behaviors:\n- Respond quickly and directly, without unnecessary delays\n- If the user is approaching or exceeding a message limit, summarize briefly and suggest waiting before sending more`;
-
-          const recentMessages = messages.slice(-10);
-          const historyLines = recentMessages
-            .map((m) => `${m.sender === 'user' ? 'User' : m.sender === 'admin' ? 'Admin' : 'Assistant'}: ${m.text}`)
-            .join('\n');
-
-          const contextPrompt = `${CHATBOT_PROMPT}\n\nConversation History:\n${historyLines}\n\nCurrent User Message: ${filteredText}\n\nPlease respond naturally considering the conversation context above.`;
-
-          let botText = '';
-          try {
-            const w = (typeof window !== 'undefined' ? (window as any) : {}) as any;
-            if (w.apifree && typeof w.apifree.chat === 'function') {
-              const sdkResp = await w.apifree.chat(contextPrompt);
-              botText = (sdkResp || '').toString().trim();
-            } else {
-              const res = await fetch('https://apifreellm.com/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: contextPrompt }),
-              });
-
-              let aiResponse: string | null = null;
+        setTimeout(async () => {
+          let botResponseText: string;
+          let botMeta: any = {};
+          
+          // 1) Quick intent-based replies (greetings, thanks, help) with Urdu support
+          const intent = matchIntent(filteredText);
+          if (intent.handled) {
+            botResponseText = intent.reply!;
+            botMeta = { matchType: 'intent' };
+          }
+          // 2) Intelligent KB matching
+          else if (kbPages.length > 0 && typeof findBestMatchKb === 'function' && typeof formatResponse === 'function') {
+            console.log('🤖 Using intelligent KB matching');
+            const match = findBestMatchKb(filteredText, kbPages, 0.4);
+            const response = formatResponse(match);
+            
+            botResponseText = response.text;
+            botMeta = {
+              sourceUrl: response.sourceUrl,
+              sourcePage: response.sourcePage,
+              confidence: response.confidence,
+              needsAdmin: response.needsAdmin,
+              matchType: 'intelligent'
+            };
+            
+            // If no match, flag as unanswered for admin
+            if (response.needsAdmin) {
               try {
                 const data = await res.json();
                 if (typeof data === 'string') aiResponse = data;
@@ -220,12 +237,41 @@ export function useChat(userId: string | null, chatId?: string) {
 
               botText = (aiResponse || '').toString().trim();
             }
-            if (!botText) {
-              botText = "Sorry, I couldn't generate a response. Please try again in a moment.";
+          }
+          // 3) Fallback to legacy FAQ matching
+          else if (faqs.length > 0 && findBestMatch && truncateAnswer) {
+            console.log('📚 Using legacy FAQ matching');
+            const recentMessages = messages.slice(-6);
+            const context = recentMessages.map((m) => m.text).join(' ');
+            const searchQuery = `${context} ${filteredText}`;
+            const match = findBestMatch(searchQuery, faqs);
+
+            if (match) {
+              botResponseText = truncateAnswer(match.answer, 500);
+              if (match.answer.length > 500) {
+                botResponseText += '\n\n[Read more in our FAQ section]';
+              }
+              botMeta = { faqId: match.id, matchType: 'legacy' };
+            } else {
+              const lang = detectLanguage(filteredText);
+              botResponseText = adminOfferMessage(lang);
+              botMeta = { needsAdminOffer: true, matchType: 'legacy' };
             }
-          } catch (error) {
-            console.error('ApiFreeLLM error:', error);
-            botText = 'Sorry, I encountered an error. Please try again!';
+          }
+          // No matching system available
+          else {
+            const lang = detectLanguage(filteredText);
+            botResponseText = adminOfferMessage(lang);
+            botMeta = { needsAdminOffer: true, matchType: 'none' };
+          }
+
+          // If user says 'yes' after an admin offer, auto-route to admin
+          const lastBot = messages.slice().reverse().find((m) => m.sender === 'bot');
+          const userSaidYes = /^(yes|y|haan|han|جی|ہاں)$/i.test(filteredText.trim());
+          if (lastBot && (lastBot.meta as any)?.needsAdminOffer && userSaidYes) {
+            const lang = detectLanguage(filteredText);
+            botResponseText = adminConfirmMessage(lang);
+            botMeta = { needsAdmin: true, escalated: true };
           }
 
           await addDoc(messagesRef, {
@@ -240,7 +286,7 @@ export function useChat(userId: string | null, chatId?: string) {
         })();
       }
     },
-    [userId, currentChatId, messages, isTakeover, createNewChat]
+    [userId, currentChatId, messages, faqs, kbPages, isTakeover, createNewChat]
   );
 
   const toggleTakeover = useCallback(

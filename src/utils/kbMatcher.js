@@ -200,7 +200,8 @@ function extractSnippet(content, queryTokens, maxLength = 300) {
 export function findBestMatch(query, pages, threshold = 0.4) {
   if (!query || !pages || pages.length === 0) return null;
   
-  const queryTokens = tokenize(query);
+  // Expand query to include synonyms (including Roman Urdu) for better recall
+  const queryTokens = expandQuery(query);
   if (queryTokens.length === 0) return null;
   
   let bestMatch = null;
@@ -233,14 +234,38 @@ export function findBestMatch(query, pages, threshold = 0.4) {
  * Get common synonyms for query expansion
  */
 const SYNONYMS = {
+  // English core
   'help': ['assist', 'support', 'aid'],
   'volunteer': ['help', 'participate', 'contribute', 'join'],
   'donate': ['give', 'contribute', 'support', 'fund'],
   'project': ['program', 'initiative', 'activity'],
+  'projects': ['programs', 'initiatives', 'activities'],
   'event': ['activity', 'program', 'gathering'],
+  'events': ['activities', 'programs', 'gatherings'],
   'location': ['address', 'place', 'office', 'where'],
   'contact': ['reach', 'email', 'phone', 'call'],
-  'about': ['info', 'information', 'what', 'who']
+  'about': ['info', 'information', 'what', 'who'],
+
+  // Roman Urdu → English bridges
+  'kya': ['what', 'about', 'info'],
+  'kia': ['what', 'about', 'info'],
+  'hai': ['is', 'about'],
+  'kaise': ['how', 'apply', 'join', 'register'],
+  'kesay': ['how', 'apply', 'join', 'register'],
+  'kahan': ['where', 'location', 'address', 'office'],
+  'kidhar': ['where', 'location', 'address', 'office'],
+  'kab': ['when', 'time', 'schedule'],
+  'madad': ['help', 'support', 'assist'],
+  'rabta': ['contact', 'reach', 'email', 'phone'],
+  'raabta': ['contact', 'reach', 'email', 'phone'],
+  'volunteer': ['join', 'madad'], // keep both
+  'shamil': ['join', 'participate'],
+  'apply': ['register', 'join'],
+  'register': ['apply', 'join'],
+  'projectz': ['projects'],
+  'ivent': ['event'],
+  'ivents': ['events'],
+  'wasilah': ['wasila', 'waseela', 'waseelaa'], // common variations
 };
 
 /**

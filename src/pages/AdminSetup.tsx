@@ -132,7 +132,7 @@ const AdminSetup = () => {
 
   // Make current user admin
   const makeCurrentUserAdmin = async () => {
-    if (!user) {
+    if (!currentUser) {
       setAdminStatus('error');
       setAdminMessage('You must be logged in to make yourself admin');
       return;

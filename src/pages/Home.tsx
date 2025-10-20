@@ -181,7 +181,7 @@ const Home = () => {
               </Link>
               <Link
                 to="/about"
-                className="glassmorphism text-xl px-12 py-6 inline-flex items-center group text-cream-elegant hover:bg-cream-elegant/20 transition-all duration-300 rounded-luxury"
+                className="glassmorphism text-xl px-12 py-6 inline-flex items-center group text-cream-elegant hover:bg-logo-teal/30 transition-all duration-300 rounded-luxury border border-cream-elegant/20"
               >
                 Learn More
                 <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />
