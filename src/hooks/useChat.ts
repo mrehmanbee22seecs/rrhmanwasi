@@ -326,7 +326,7 @@ export function useChat(userId: string | null, chatId?: string) {
         }, 1000);
       }
     },
-    [userId, currentChatId, messages, faqs, isTakeover, createNewChat]
+    [userId, currentChatId, messages, faqs, kbPages, isTakeover, createNewChat]
   );
 
   const toggleTakeover = useCallback(

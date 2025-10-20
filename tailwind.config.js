@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Logo Navy Colors
+        // Logo Navy Colors - Primary backgrounds
         'logo-navy': '#2C3E50',
         'logo-navy-light': '#34495E',
         'logo-navy-dark': '#1A252F',
@@ -16,16 +16,16 @@ export default {
         'vibrant-orange-light': '#F39C12',
         'vibrant-orange-dark': '#D35400',
         
-        // Elegant Neutrals
+        // Elegant Neutrals - Proper cream/off-white for text on dark backgrounds
         'cream-elegant': '#F8F6F0',
-        'cream-white': '#FEFEFE',
+        'cream-white': '#FDF8F3',
         'gold-luxury': '#D4AF37',
         'gold-light': '#F1C40F',
         
-        // Readable Text Colors
-        'text-dark': '#1A1A1A',
-        'text-medium': '#2C2C2C',
-        'text-light': '#4A4A4A',
+        // Text Colors
+        'text-dark': '#2C3E50',
+        'text-medium': '#34495E',
+        'text-light': '#7F8C8D',
       },
       fontFamily: {
         'luxury-display': ['Playfair Display', 'serif'],

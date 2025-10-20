@@ -52,6 +52,7 @@ const CreateSubmission = () => {
     description: '',
     targetAudience: '',
     durationEstimate: '',
+    durationHours: undefined as number | undefined,
     requirements: [''],
     objectives: [''],
     activities: [''],
@@ -84,6 +85,7 @@ const CreateSubmission = () => {
     description: '',
     targetAudience: '',
     durationEstimate: '',
+    durationHours: undefined as number | undefined,
     requirements: [''],
     agenda: [''],
     activities: [''],
@@ -127,6 +129,7 @@ const CreateSubmission = () => {
             description: data.description || '',
             targetAudience: data.targetAudience || '',
             durationEstimate: data.durationEstimate || '',
+            durationHours: data.durationHours,
             requirements: data.requirements?.length > 0 ? data.requirements : [''],
             objectives: data.objectives?.length > 0 ? data.objectives : [''],
             activities: data.activities?.length > 0 ? data.activities : [''],
@@ -159,6 +162,7 @@ const CreateSubmission = () => {
             description: data.description || '',
             targetAudience: data.targetAudience || '',
             durationEstimate: data.durationEstimate || '',
+            durationHours: data.durationHours,
             requirements: data.requirements?.length > 0 ? data.requirements : [''],
             agenda: data.agenda?.length > 0 ? data.agenda : [''],
             activities: data.activities?.length > 0 ? data.activities : [''],
@@ -247,6 +251,7 @@ const CreateSubmission = () => {
           description: projectData.description,
           targetAudience: projectData.targetAudience,
           durationEstimate: projectData.durationEstimate,
+          durationHours: projectData.durationHours,
           requirements: projectData.requirements.filter(r => r.trim() !== ''),
           objectives: projectData.objectives.filter(o => o.trim() !== ''),
           activities: projectData.activities.filter(a => a.trim() !== ''),
@@ -264,7 +269,8 @@ const CreateSubmission = () => {
           status: finalStatus,
           isVisible: finalStatus === 'approved',
           auditTrail: [],
-          submittedAt: serverTimestamp()
+          submittedAt: serverTimestamp(),
+          participantIds: [currentUser.uid] // Start with submitter as participant
         };
       } else {
         collectionName = 'event_submissions';
@@ -285,6 +291,7 @@ const CreateSubmission = () => {
           description: eventData.description,
           targetAudience: eventData.targetAudience,
           durationEstimate: eventData.durationEstimate,
+          durationHours: eventData.durationHours,
           requirements: eventData.requirements.filter(r => r.trim() !== ''),
           agenda: eventData.agenda.filter(a => a.trim() !== ''),
           activities: eventData.activities.filter(a => a.trim() !== ''),
@@ -301,6 +308,7 @@ const CreateSubmission = () => {
           status: finalStatus,
           isVisible: finalStatus === 'approved',
           auditTrail: [],
+          attendeeIds: [currentUser.uid], // Start with submitter as attendee
           submittedAt: serverTimestamp()
         };
       }
@@ -632,6 +640,24 @@ const CreateSubmission = () => {
                       className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
                       placeholder="e.g., 3 hours, Full day, 6 months"
                     />
+                  </div>
+                  <div>
+                    <label className="block font-luxury-medium text-black mb-2">
+                      Duration (Hours) *
+                      <span className="text-sm text-gray-600 font-normal ml-2">For volunteer stats tracking</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={submissionType === 'project' ? projectData.durationHours || '' : eventData.durationHours || ''}
+                      onChange={(e) => handleInputChange('durationHours', e.target.value ? parseFloat(e.target.value) : undefined)}
+                      className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                      placeholder="e.g., 2.5, 8, 40"
+                    />
+                    <p className="text-sm text-gray-600 mt-1">
+                      This will count toward volunteer hours when the {submissionType} is completed
+                    </p>
                   </div>
                 </div>
 
