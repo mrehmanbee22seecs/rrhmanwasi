@@ -2,8 +2,8 @@ const PROFANITY_WORDS = [
   'damn', 'hell', 'crap', 'stupid', 'idiot', 'dumb'
 ];
 
-const RATE_LIMIT_WINDOW = 60000;
-const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const RATE_LIMIT_MAX = 5; // messages per window
 
 const messageTimestamps = new Map<string, number[]>();
 
@@ -18,7 +18,13 @@ export function filterProfanity(text: string): string {
   return filtered;
 }
 
-export function checkRateLimit(userId: string): { allowed: boolean; remaining: number } {
+export function checkRateLimit(userId: string): {
+  allowed: boolean;
+  remaining: number;
+  resetMs: number;
+  limit: number;
+  windowMs: number;
+} {
   const now = Date.now();
   const timestamps = messageTimestamps.get(userId) || [];
 
@@ -27,13 +33,27 @@ export function checkRateLimit(userId: string): { allowed: boolean; remaining: n
   );
 
   if (recentTimestamps.length >= RATE_LIMIT_MAX) {
-    return { allowed: false, remaining: 0 };
+    const oldest = Math.min(...recentTimestamps);
+    const resetMs = Math.max(0, RATE_LIMIT_WINDOW - (now - oldest));
+    return {
+      allowed: false,
+      remaining: 0,
+      resetMs,
+      limit: RATE_LIMIT_MAX,
+      windowMs: RATE_LIMIT_WINDOW,
+    };
   }
 
   recentTimestamps.push(now);
   messageTimestamps.set(userId, recentTimestamps);
 
-  return { allowed: true, remaining: RATE_LIMIT_MAX - recentTimestamps.length };
+  return {
+    allowed: true,
+    remaining: RATE_LIMIT_MAX - recentTimestamps.length,
+    resetMs: 0,
+    limit: RATE_LIMIT_MAX,
+    windowMs: RATE_LIMIT_WINDOW,
+  };
 }
 
 export function generateChatTitle(firstMessage: string): string {

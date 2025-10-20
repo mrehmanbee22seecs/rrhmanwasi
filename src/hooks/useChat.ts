@@ -143,7 +143,10 @@ export function useChat(userId: string | null, chatId?: string) {
 
       const rateCheck = checkRateLimit(userId);
       if (!rateCheck.allowed && !isAdmin) {
-        throw new Error('Rate limit exceeded. Please wait before sending more messages.');
+        const seconds = Math.ceil(rateCheck.resetMs / 1000);
+        throw new Error(
+          `Rate limit reached: ${rateCheck.limit}/${Math.round(rateCheck.windowMs/1000)}s. Try again in ${seconds}s.`
+        );
       }
 
       const filteredText = filterProfanity(text);
@@ -162,7 +165,13 @@ export function useChat(userId: string | null, chatId?: string) {
         sender: isAdmin ? 'admin' : 'user',
         text: filteredText,
         createdAt: serverTimestamp(),
-        meta: {},
+        meta: {
+          rate: {
+            remaining: rateCheck.remaining,
+            limit: rateCheck.limit,
+            windowMs: rateCheck.windowMs,
+          }
+        },
       });
 
       const chatRef = doc(db, `users/${userId}/chats/${activeChatId}`);
@@ -175,7 +184,7 @@ export function useChat(userId: string | null, chatId?: string) {
           const chatRef = doc(db, `users/${userId}/chats/${activeChatId}`);
           const messagesRef = collection(db, `users/${userId}/chats/${activeChatId}/messages`);
 
-          const CHATBOT_PROMPT = `You are a helpful customer support AI assistant for Wasilah. Your personality traits:\n\n- Friendly and professional tone\n- Patient and understanding\n- Knowledgeable about general topics\n- Always provide actionable advice\n- If you don't know something specific about the organization, politely say so and offer to connect them with a human agent\n- Keep responses concise but informative\n- Use emojis occasionally to be friendly (but not overuse them)`;
+          const CHATBOT_PROMPT = `You are a helpful customer support AI assistant for Wasilah. Your personality traits:\n\n- Friendly and professional tone\n- Patient and understanding\n- Knowledgeable about general topics\n- Always provide actionable advice\n- If you don't know something specific about the organization, politely say so and offer to connect them with a human agent\n- Keep responses concise but informative\n- Use emojis occasionally to be friendly (but not overuse them)\n\nImportant behaviors:\n- Respond quickly and directly, without unnecessary delays\n- If the user is approaching or exceeding a message limit, summarize briefly and suggest waiting before sending more`;
 
           const recentMessages = messages.slice(-10);
           const historyLines = recentMessages
