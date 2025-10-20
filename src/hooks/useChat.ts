@@ -8,33 +8,10 @@ import {
   doc,
   updateDoc,
   serverTimestamp,
-  getDocs,
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { filterProfanity, checkRateLimit, generateChatTitle } from '../utils/chatHelpers';
-
-// Try to import new KB matcher, fallback to old one
-let findBestMatchKb: any = null;
-let formatResponse: any = null;
-try {
-  const kbMatcher = require('../utils/kbMatcher');
-  findBestMatchKb = kbMatcher.findBestMatch;
-  formatResponse = kbMatcher.formatResponse;
-} catch (e) {
-  console.log('Using legacy FAQ matching');
-}
-
-// Legacy imports
-let findBestMatch: any = null;
-let truncateAnswer: any = null;
-try {
-  const legacyMatch = require('../utils/matchKb');
-  findBestMatch = legacyMatch.findBestMatch;
-  truncateAnswer = legacyMatch.truncateAnswer;
-} catch (e) {
-  console.log('Legacy FAQ system not available');
-}
 
 interface Message {
   id: string;
@@ -64,8 +41,7 @@ interface FAQ {
 export function useChat(userId: string | null, chatId?: string) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
-  const [faqs, setFaqs] = useState<FAQ[]>([]);
-  const [kbPages, setKbPages] = useState<any[]>([]);
+  const [faqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentChatId, setCurrentChatId] = useState<string | null>(chatId || null);
   const [isTakeover, setIsTakeover] = useState(false);
@@ -106,54 +82,7 @@ export function useChat(userId: string | null, chatId?: string) {
     return () => unsubscribe();
   }, [userId]);
 
-  // Load FAQs (legacy system)
-  useEffect(() => {
-    const faqsRef = collection(db, 'faqs');
-    const unsubscribe = onSnapshot(faqsRef, (snapshot) => {
-      const faqList: FAQ[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        faqList.push({
-          id: doc.id,
-          question: data.question,
-          answer: data.answer,
-          keywords: data.keywords || [],
-          tags: data.tags || [],
-        });
-      });
-      setFaqs(faqList);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  // Load KB pages (new intelligent system)
-  useEffect(() => {
-    const loadKbPages = async () => {
-      try {
-        const kbSnapshot = await getDocs(
-          collection(db, 'kb', 'pages', 'content')
-        );
-        
-        const pages: any[] = [];
-        kbSnapshot.forEach((doc) => {
-          pages.push({
-            id: doc.id,
-            ...doc.data()
-          });
-        });
-        
-        setKbPages(pages);
-        if (pages.length > 0) {
-          console.log(`✅ Loaded ${pages.length} KB pages - using intelligent matching`);
-        }
-      } catch (error) {
-        console.error('Error loading KB pages:', error);
-      }
-    };
-    
-    loadKbPages();
-  }, []);
+  // FAQs and KB are deprecated for bot responses; using ApiFreeLLM instead
 
   useEffect(() => {
     if (!userId || !currentChatId) {
@@ -196,6 +125,7 @@ export function useChat(userId: string | null, chatId?: string) {
           createdAt: serverTimestamp(),
           lastActivityAt: serverTimestamp(),
           isActive: true,
+          aiProvider: 'apifreellm',
         });
 
         return chatDoc.id;
@@ -242,79 +172,64 @@ export function useChat(userId: string | null, chatId?: string) {
 
       if (!isAdmin && !isTakeover) {
         setTimeout(async () => {
-          let botResponseText: string;
-          let botMeta: any = {};
-          
-          // Try new intelligent KB matching first
-          if (kbPages.length > 0 && findBestMatchKb && formatResponse) {
-            console.log('🤖 Using intelligent KB matching');
-            const match = findBestMatchKb(filteredText, kbPages, 0.4);
-            const response = formatResponse(match);
-            
-            botResponseText = response.text;
-            botMeta = {
-              sourceUrl: response.sourceUrl,
-              sourcePage: response.sourcePage,
-              confidence: response.confidence,
-              needsAdmin: response.needsAdmin,
-              matchType: 'intelligent'
-            };
-            
-            // If no match, flag as unanswered for admin
-            if (response.needsAdmin) {
-              try {
-                await addDoc(collection(db, 'unanswered_queries'), {
-                  chatId: activeChatId,
-                  userId,
-                  query: filteredText,
-                  status: 'pending',
-                  createdAt: serverTimestamp()
-                });
-              } catch (error) {
-                console.error('Error creating unanswered query:', error);
-              }
-            }
-          }
-          // Fallback to legacy FAQ matching
-          else if (faqs.length > 0 && findBestMatch && truncateAnswer) {
-            console.log('📚 Using legacy FAQ matching');
-            const recentMessages = messages.slice(-6);
-            const context = recentMessages.map((m) => m.text).join(' ');
-            const searchQuery = `${context} ${filteredText}`;
-            const match = findBestMatch(searchQuery, faqs);
+          const chatRef = doc(db, `users/${userId}/chats/${activeChatId}`);
+          const messagesRef = collection(db, `users/${userId}/chats/${activeChatId}/messages`);
 
-            if (match) {
-              botResponseText = truncateAnswer(match.answer, 500);
-              if (match.answer.length > 500) {
-                botResponseText += '\n\n[Read more in our FAQ section]';
-              }
-              botMeta = { faqId: match.id, matchType: 'legacy' };
+          const CHATBOT_PROMPT = `You are a helpful customer support AI assistant for Wasilah. Your personality traits:\n\n- Friendly and professional tone\n- Patient and understanding\n- Knowledgeable about general topics\n- Always provide actionable advice\n- If you don't know something specific about the organization, politely say so and offer to connect them with a human agent\n- Keep responses concise but informative\n- Use emojis occasionally to be friendly (but not overuse them)`;
+
+          const recentMessages = messages.slice(-10);
+          const historyLines = recentMessages
+            .map((m) => `${m.sender === 'user' ? 'User' : m.sender === 'admin' ? 'Admin' : 'Assistant'}: ${m.text}`)
+            .join('\n');
+
+          const contextPrompt = `${CHATBOT_PROMPT}\n\nConversation History:\n${historyLines}\n\nCurrent User Message: ${filteredText}\n\nPlease respond naturally considering the conversation context above.`;
+
+          let botText = '';
+          try {
+            const w = (typeof window !== 'undefined' ? (window as any) : {}) as any;
+            if (w.apifree && typeof w.apifree.chat === 'function') {
+              const sdkResp = await w.apifree.chat(contextPrompt);
+              botText = (sdkResp || '').toString().trim();
             } else {
-              botResponseText = "I'm sorry — we don't have that information right now. We'll review your question and an admin will reach out to you soon.";
-              botMeta = { needsAdmin: true, matchType: 'legacy' };
+              const res = await fetch('https://apifreellm.com/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: contextPrompt }),
+              });
+
+              let aiResponse: string | null = null;
+              try {
+                const data = await res.json();
+                if (typeof data === 'string') aiResponse = data;
+                else if (data && typeof data.response === 'string') aiResponse = data.response;
+                else if (data && typeof data.message === 'string') aiResponse = data.message;
+              } catch (_) {
+                aiResponse = await res.text();
+              }
+
+              botText = (aiResponse || '').toString().trim();
             }
-          }
-          // No matching system available
-          else {
-            botResponseText = "I'm still learning! An admin will help you soon. Meanwhile, try asking about Wasilah's projects, volunteering, or events.";
-            botMeta = { needsAdmin: true, matchType: 'none' };
+            if (!botText) {
+              botText = "Sorry, I couldn't generate a response. Please try again in a moment.";
+            }
+          } catch (error) {
+            console.error('ApiFreeLLM error:', error);
+            botText = 'Sorry, I encountered an error. Please try again!';
           }
 
           await addDoc(messagesRef, {
             sender: 'bot',
-            text: botResponseText,
+            text: botText,
             createdAt: serverTimestamp(),
-            meta: botMeta,
-            ...botMeta // Spread meta fields to root for easy access
+            meta: { provider: 'apifreellm' },
+            provider: 'apifreellm',
           });
 
-          await updateDoc(chatRef, {
-            lastActivityAt: serverTimestamp(),
-          });
+          await updateDoc(chatRef, { lastActivityAt: serverTimestamp() });
         }, 1000);
       }
     },
-    [userId, currentChatId, messages, faqs, isTakeover, createNewChat]
+    [userId, currentChatId, messages, isTakeover, createNewChat]
   );
 
   const toggleTakeover = useCallback(

@@ -104,6 +104,12 @@ exports.generateBotResponse = functions.firestore
         return null;
       }
 
+      // Skip legacy bot if client uses external AI provider
+      if (chatData?.aiProvider) {
+        console.log(`AI provider set to ${chatData.aiProvider}; skipping legacy bot response`);
+        return null;
+      }
+
       // Get recent messages for context
       const recentMessages = await db
         .collection(`users/${userId}/chats/${chatId}/messages`)

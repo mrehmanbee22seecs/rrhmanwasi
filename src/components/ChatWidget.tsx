@@ -2,9 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Minimize2, Menu, Plus, Clock, Trash2, Bell, ExternalLink, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useChat } from '../hooks/useChat';
-import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { findBestMatch, formatResponse } from '../utils/kbMatcher';
 
 interface Message {
   id: string;
@@ -25,8 +24,18 @@ const ChatWidget = () => {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [kbPages, setKbPages] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  // Load ApiFreeLLM SDK for browser usage
+  useEffect(() => {
+    const w = window as any;
+    if (!w.apifree) {
+      const script = document.createElement('script');
+      script.src = 'https://apifreellm.com/apifree.min.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
+
 
   const {
     messages,
@@ -37,31 +46,7 @@ const ChatWidget = () => {
     closeChat,
   } = useChat(currentUser?.uid || null);
 
-  // Load KB pages for intelligent matching
-  useEffect(() => {
-    const loadKb = async () => {
-      try {
-        const pagesSnapshot = await getDocs(
-          collection(db, 'kb', 'pages', 'content')
-        );
-        
-        const pages: any[] = [];
-        pagesSnapshot.forEach((doc) => {
-          pages.push({
-            id: doc.id,
-            ...doc.data()
-          });
-        });
-        
-        setKbPages(pages);
-        console.log(`✅ Loaded ${pages.length} KB pages for intelligent matching`);
-      } catch (error) {
-        console.error('Error loading KB:', error);
-      }
-    };
-    
-    loadKb();
-  }, []);
+  // Using external AI provider (ApiFreeLLM) via useChat hook
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -104,21 +89,6 @@ const ChatWidget = () => {
       
       // Small delay for UX
       await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // If KB pages loaded, use intelligent matching
-      if (kbPages.length > 0) {
-        const match = findBestMatch(userMessage, kbPages, 0.4);
-        const response = formatResponse(match);
-        
-        console.log('🤖 Intelligent match:', {
-          query: userMessage,
-          confidence: response.confidence,
-          hasMatch: !response.needsAdmin
-        });
-        
-        // The bot response will be handled by useChat hook
-        // but we can log the intelligence for monitoring
-      }
     } catch (error: any) {
       console.error('Error sending message:', error);
       alert(error.message || 'Failed to send message');
@@ -139,7 +109,7 @@ const ChatWidget = () => {
     return chat.takeoverBy;
   });
 
-  const hasIntelligentKb = kbPages.length > 0;
+  const hasAi = true;
 
   if (!isOpen) {
     return (
@@ -149,7 +119,7 @@ const ChatWidget = () => {
         aria-label="Open chat"
       >
         <MessageCircle className="w-6 h-6" />
-        {hasIntelligentKb && (
+        {hasAi && (
           <Sparkles className="w-3 h-3 absolute -top-1 -left-1 text-yellow-300 animate-pulse" title="AI-Powered" />
         )}
         {hasUnreadAdminMessages ? (
@@ -195,7 +165,7 @@ const ChatWidget = () => {
           <h3 className="font-semibold">
             {currentChat?.title || 'Wasilah Assistant'}
           </h3>
-          {hasIntelligentKb && (
+          {hasAi && (
             <span className="text-xs bg-yellow-400 text-blue-900 px-2 py-0.5 rounded-full flex items-center gap-1 font-semibold">
               <Sparkles className="w-3 h-3" />
               Smart
@@ -305,18 +275,15 @@ const ChatWidget = () => {
               <div className="text-center text-gray-500 mt-8">
                 <div className="relative inline-block mb-3">
                   <MessageCircle className="w-12 h-12 opacity-30" />
-                  {hasIntelligentKb && (
+                  {hasAi && (
                     <Sparkles className="w-5 h-5 absolute -top-1 -right-1 text-yellow-500 animate-pulse" />
                   )}
                 </div>
                 <p className="text-sm font-semibold">Welcome to Wasilah Assistant!</p>
                 <p className="text-xs mt-1">
-                  {hasIntelligentKb 
-                    ? '🤖 Ask me anything - I learn from our website!'
-                    : 'How can we help you today?'
-                  }
+                  🤖 Ask me anything — I’m AI-powered!
                 </p>
-                {hasIntelligentKb && (
+                {hasAi && (
                   <div className="mt-4 space-y-2 max-w-xs mx-auto">
                     <button
                       onClick={() => setInputText('What is Wasilah?')}
