@@ -10,6 +10,9 @@ export interface EmailData {
   text?: string;
 }
 
+const WEBHOOK_URL: string | undefined = (import.meta as any)?.env?.VITE_EMAIL_WEBHOOK_URL;
+const WEBHOOK_TOKEN: string | undefined = (import.meta as any)?.env?.VITE_EMAIL_WEBHOOK_TOKEN;
+
 export interface ChatMessage {
   message: string;
   timestamp: string;
@@ -623,6 +626,27 @@ const storeResponse = async (type: string, data: any) => {
 // Main email sending function (to be implemented with your backend)
 export const sendEmail = async (emailData: EmailData): Promise<boolean> => {
   try {
+    // If webhook is configured (Apps Script or any HTTPS email relay), use it
+    if (WEBHOOK_URL) {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'send',
+          token: WEBHOOK_TOKEN || '',
+          to: emailData.to,
+          subject: emailData.subject,
+          html: emailData.html,
+          text: emailData.text || undefined,
+        }),
+      });
+      if (!res.ok) {
+        console.warn('Email webhook responded with non-2xx');
+      }
+    }
+
     // Store in Firebase based on email subject/type
     const emailType = emailData.subject.toLowerCase();
     if (emailType.includes('volunteer')) {
@@ -640,7 +664,7 @@ export const sendEmail = async (emailData: EmailData): Promise<boolean> => {
     }
 
     // In a real application, this would call your backend API
-    // For now, we'll log the email data
+    // For now, also log the email data for visibility
     console.log('Sending email to:', emailData.to);
     console.log('Subject:', emailData.subject);
     console.log('HTML Content:', emailData.html);
@@ -651,6 +675,37 @@ export const sendEmail = async (emailData: EmailData): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error('Error sending email:', error);
+    return false;
+  }
+};
+
+// Spark-friendly reminder scheduler via webhook (Apps Script or any HTTPS endpoint)
+export const scheduleReminderEmails = async (params: {
+  recipients: string[];
+  subject: string;
+  html: string;
+  sendAtISO: string; // ISO datetime string
+}): Promise<boolean> => {
+  try {
+    if (!WEBHOOK_URL) {
+      console.warn('No WEBHOOK_URL configured; skipping scheduleReminderEmails');
+      return false;
+    }
+    const res = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'schedule',
+        token: WEBHOOK_TOKEN || '',
+        to: params.recipients,
+        subject: params.subject,
+        html: params.html,
+        sendAt: params.sendAtISO,
+      }),
+    });
+    return res.ok;
+  } catch (e) {
+    console.error('scheduleReminderEmails failed', e);
     return false;
   }
 };
