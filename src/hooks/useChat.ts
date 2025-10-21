@@ -186,6 +186,8 @@ export function useChat(userId: string | null, chatId?: string) {
       const filteredText = filterProfanity(text).trim();
       if (!filteredText) return;
 
+      console.log('🤖 Processing message:', filteredText);
+
       let activeChatId = currentChatId;
 
       if (!activeChatId) {
@@ -217,82 +219,139 @@ export function useChat(userId: string | null, chatId?: string) {
       });
 
       if (!isAdmin && !isTakeover) {
-        // Immediate bot response (no artificial delay)
+        // Immediate bot response with timeout protection
         (async () => {
           let botResponseText: string;
           let botMeta: any = {};
           
-          // 1) Quick intent-based replies (greetings, thanks, help) with Urdu support
-          const intent = matchIntent(filteredText);
-          if (intent.handled) {
-            botResponseText = intent.reply!;
-            botMeta = { matchType: 'intent' };
-          }
-          // 2) Intelligent KB matching
-          else if (kbPages.length > 0 && typeof findBestMatchKb === 'function' && typeof formatResponse === 'function') {
-            console.log('🤖 Using intelligent KB matching');
-            const match = findBestMatchKb(filteredText, kbPages, 0.4);
-            const response = formatResponse(match);
+          // Set a timeout to prevent the bot from getting stuck
+          const responseTimeout = setTimeout(async () => {
+            console.warn('⚠️ Bot response timeout, sending fallback');
+            const lang = detectLanguage(filteredText);
+            const timeoutText = lang === 'ur' 
+              ? 'معذرت، میں آپ کے سوال کا جواب نہیں دے سکا۔ کیا آپ ایڈمن سے بات کرنا چاہیں گے؟'
+              : 'Sorry, I couldn\'t process your question in time. Would you like to speak with an admin?';
             
-            // Ensure reasonably complete sentence and avoid abrupt cuts
-            botResponseText = (response.text || '').trim();
-            if (botResponseText.length < 1 && response.sourcePage) {
-              botResponseText = `Here's what I found on ${response.sourcePage}.`;
+            try {
+              await addDoc(messagesRef, {
+                sender: 'bot',
+                text: timeoutText,
+                createdAt: serverTimestamp(),
+                meta: { needsAdmin: true, timeout: true, matchType: 'timeout' },
+              });
+              await updateDoc(chatRef, { lastActivityAt: serverTimestamp() });
+            } catch (err) {
+              console.error('Error sending timeout response:', err);
             }
-            botMeta = {
-              sourceUrl: response.sourceUrl,
-              sourcePage: response.sourcePage,
-              confidence: response.confidence,
-              needsAdmin: response.needsAdmin,
-              matchType: 'intelligent'
-            };
-          }
-          // 3) Fallback to legacy FAQ matching
-          else if (faqs.length > 0 && findBestMatch && truncateAnswer) {
-            console.log('📚 Using legacy FAQ matching');
-            const recentMessages = messages.slice(-6);
-            const context = recentMessages.map((m) => m.text).join(' ');
-            const searchQuery = `${context} ${filteredText}`;
-            const match = findBestMatch(searchQuery, faqs);
-
-            if (match) {
-              botResponseText = truncateAnswer(match.answer, 500);
-              if (match.answer.length > 500) {
-                botResponseText += '\n\n[Read more in our FAQ section]';
+          }, 10000); // 10 second timeout
+          
+          try {
+            // 1) Quick intent-based replies (greetings, thanks, help) with Urdu support
+            const intent = matchIntent(filteredText);
+            if (intent.handled) {
+              botResponseText = intent.reply!;
+              botMeta = { matchType: 'intent' };
+            }
+            // 2) Intelligent KB matching (primary method)
+            else if (kbPages.length > 0 && typeof findBestMatchKb === 'function' && typeof formatResponse === 'function') {
+              console.log('🤖 Using intelligent KB matching');
+              const match = findBestMatchKb(filteredText, kbPages, 0.2); // Lowered threshold
+              const response = formatResponse(match);
+              
+              // Ensure reasonably complete sentence and avoid abrupt cuts
+              botResponseText = (response.text || '').trim();
+              if (botResponseText.length < 10) {
+                // If response is too short, try to provide a more helpful fallback
+                const lang = detectLanguage(filteredText);
+                if (filteredText.toLowerCase().includes('apply') || filteredText.toLowerCase().includes('join')) {
+                  botResponseText = lang === 'ur' 
+                    ? 'وسیلہ میں شامل ہونے کے لیے Volunteer صفحہ پر جائیں اور application form بھریں۔ ہم 3-5 دن میں رابطہ کریں گے۔'
+                    : 'To join Wasilah, visit the Volunteer page and complete the application form. We will contact you within 3-5 business days.';
+                } else {
+                  botResponseText = adminOfferMessage(lang);
+                }
+                botMeta = { needsAdminOffer: true, matchType: 'fallback' };
+              } else {
+                botMeta = {
+                  sourceUrl: response.sourceUrl,
+                  sourcePage: response.sourcePage,
+                  confidence: response.confidence,
+                  needsAdmin: response.needsAdmin,
+                  matchType: 'intelligent'
+                };
               }
-              botMeta = { faqId: match.id, matchType: 'legacy' };
-            } else {
+            }
+            // 3) Fallback to legacy FAQ matching
+            else if (faqs.length > 0 && findBestMatch && truncateAnswer) {
+              console.log('📚 Using legacy FAQ matching');
+              const recentMessages = messages.slice(-6);
+              const context = recentMessages.map((m) => m.text).join(' ');
+              const searchQuery = `${context} ${filteredText}`;
+              const match = findBestMatch(searchQuery, faqs);
+
+              if (match) {
+                botResponseText = truncateAnswer(match.answer, 800); // Increased length
+                if (match.answer.length > 800) {
+                  botResponseText += '\n\n[Read more in our FAQ section]';
+                }
+                botMeta = { faqId: match.id, matchType: 'legacy' };
+              } else {
+                const lang = detectLanguage(filteredText);
+                botResponseText = adminOfferMessage(lang);
+                botMeta = { needsAdminOffer: true, matchType: 'legacy' };
+              }
+            }
+            // No matching system available
+            else {
               const lang = detectLanguage(filteredText);
               botResponseText = adminOfferMessage(lang);
-              botMeta = { needsAdminOffer: true, matchType: 'legacy' };
+              botMeta = { needsAdminOffer: true, matchType: 'none' };
             }
-          }
-          // No matching system available
-          else {
+
+            // If user says 'yes' after an admin offer, auto-route to admin
+            const lastBot = messages.slice().reverse().find((m) => m.sender === 'bot');
+            const userSaidYes = /^(yes|y|haan|han|جی|ہاں)$/i.test(filteredText.trim());
+            if (lastBot && (lastBot.meta as any)?.needsAdminOffer && userSaidYes) {
+              const lang = detectLanguage(filteredText);
+              botResponseText = adminConfirmMessage(lang);
+              botMeta = { needsAdmin: true, escalated: true };
+            }
+
+            // Clear timeout since we got a response
+            clearTimeout(responseTimeout);
+            
+            // Ensure we don't save empty/undefined text
+            if (botResponseText && botResponseText.trim().length > 0) {
+              await addDoc(messagesRef, {
+                sender: 'bot',
+                text: botResponseText,
+                createdAt: serverTimestamp(),
+                meta: botMeta,
+              });
+
+              await updateDoc(chatRef, { lastActivityAt: serverTimestamp() });
+              console.log('✅ Bot response sent successfully');
+            }
+          } catch (error) {
+            console.error('Bot response error:', error);
+            clearTimeout(responseTimeout);
+            
+            // Fallback response on error
             const lang = detectLanguage(filteredText);
-            botResponseText = adminOfferMessage(lang);
-            botMeta = { needsAdminOffer: true, matchType: 'none' };
+            const fallbackText = lang === 'ur' 
+              ? 'معذرت، میں آپ کے سوال کا جواب نہیں دے سکا۔ کیا آپ ایڈمن سے بات کرنا چاہیں گے؟'
+              : 'Sorry, I couldn\'t process your question. Would you like to speak with an admin?';
+            
+            await addDoc(messagesRef, {
+              sender: 'bot',
+              text: fallbackText,
+              createdAt: serverTimestamp(),
+              meta: { needsAdmin: true, error: true, matchType: 'error' },
+            });
+
+            await updateDoc(chatRef, { lastActivityAt: serverTimestamp() });
           }
-
-          // If user says 'yes' after an admin offer, auto-route to admin
-          const lastBot = messages.slice().reverse().find((m) => m.sender === 'bot');
-          const userSaidYes = /^(yes|y|haan|han|جی|ہاں)$/i.test(filteredText.trim());
-          if (lastBot && (lastBot.meta as any)?.needsAdminOffer && userSaidYes) {
-            const lang = detectLanguage(filteredText);
-            botResponseText = adminConfirmMessage(lang);
-            botMeta = { needsAdmin: true, escalated: true };
-          }
-
-          // Ensure we don't save empty/undefined text
-          await addDoc(messagesRef, {
-            sender: 'bot',
-            text: botResponseText,
-            createdAt: serverTimestamp(),
-            meta: botMeta,
-          });
-
-          await updateDoc(chatRef, { lastActivityAt: serverTimestamp() });
-        })().catch((err) => console.error('Bot response error:', err));
+        })();
       }
     },
     [userId, currentChatId, messages, faqs, kbPages, isTakeover, createNewChat]
