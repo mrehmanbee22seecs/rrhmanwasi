@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Users, MapPin, Clock, CheckCircle, Send, AlertCircle, Star } from 'lucide-react';
-import { sendEmail, formatEventRegistrationEmail } from '../utils/emailService';
+import { sendEmail, formatEventRegistrationEmail, formatEventRegistrationConfirmationEmail } from '../utils/emailService';
 import { db } from '../config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { EventSubmission } from '../types/submissions';
@@ -317,8 +317,21 @@ const EventDetail = () => {
       timestamp: new Date().toISOString()
     });
     
-    sendEmail(emailData).then((success) => {
+    sendEmail(emailData).then(async (success) => {
       if (success) {
+        // Also send a confirmation to the registrant
+        try {
+          await sendEmail(
+            formatEventRegistrationConfirmationEmail({
+              name: registrationData.name,
+              email: registrationData.email,
+              eventTitle: displayEvent.title,
+              eventDate: formatDate(displayEvent.date),
+              time: displayEvent.time,
+              location: displayEvent.location,
+            })
+          );
+        } catch {}
         alert(`Thank you for registering for ${displayEvent.title}! You will receive a confirmation email shortly.`);
       } else {
         alert('There was an error with your registration. Please try again or contact us directly.');

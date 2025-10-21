@@ -100,6 +100,14 @@ export interface SubmissionStatusUpdate {
 
 const ADMIN_EMAIL = 'muneebtahir08@gmail.com';
 
+// Common branding tokens
+const brand = {
+  gradient: 'linear-gradient(135deg, #FF6B9D, #00D9FF)',
+  headerBg: '#0F0F23',
+  accent: '#FF6B9D',
+  textDark: '#2C3E50'
+};
+
 // Format chat message email
 export const formatChatMessageEmail = (data: ChatMessage): EmailData => {
   return {
@@ -474,6 +482,126 @@ export const formatSubmissionStatusUpdateEmail = (data: SubmissionStatusUpdate):
       </div>
     `,
     text: `${data.type.charAt(0).toUpperCase() + data.type.slice(1)} Submission ${isApproved ? 'Approved' : 'Rejected'}: ${data.title}\n\nHello ${data.submitterName},\n\nYour ${data.type} "${data.title}" has been ${data.status}.\n\n${isApproved ? 'Congratulations! Your submission is now live.' : 'Please review the feedback and resubmit.'}\n\n${data.adminComments ? `Admin Comments: ${data.adminComments}\n\n` : ''}${data.rejectionReason ? `Reason: ${data.rejectionReason}\n\n` : ''}Updated: ${new Date(data.timestamp).toLocaleString()}`
+  };
+};
+
+// Submission received (to user)
+export const formatSubmissionReceivedEmail = (data: {
+  type: 'project' | 'event';
+  title: string;
+  submitterName: string;
+  submitterEmail: string;
+  summary?: string;
+  when?: string; // date/time or start-end dates
+}): EmailData => {
+  const niceType = data.type.charAt(0).toUpperCase() + data.type.slice(1);
+  return {
+    to: data.submitterEmail,
+    subject: `${niceType} submitted successfully: ${data.title}`,
+    html: `
+      <div style="font-family: Inter, Arial, sans-serif; max-width: 640px; margin: 0 auto; background:#f8fafc">
+        <div style="background: ${brand.gradient}; padding: 20px; text-align:center;">
+          <h1 style="color:#fff; margin:0;">${niceType} Received</h1>
+        </div>
+        <div style="background:#fff; padding:24px;">
+          <p style="color:${brand.textDark}">Hello <strong>${data.submitterName}</strong>,</p>
+          <p style="color:${brand.textDark}">Thank you for your ${data.type} submission. Our team will review it shortly.</p>
+          <div style="background:#f1f5f9; border-radius:12px; padding:16px; margin:16px 0;">
+            <p style="margin:0; color:#0f172a"><strong>Title:</strong> ${data.title}</p>
+            ${data.summary ? `<p style="margin:8px 0 0; color:#334155"><strong>Summary:</strong> ${data.summary}</p>` : ''}
+            ${data.when ? `<p style="margin:8px 0 0; color:#334155"><strong>When:</strong> ${data.when}</p>` : ''}
+          </div>
+          <p style="color:${brand.textDark}">We will notify you as soon as there is an update.</p>
+          <p style="color:${brand.textDark}">— Wasilah Team</p>
+        </div>
+      </div>
+    `
+  };
+};
+
+// Event registration confirmation (to user)
+export const formatEventRegistrationConfirmationEmail = (data: {
+  name: string;
+  email: string;
+  eventTitle: string;
+  eventDate: string;
+  time?: string;
+  location?: string;
+}): EmailData => {
+  return {
+    to: data.email,
+    subject: `You're registered: ${data.eventTitle}`,
+    html: `
+      <div style="font-family: Inter, Arial, sans-serif; max-width: 640px; margin: 0 auto; background:#f8fafc">
+        <div style="background: ${brand.gradient}; padding: 20px; text-align:center;">
+          <h1 style="color:#fff; margin:0;">Registration Confirmed</h1>
+        </div>
+        <div style="background:#fff; padding:24px;">
+          <p style="color:${brand.textDark}">Hello <strong>${data.name}</strong>,</p>
+          <p style="color:${brand.textDark}">You're registered for <strong>${data.eventTitle}</strong>.</p>
+          <div style="background:#f1f5f9; border-radius:12px; padding:16px; margin:16px 0;">
+            <p style="margin:0; color:#0f172a"><strong>Date:</strong> ${data.eventDate}</p>
+            ${data.time ? `<p style=\"margin:8px 0 0; color:#334155\"><strong>Time:</strong> ${data.time}</p>` : ''}
+            ${data.location ? `<p style=\"margin:8px 0 0; color:#334155\"><strong>Location:</strong> ${data.location}</p>` : ''}
+          </div>
+          <p style="color:${brand.textDark}">We look forward to seeing you!</p>
+          <p style="color:${brand.textDark}">— Wasilah Team</p>
+        </div>
+      </div>
+    `
+  };
+};
+
+// Project application confirmation (to user)
+export const formatProjectApplicationConfirmationEmail = (data: {
+  name: string;
+  email: string;
+  projectTitle: string;
+}): EmailData => {
+  return {
+    to: data.email,
+    subject: `Application received: ${data.projectTitle}`,
+    html: `
+      <div style="font-family: Inter, Arial, sans-serif; max-width: 640px; margin: 0 auto; background:#f8fafc">
+        <div style="background: ${brand.gradient}; padding: 20px; text-align:center;">
+          <h1 style="color:#fff; margin:0;">Application Received</h1>
+        </div>
+        <div style="background:#fff; padding:24px;">
+          <p style="color:${brand.textDark}">Hello <strong>${data.name}</strong>,</p>
+          <p style="color:${brand.textDark}">Thank you for applying to <strong>${data.projectTitle}</strong>. Our team will review your application and get back to you.</p>
+          <p style="color:${brand.textDark}">— Wasilah Team</p>
+        </div>
+      </div>
+    `
+  };
+};
+
+// Reminder email (to user)
+export const formatReminderEmail = (data: {
+  to: string;
+  title: string;
+  description?: string;
+  when: string;
+  submissionTitle?: string;
+  submissionType?: 'project' | 'event';
+}): EmailData => {
+  return {
+    to: data.to,
+    subject: `Reminder: ${data.title}`,
+    html: `
+      <div style="font-family: Inter, Arial, sans-serif; max-width: 640px; margin: 0 auto; background:#f8fafc">
+        <div style="background: ${brand.gradient}; padding: 20px; text-align:center;">
+          <h1 style="color:#fff; margin:0;">Reminder</h1>
+        </div>
+        <div style="background:#fff; padding:24px;">
+          ${data.submissionTitle ? `<p style=\"color:${brand.textDark}\">For: <strong>${data.submissionTitle}</strong>${data.submissionType ? ` (${data.submissionType})` : ''}</p>` : ''}
+          <p style="color:${brand.textDark}"><strong>${data.title}</strong></p>
+          <p style="color:${brand.textDark}">When: ${data.when}</p>
+          ${data.description ? `<p style=\"color:${brand.textDark}\">${data.description}</p>` : ''}
+          <p style="color:${brand.textDark}">— Wasilah Team</p>
+        </div>
+      </div>
+    `
   };
 };
 
