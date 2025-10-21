@@ -48,17 +48,25 @@ export const themes: Theme[] = [
   {
     id: 'wasilah-classic',
     name: 'Wasilah Classic',
-    description: 'Our signature orange and navy theme',
+    description: 'Premium Firebase-inspired dark theme with vibrant gradients',
     colors: {
-      primary: '#E67E22',
-      secondary: '#2C3E50',
-      accent: '#F39C12',
-      background: '#F8F6F0',
-      surface: '#FFFFFF',
-      text: '#1A1A1A',
-      textLight: '#4A4A4A'
+      // Vibrant gradient primary (purple-pink-orange blend)
+      primary: '#FF6B9D',
+      // Deep charcoal/black background
+      secondary: '#0F0F23',
+      // Bright accent (electric blue/cyan)
+      accent: '#00D9FF',
+      // Rich dark background
+      background: '#050517',
+      // Card/surface dark navy
+      surface: '#1A1A2E',
+      // Light text for dark BG
+      text: '#FFFFFF',
+      // Muted light text
+      textLight: '#B4B4C8'
     },
-    preview: 'linear-gradient(135deg, #E67E22, #2C3E50)'
+    preview: 'linear-gradient(135deg, #FF6B9D, #00D9FF, #8B5CF6)',
+    isDark: true
   },
   {
     id: 'emerald-forest',
@@ -158,7 +166,7 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const defaultTheme = themes.find(t => t.id === 'jet-black') || themes[0];
+  const defaultTheme = themes.find(t => t.id === 'wasilah-classic') || themes[0];
   const [currentTheme, setCurrentTheme] = useState<Theme>(defaultTheme);
   const { currentUser, userData } = useAuth();
 
