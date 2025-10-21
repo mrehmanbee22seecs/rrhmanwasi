@@ -16,7 +16,7 @@ const AdminToggle: React.FC = () => {
       {/* Desktop: bottom-6 left-6 (standard positioning) */}
       <button
         onClick={() => setShowAdminPanel(true)}
-        className="fixed bottom-20 left-4 sm:bottom-6 sm:left-6 z-[60] px-3 py-2 sm:px-6 sm:py-3 rounded-full shadow-lg font-bold transition-all duration-300 hover:scale-110 active:scale-95 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white"
+        className="fixed bottom-20 left-4 sm:bottom-6 sm:left-6 z-[66] px-3 py-2 sm:px-6 sm:py-3 rounded-full shadow-lg font-bold transition-all duration-300 hover:scale-110 active:scale-95 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white"
         title="Open Admin Panel"
       >
         <div className="flex items-center gap-1.5 sm:gap-2">
