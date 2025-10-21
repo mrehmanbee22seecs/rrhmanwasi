@@ -68,14 +68,14 @@ const DonationWidget = () => {
   return (
     <>
       {!isOpen && !suppressButton && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-[calc(50%+100px)] z-50">
+        <div className="fixed bottom-5 md:bottom-6 left-1/2 -translate-x-[calc(50%+72px)] md:-translate-x-[calc(50%+100px)] z-50">
           <button
             onClick={() => setIsOpen(true)}
-            className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-4 rounded-full shadow-luxury-glow flex items-center justify-center hover:scale-110 transition-all duration-300 animate-pulse group"
+            className="bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-3 md:px-6 md:py-4 rounded-full shadow-luxury-glow flex items-center justify-center hover:scale-110 transition-all duration-300 animate-pulse group"
             title="Support Our Mission"
           >
-            <Heart className="w-6 h-6 mr-2" fill="currentColor" />
-            <span className="font-luxury-semibold text-lg whitespace-nowrap">DONATE NOW!</span>
+            <Heart className="w-5 h-5 md:w-6 md:h-6 mr-2" fill="currentColor" />
+            <span className="font-luxury-semibold text-base md:text-lg whitespace-nowrap">DONATE NOW!</span>
           </button>
         </div>
       )}
@@ -88,7 +88,7 @@ const DonationWidget = () => {
           />
           <div
             ref={widgetRef}
-            className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[70] w-full max-w-md max-h-[90vh] overflow-y-auto luxury-card bg-cream-white rounded-luxury-lg shadow-luxury-lg animate-scale-in"
+            className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[70] w-[92vw] max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto luxury-card bg-cream-white rounded-luxury-lg shadow-luxury-lg animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
           {/* Header */}

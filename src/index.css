@@ -977,3 +977,94 @@ body {
   border: 1px solid rgba(255, 107, 157, 0.2);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
+
+/* --- Global Luxury Button Styles (high-contrast, theme-aware) --- */
+/* These ensure buttons are visible against surfaces/backgrounds across themes */
+.btn-luxury-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  font-weight: 600;
+  line-height: 1.1;
+  border: 2px solid transparent;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-luxury-base:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.35);
+}
+
+.btn-luxury-base:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.btn-luxury-base:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: grayscale(10%);
+}
+
+/* Primary: vibrant gradient using theme primary/accent for strong contrast */
+.btn-luxury-primary {
+  composes: btn-luxury-base;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 217, 255, 0.18), 0 6px 18px rgba(255, 107, 157, 0.22);
+}
+
+.btn-luxury-primary:hover:not(:disabled) {
+  filter: brightness(1.07) saturate(1.05);
+  box-shadow: 0 12px 32px rgba(0, 217, 255, 0.25), 0 8px 22px rgba(255, 107, 157, 0.28);
+}
+
+/* Secondary: solid surface-contrast button */
+.btn-luxury-secondary {
+  composes: btn-luxury-base;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.btn-luxury-secondary:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--color-surface), rgba(255, 255, 255, 0.04));
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+/* Outline: transparent background, strong themed border/text */
+.btn-luxury-outline {
+  composes: btn-luxury-base;
+  background: transparent;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.btn-luxury-outline:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Ghost: minimal emphasis, good for less primary actions */
+.btn-luxury-ghost {
+  composes: btn-luxury-base;
+  background: transparent;
+  color: var(--color-text);
+}
+
+.btn-luxury-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Size modifiers */
+.btn-sm { padding: 0.5rem 0.875rem; border-radius: 10px; font-size: 0.875rem; }
+.btn-lg { padding: 0.9rem 1.5rem; border-radius: 14px; font-size: 1.125rem; }
+
+/* Ensure contrast on light themes as well */
+:root:not(.theme-dark) .btn-luxury-primary {
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.18), 0 6px 18px rgba(59, 130, 246, 0.18);
+}
+
