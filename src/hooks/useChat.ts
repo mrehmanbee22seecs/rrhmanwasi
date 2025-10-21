@@ -15,10 +15,13 @@ import { db } from '../config/firebase';
 import { filterProfanity, checkRateLimit, generateChatTitle } from '../utils/chatHelpers';
 import { matchIntent, detectLanguage, adminOfferMessage, adminConfirmMessage } from '../utils/intents';
 
-// Try to import new KB matcher, fallback to old one
+// KB Matcher
 import * as kbMatcher from '../utils/kbMatcher';
 const findBestMatchKb: any = kbMatcher?.findBestMatch;
 const formatResponse: any = kbMatcher?.formatResponse;
+
+// Local KB Service (no Firestore needed - works on Spark plan)
+import { getEnhancedKB } from '../services/localKbService';
 
 // Legacy imports
 let findBestMatch: any = null;
@@ -101,16 +104,14 @@ export function useChat(userId: string | null, chatId?: string) {
     return () => unsubscribe();
   }, [userId]);
 
-  // Load KB pages for intelligent matching
+  // Load KB pages for intelligent matching from local data (no Firestore needed)
   useEffect(() => {
-    const loadKb = async () => {
+    const loadKb = () => {
       try {
-        const pagesSnapshot = await getDocs(collection(db, 'kb', 'pages', 'content'));
-        const pages: any[] = [];
-        pagesSnapshot.forEach((doc) => {
-          pages.push({ id: doc.id, ...doc.data() });
-        });
+        // Load from local seed data - works on Spark plan, no Cloud Functions needed
+        const pages = getEnhancedKB();
         setKbPages(pages);
+        console.log(`✅ Loaded ${pages.length} KB pages for instant intelligent responses`);
       } catch (error) {
         console.error('Error loading KB:', error);
       }
@@ -254,8 +255,8 @@ export function useChat(userId: string | null, chatId?: string) {
             }
             // 2) Intelligent KB matching (primary method)
             else if (kbPages.length > 0 && typeof findBestMatchKb === 'function' && typeof formatResponse === 'function') {
-              console.log('🤖 Using intelligent KB matching');
-              const match = findBestMatchKb(filteredText, kbPages, 0.2); // Lowered threshold
+              console.log('🤖 Using intelligent KB matching with enhanced semantic search');
+              const match = findBestMatchKb(filteredText, kbPages, 0.12); // Lowered threshold for better coverage
               const response = formatResponse(match);
               
               // Ensure reasonably complete sentence and avoid abrupt cuts
