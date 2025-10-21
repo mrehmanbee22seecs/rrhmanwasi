@@ -325,7 +325,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-cream-white py-8 sm:py-12 relative overflow-hidden">
+    <div className="min-h-screen bg-cream-white pt-28 pb-8 sm:pt-32 sm:pb-12 relative overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0 opacity-30 pointer-events-none">
         <div className="absolute top-20 left-20 w-32 h-32 bg-vibrant-orange/10 rounded-full animate-float-gentle"></div>
@@ -420,7 +420,7 @@ const Dashboard = () => {
                   <Link
                     key={index}
                     to={action.link}
-                    className="p-6 rounded-luxury border-2 border-gray-200 floating-card magnetic-element group"
+                    className="relative overflow-hidden p-6 rounded-luxury border-2 border-gray-200 floating-card magnetic-element group"
                   >
                     <div className="flex items-center space-x-4">
                       <div className={`w-12 h-12 ${action.color} rounded-full flex items-center justify-center group-hover:animate-pulse-glow group-hover:scale-110 transition-all duration-300`}>
@@ -434,7 +434,7 @@ const Dashboard = () => {
                       </div>
                       <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-vibrant-orange group-hover:translate-x-1 transition-all duration-300" />
                     </div>
-                    <div className="absolute inset-0 bg-gradient-to-br from-vibrant-orange/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-luxury"></div>
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-vibrant-orange/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-luxury"></div>
                   </Link>
                 ))}
               </div>
