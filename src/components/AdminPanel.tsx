@@ -54,6 +54,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   });
   const [showNewEventForm, setShowNewEventForm] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
+  const [showRawJson, setShowRawJson] = useState(false);
+  const [showAuditTrail, setShowAuditTrail] = useState(true);
 
   const { isAdmin, currentUser } = useAuth();
 
@@ -766,6 +768,322 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                       {reviewingSubmission === submission.id && (
                         <div className="mt-6 p-4 bg-gray-50 rounded-luxury">
                           <h5 className="text-lg font-luxury-heading text-black mb-4">Review Submission</h5>
+
+                          {/* Full Application Details */}
+                          <div className="mb-6 space-y-6">
+                            <div className="flex items-start gap-4">
+                              {submission.image && (
+                                <img
+                                  src={submission.image}
+                                  alt={submission.title}
+                                  className="w-28 h-28 object-cover rounded-lg border"
+                                />
+                              )}
+                              <div className="flex-1">
+                                <h6 className="text-base font-luxury-heading text-black">Full Application</h6>
+                                <p className="text-sm text-black/70">See all details submitted by the user</p>
+                                <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                                  <span className={`px-2 py-1 rounded-full ${getSubmissionTypeColor(submission.submissionType)}`}>{submission.submissionType}</span>
+                                  <span className={`px-2 py-1 rounded-full ${getSubmissionStatusColor(submission.status)}`}>{submission.status}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Section: Public Information */}
+                            <div className="bg-white p-4 rounded-luxury border">
+                              <h6 className="text-sm font-luxury-heading text-black mb-3">Section 1: Public Information</h6>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-black">
+                                <div>
+                                  <strong>Category:</strong> {submission.category || '—'}
+                                </div>
+                                <div>
+                                  <strong>Location:</strong> {submission.location || '—'}
+                                </div>
+                                {submission.address && (
+                                  <div className="md:col-span-2">
+                                    <strong>Address:</strong> {submission.address}
+                                  </div>
+                                )}
+                                {submission.submissionType === 'project' ? (
+                                  <>
+                                    <div>
+                                      <strong>Expected Volunteers:</strong> {(submission as any).expectedVolunteers ?? '—'}
+                                    </div>
+                                    <div>
+                                      <strong>Start Date:</strong> {(submission as any).startDate || '—'}
+                                    </div>
+                                    <div>
+                                      <strong>End Date:</strong> {(submission as any).endDate || '—'}
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div>
+                                      <strong>Event Date:</strong> {(submission as any).date || '—'}
+                                    </div>
+                                    <div>
+                                      <strong>Event Time:</strong> {(submission as any).time || '—'}
+                                    </div>
+                                    <div>
+                                      <strong>Expected Attendees:</strong> {(submission as any).expectedAttendees ?? '—'}
+                                    </div>
+                                    <div>
+                                      <strong>Cost:</strong> {(submission as any).cost || '—'}
+                                    </div>
+                                    {(submission as any).registrationDeadline && (
+                                      <div>
+                                        <strong>Registration Deadline:</strong> {(submission as any).registrationDeadline}
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                                {(submission.latitude !== undefined && submission.longitude !== undefined) || submission.address ? (
+                                  <div className="md:col-span-2">
+                                    <a
+                                      className="inline-flex items-center text-blue-600 hover:text-blue-800"
+                                      href={
+                                        submission.latitude !== undefined && submission.longitude !== undefined
+                                          ? `https://www.google.com/maps?q=${submission.latitude},${submission.longitude}`
+                                          : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(submission.address || '')}`
+                                      }
+                                      target="_blank"
+                                      rel="noreferrer"
+                                    >
+                                      View on Google Maps
+                                    </a>
+                                  </div>
+                                ) : null}
+                              </div>
+                              {submission.description && (
+                                <div className="mt-3 text-sm text-black/90">
+                                  <strong>Description:</strong>
+                                  <p className="mt-1 whitespace-pre-wrap">{submission.description}</p>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Section: Detailed Information */}
+                            <div className="bg-white p-4 rounded-luxury border">
+                              <h6 className="text-sm font-luxury-heading text-black mb-3">Section 2: Detailed Information</h6>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-black">
+                                {(submission as any).targetAudience && (
+                                  <div>
+                                    <strong>Target Audience:</strong> {(submission as any).targetAudience}
+                                  </div>
+                                )}
+                                {(submission as any).durationEstimate && (
+                                  <div>
+                                    <strong>Duration Estimate:</strong> {(submission as any).durationEstimate}
+                                  </div>
+                                )}
+                                {(submission as any).durationHours !== undefined && (
+                                  <div>
+                                    <strong>Duration (Hours):</strong> {(submission as any).durationHours}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Lists */}
+                              {Array.isArray((submission as any).requirements) && (submission as any).requirements.length > 0 && (
+                                <div className="mt-3">
+                                  <strong className="text-sm text-black">Requirements</strong>
+                                  <ul className="list-disc list-inside mt-1 text-sm text-black/90 space-y-0.5">
+                                    {(submission as any).requirements.map((item: string, idx: number) => (
+                                      <li key={`req-${idx}`}>{item}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {submission.submissionType === 'project' && Array.isArray((submission as any).objectives) && (submission as any).objectives.length > 0 && (
+                                <div className="mt-3">
+                                  <strong className="text-sm text-black">Objectives</strong>
+                                  <ul className="list-disc list-inside mt-1 text-sm text-black/90 space-y-0.5">
+                                    {(submission as any).objectives.map((item: string, idx: number) => (
+                                      <li key={`obj-${idx}`}>{item}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {submission.submissionType === 'event' && Array.isArray((submission as any).agenda) && (submission as any).agenda.length > 0 && (
+                                <div className="mt-3">
+                                  <strong className="text-sm text-black">Agenda</strong>
+                                  <ul className="list-disc list-inside mt-1 text-sm text-black/90 space-y-0.5">
+                                    {(submission as any).agenda.map((item: string, idx: number) => (
+                                      <li key={`agenda-${idx}`}>{item}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {Array.isArray((submission as any).activities) && (submission as any).activities.length > 0 && (
+                                <div className="mt-3">
+                                  <strong className="text-sm text-black">Activities</strong>
+                                  <ul className="list-disc list-inside mt-1 text-sm text-black/90 space-y-0.5">
+                                    {(submission as any).activities.map((item: string, idx: number) => (
+                                      <li key={`act-${idx}`}>{item}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {(submission as any).notes && (
+                                <div className="mt-3">
+                                  <strong className="text-sm text-black">Notes</strong>
+                                  <p className="mt-1 text-sm text-black/90 whitespace-pre-wrap">{(submission as any).notes}</p>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Task Checklist */}
+                            {Array.isArray((submission as any).checklist) && (submission as any).checklist.length > 0 && (
+                              <div className="bg-white p-4 rounded-luxury border">
+                                <h6 className="text-sm font-luxury-heading text-black mb-3">Task Checklist</h6>
+                                <ul className="space-y-1 text-sm">
+                                  {(submission as any).checklist.map((item: any) => (
+                                    <li key={item.id} className="flex items-center gap-2">
+                                      <span className={`inline-flex w-4 h-4 rounded border ${item.completed ? 'bg-green-500 border-green-500' : 'bg-white border-gray-300'}`} />
+                                      <span className="text-black/90">{item.text}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Reminders */}
+                            {Array.isArray((submission as any).reminders) && (submission as any).reminders.length > 0 && (
+                              <div className="bg-white p-4 rounded-luxury border">
+                                <h6 className="text-sm font-luxury-heading text-black mb-3">Reminders</h6>
+                                <ul className="space-y-1 text-sm text-black/90">
+                                  {(submission as any).reminders.map((r: any) => (
+                                    <li key={r.id} className="flex flex-col md:flex-row md:items-center md:gap-2">
+                                      <span className="font-medium">{r.title}</span>
+                                      <span className="text-black/70">{r.reminderDate} {r.reminderTime}</span>
+                                      {Array.isArray(r.notifyEmails) && r.notifyEmails.length > 0 && (
+                                        <span className="text-black/70">→ {r.notifyEmails.join(', ')}</span>
+                                      )}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Heads / Organizers */}
+                            {Array.isArray(submission.heads) && submission.heads.length > 0 && (
+                              <div className="bg-white p-4 rounded-luxury border">
+                                <h6 className="text-sm font-luxury-heading text-black mb-3">{submission.submissionType === 'project' ? 'Project Heads' : 'Event Organizers'}</h6>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                  {submission.heads.map((h) => (
+                                    <div key={h.id} className="flex items-center gap-3 p-2 rounded-lg border">
+                                      {h.image ? (
+                                        <img src={h.image} alt={h.name} className="w-10 h-10 rounded-full object-cover border" />
+                                      ) : (
+                                        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">
+                                          {h.name?.charAt(0) || '?'}
+                                        </div>
+                                      )}
+                                      <div className="min-w-0">
+                                        <div className="text-sm font-medium text-black truncate">{h.name}</div>
+                                        <div className="text-xs text-black/70 truncate">{h.designation}</div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Admin-only Information */}
+                            {(submission as any).budget || (submission as any).fundingSource || (submission as any).sponsorInfo || (submission as any).internalNotes ? (
+                              <div className="bg-white p-4 rounded-luxury border">
+                                <h6 className="text-sm font-luxury-heading text-black mb-3">Section 3: Admin-Only Information</h6>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-black">
+                                  {(submission as any).budget && (
+                                    <div>
+                                      <strong>Budget:</strong> {(submission as any).budget}
+                                    </div>
+                                  )}
+                                  {submission.submissionType === 'project' && (submission as any).fundingSource && (
+                                    <div>
+                                      <strong>Funding Source:</strong> {(submission as any).fundingSource}
+                                    </div>
+                                  )}
+                                  {submission.submissionType === 'event' && (submission as any).sponsorInfo && (
+                                    <div>
+                                      <strong>Sponsor Info:</strong> {(submission as any).sponsorInfo}
+                                    </div>
+                                  )}
+                                </div>
+                                {(submission as any).internalNotes && (
+                                  <div className="mt-2">
+                                    <strong className="text-sm text-black">Internal Notes</strong>
+                                    <p className="mt-1 text-sm text-black/90 whitespace-pre-wrap">{(submission as any).internalNotes}</p>
+                                  </div>
+                                )}
+                              </div>
+                            ) : null}
+
+                            {/* Contact Information */}
+                            <div className="bg-white p-4 rounded-luxury border">
+                              <h6 className="text-sm font-luxury-heading text-black mb-3">Contact Information</h6>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-black">
+                                <div>
+                                  <strong>Email:</strong> {submission.contactEmail || '—'}
+                                </div>
+                                <div>
+                                  <strong>Phone:</strong> {submission.contactPhone || '—'}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Audit Trail */}
+                            {Array.isArray(submission.auditTrail) && submission.auditTrail.length > 0 && (
+                              <div className="bg-white p-4 rounded-luxury border">
+                                <div className="flex items-center justify-between mb-2">
+                                  <h6 className="text-sm font-luxury-heading text-black">Audit Trail</h6>
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowAuditTrail((v) => !v)}
+                                    className="text-xs text-vibrant-orange hover:underline"
+                                  >
+                                    {showAuditTrail ? 'Hide' : 'Show'}
+                                  </button>
+                                </div>
+                                {showAuditTrail && (
+                                  <ul className="space-y-1 text-sm text-black/90">
+                                    {submission.auditTrail.map((a, idx) => (
+                                      <li key={`audit-${idx}`} className="flex flex-col md:flex-row md:items-center md:gap-2">
+                                        <span className="font-medium">{a.action}</span>
+                                        {a.details && <span className="text-black/70">— {a.details}</span>}
+                                        {a.performedAt && (
+                                          <span className="text-black/60">@ {typeof a.performedAt === 'string' ? a.performedAt : (a.performedAt?.toDate?.()?.toLocaleString?.() || '')}</span>
+                                        )}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Raw JSON toggle */}
+                            <div className="flex items-center justify-between">
+                              <button
+                                type="button"
+                                onClick={() => setShowRawJson((v) => !v)}
+                                className="text-xs text-gray-600 hover:text-gray-800"
+                              >
+                                {showRawJson ? 'Hide raw JSON' : 'Show raw JSON'}
+                              </button>
+                              <div className="text-xs text-gray-500">
+                                Submitted: {submission.submittedAt?.toDate?.()?.toLocaleString?.() || '—'}
+                              </div>
+                            </div>
+                            {showRawJson && (
+                              <pre className="mt-2 p-3 bg-gray-100 rounded-lg text-xs overflow-auto text-black">
+                                {JSON.stringify(submission, null, 2)}
+                              </pre>
+                            )}
+                          </div>
                           
                           <div className="space-y-4">
                             <div>
