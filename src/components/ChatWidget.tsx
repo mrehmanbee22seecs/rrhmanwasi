@@ -2,9 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Sparkles, Menu, Plus, Clock, Trash2, Bell, ExternalLink, Minimize2, X, Send } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useChat } from '../hooks/useChat';
-import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { findBestMatch, formatResponse } from '../utils/kbMatcher';
+import { getEnhancedKB } from '../services/localKbService';
 import ChatWidgetModal from './ChatWidgetModal';
 
 interface Message {
@@ -41,15 +42,12 @@ const ChatWidget = () => {
     closeChat,
   } = useChat(currentUser?.uid || null);
 
-  // Load KB pages for intelligent matching
+  // Load KB pages for intelligent matching from local data (no Firestore needed)
   useEffect(() => {
-    const loadKb = async () => {
+    const loadKb = () => {
       try {
-        const pagesSnapshot = await getDocs(collection(db, 'kb', 'pages', 'content'));
-        const pages: any[] = [];
-        pagesSnapshot.forEach((doc) => {
-          pages.push({ id: doc.id, ...doc.data() });
-        });
+        // Load from local seed data - works on Spark plan
+        const pages = getEnhancedKB();
         setKbPages(pages);
         console.log(`✅ Loaded ${pages.length} KB pages for instant responses`);
       } catch (error) {

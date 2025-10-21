@@ -229,10 +229,10 @@ function extractSnippet(content, queryTokens, maxLength = 800) {
  * Main matching function - Find best page match for user query
  * @param {string} query - User's question
  * @param {Array} pages - Array of KB pages from Firestore
- * @param {number} threshold - Minimum confidence score (default: 0.4)
+ * @param {number} threshold - Minimum confidence score (default: 0.15 - lowered for better coverage)
  * @returns {Object|null} - Matched page with score and snippet
  */
-export function findBestMatch(query, pages, threshold = 0.2) {
+export function findBestMatch(query, pages, threshold = 0.15) {
   if (!query || !pages || pages.length === 0) return null;
   
   // Expand query to include synonyms (including Roman Urdu) for better recall
@@ -252,20 +252,51 @@ export function findBestMatch(query, pages, threshold = 0.2) {
     // Enhanced scoring with exact keyword matches
     const exactMatchScore = calculateExactMatchScore(queryTokens, page.tokens);
     
-    // Weighted combination with exact matches getting higher priority
-    const finalScore = (tfidfScore * 0.4) + (fuzzyScore * 0.3) + (exactMatchScore * 0.3);
+    // Check if page has FAQ keywords for bonus scoring
+    const keywordBonus = page.keywords ? calculateKeywordBonus(queryTokens, page.keywords) : 0;
+    
+    // Weighted combination with exact matches and keywords getting higher priority
+    const finalScore = (tfidfScore * 0.3) + (fuzzyScore * 0.25) + (exactMatchScore * 0.3) + (keywordBonus * 0.15);
     
     if (finalScore > bestScore && finalScore >= threshold) {
       bestScore = finalScore;
       bestMatch = {
         page,
         score: finalScore,
-        snippet: extractSnippet(page.content, queryTokens, 800) // Increased snippet length
+        snippet: extractSnippet(page.content, queryTokens, 1000) // Increased snippet length for detailed answers
       };
     }
   }
   
   return bestMatch;
+}
+
+/**
+ * Calculate bonus score from FAQ keywords
+ */
+function calculateKeywordBonus(queryTokens, keywords) {
+  if (!keywords || keywords.length === 0) return 0;
+  
+  let matches = 0;
+  const querySet = new Set(queryTokens.map(t => t.toLowerCase()));
+  
+  for (const keyword of keywords) {
+    const keywordLower = keyword.toLowerCase();
+    // Check exact match or fuzzy match
+    if (querySet.has(keywordLower)) {
+      matches += 1;
+    } else {
+      // Check fuzzy match
+      for (const queryToken of queryTokens) {
+        if (stringSimilarity(queryToken, keywordLower) > 0.8) {
+          matches += 0.5;
+          break;
+        }
+      }
+    }
+  }
+  
+  return Math.min(1.0, matches / Math.max(1, queryTokens.length));
 }
 
 /**
@@ -361,23 +392,31 @@ export function formatResponse(match) {
   
   const { page, score, snippet } = match;
   
-  // Enhanced response with additional context
+  // Use full answer for FAQ pages to provide detailed responses
   let enhancedText = snippet;
   
-  // Add helpful context based on the page type
-  if (page.title && page.title.toLowerCase().includes('volunteer')) {
-    enhancedText += "\n\n💡 Quick tip: You can start volunteering immediately by filling out our volunteer form. We'll contact you within 3-5 business days!";
-  } else if (page.title && page.title.toLowerCase().includes('project')) {
-    enhancedText += "\n\n💡 Quick tip: Check our Projects page to see current opportunities and apply directly online.";
-  } else if (page.title && page.title.toLowerCase().includes('event')) {
-    enhancedText += "\n\n💡 Quick tip: Visit our Events page to see upcoming activities and register for free.";
-  } else if (page.title && page.title.toLowerCase().includes('contact')) {
-    enhancedText += "\n\n💡 Quick tip: You can also reach us through this chat for immediate assistance!";
+  // If this is an FAQ with a full answer, prefer that over the snippet
+  if (page.answer && page.answer.length > snippet.length) {
+    enhancedText = page.answer;
+  }
+  
+  // Add helpful context based on the page type or keywords
+  const keywords = (page.keywords || []).join(' ').toLowerCase();
+  const title = (page.title || '').toLowerCase();
+  
+  if (keywords.includes('volunteer') || title.includes('volunteer') || keywords.includes('join') || keywords.includes('apply')) {
+    enhancedText += "\n\n💡 Ready to join? Visit our Volunteer page to fill out the application form. We'll contact you within 3-5 business days!";
+  } else if (keywords.includes('project') || title.includes('project')) {
+    enhancedText += "\n\n💡 Want to learn more? Check our Projects page to see all current initiatives and how you can get involved!";
+  } else if (keywords.includes('event') || title.includes('event')) {
+    enhancedText += "\n\n💡 Interested? Visit our Events page to see upcoming activities and register for free!";
+  } else if (keywords.includes('contact') || title.includes('contact')) {
+    enhancedText += "\n\n💡 Need direct contact? You can also reach us via email at info@wasilah.org or through our Contact page!";
   }
   
   return {
     text: enhancedText,
-    sourceUrl: page.url,
+    sourceUrl: page.sourceUrl || page.url,
     sourcePage: page.title || page.url,
     confidence: score,
     needsAdmin: false
