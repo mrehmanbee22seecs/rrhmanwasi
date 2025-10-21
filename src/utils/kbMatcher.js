@@ -162,32 +162,55 @@ function fuzzyKeywordScore(queryTokens, docTokens) {
 /**
  * Extract relevant snippet from content
  */
-function extractSnippet(content, queryTokens, maxLength = 300) {
-  const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 0);
-  
-  let bestSentence = '';
+function extractSnippet(content, queryTokens, maxLength = 500) {
+  const sentences = content
+    .split(/([.!?]+)\s+/) // keep punctuation delimiters
+    .reduce((acc, cur, idx, arr) => {
+      // Reattach punctuation tokens to previous sentence
+      if (/[.!?]+/.test(cur) && acc.length > 0) {
+        acc[acc.length - 1] += cur + (arr[idx + 1] ? ' ' : '');
+      } else if (!/[.!?]+/.test(cur)) {
+        acc.push(cur.trim());
+      }
+      return acc;
+    }, []);
+
+  let bestIndex = -1;
   let bestScore = 0;
-  
-  for (const sentence of sentences) {
+
+  for (let i = 0; i < sentences.length; i++) {
+    const sentence = sentences[i];
     const sentenceTokens = tokenize(sentence);
-    const matches = queryTokens.filter(qt => 
+    const matches = queryTokens.filter(qt =>
       sentenceTokens.some(st => stringSimilarity(qt, st) > 0.75)
     ).length;
-    
-    const score = matches / queryTokens.length;
-    
+
+    const score = matches / Math.max(1, queryTokens.length);
     if (score > bestScore) {
       bestScore = score;
-      bestSentence = sentence.trim();
+      bestIndex = i;
     }
   }
-  
-  // If snippet too long, truncate intelligently
-  if (bestSentence.length > maxLength) {
-    return bestSentence.substring(0, maxLength) + '...';
+
+  // Prefer 1-2 sentences around the best one for completeness
+  if (bestIndex >= 0) {
+    const candidates = [sentences[bestIndex]];
+    if (sentences[bestIndex + 1]) candidates.push(sentences[bestIndex + 1]);
+    let snippet = candidates.join(' ').trim();
+
+    if (snippet.length > maxLength) {
+      // Truncate at last whitespace within limit
+      const cut = snippet.substring(0, maxLength);
+      const lastSpace = cut.lastIndexOf(' ');
+      snippet = (lastSpace > 0 ? cut.substring(0, lastSpace) : cut).trim() + '...';
+    }
+    return snippet;
   }
-  
-  return bestSentence || content.substring(0, maxLength) + '...';
+
+  // Fallback: return leading portion without breaking words
+  const cut = content.substring(0, maxLength);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > 0 ? cut.substring(0, lastSpace) : cut).trim() + '...';
 }
 
 /**

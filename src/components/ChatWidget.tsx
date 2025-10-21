@@ -61,17 +61,15 @@ const ChatWidget = () => {
 
   // Update rate limit display from latest message metadata
   useEffect(() => {
-    if (messages.length > 0) {
-      const latestUserMessage = [...messages].reverse().find(m => m.sender === 'user');
-      if (latestUserMessage?.meta?.rate) {
-        const rate = latestUserMessage.meta.rate;
-        setRateInfo({
-          remaining: rate.remaining,
-          limit: rate.limit,
-          windowSec: Math.round(rate.windowMs / 1000),
-          blockedUntil: rate.resetMs > 0 ? Date.now() + rate.resetMs : undefined,
-        });
-      }
+    const latestUserMessage = [...messages].reverse().find(m => m.sender === 'user');
+    if (latestUserMessage?.meta?.rate) {
+      const rate = latestUserMessage.meta.rate;
+      setRateInfo({
+        remaining: rate.remaining,
+        limit: rate.limit,
+        windowSec: Math.round(rate.windowMs / 1000),
+        blockedUntil: rate.resetMs > 0 ? Date.now() + rate.resetMs : undefined,
+      });
     }
   }, [messages]);
 
@@ -86,6 +84,28 @@ const ChatWidget = () => {
       modalRef.current.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
     }
   }, [isOpen]);
+
+  // Live countdown for rate limit unblocking
+  useEffect(() => {
+    if (!rateInfo?.blockedUntil) return;
+    const interval = setInterval(() => {
+      const remainingMs = rateInfo.blockedUntil - Date.now();
+      if (remainingMs <= 0) {
+        // Reset display to ready state when block expires
+        setRateInfo((prev: any) => ({
+          remaining: prev?.limit || 10,
+          limit: prev?.limit || 10,
+          windowSec: prev?.windowSec || 60,
+          blockedUntil: undefined,
+        }));
+        clearInterval(interval);
+      } else {
+        // Force re-render to update seconds UI
+        setRateInfo((prev: any) => ({ ...prev }));
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [rateInfo?.blockedUntil]);
 
   // Cross-widget coordination (hide our button when donation widget open, and vice versa)
   useEffect(() => {
@@ -103,10 +123,12 @@ const ChatWidget = () => {
     window.dispatchEvent(new CustomEvent(isOpen ? 'widget:open' : 'widget:close', { detail: 'chat' }));
   }, [isOpen]);
 
-  // Allow guests to open
-  if (!currentUser && !isOpen) {
-    // no-op
-  }
+  // Keep admin panel on top if it opens while chat is open (visual only)
+  useEffect(() => {
+    const onAdminOpen = () => setIsMinimized(true);
+    window.addEventListener('admin:open', onAdminOpen);
+    return () => window.removeEventListener('admin:open', onAdminOpen);
+  }, []);
 
   const handleNotifyAdmin = async (messageText: string) => {
     if (!currentChatId) return;
@@ -383,15 +405,15 @@ const ChatWidget = () => {
                 {rateInfo && (
                   <div className="mb-2 px-2 py-1 bg-blue-50 rounded text-xs flex items-center justify-between">
                     <span className="text-blue-700">
-                      {rateInfo.remaining > 0 ? (
+                      {rateInfo.blockedUntil && rateInfo.blockedUntil > Date.now() ? (
+                        <>⏳ Rate limit reached. Wait {Math.max(0, Math.ceil((rateInfo.blockedUntil - Date.now()) / 1000))}s</>
+                      ) : rateInfo.remaining > 0 ? (
                         <>⚡ {rateInfo.remaining}/{rateInfo.limit} messages left this minute</>
-                      ) : rateInfo.blockedUntil && rateInfo.blockedUntil > Date.now() ? (
-                        <>⏳ Rate limit reached. Wait {Math.ceil((rateInfo.blockedUntil - Date.now()) / 1000)}s</>
                       ) : (
                         <>✅ Ready to send messages</>
                       )}
                     </span>
-                    {rateInfo.remaining <= 2 && rateInfo.remaining > 0 && (
+                    {rateInfo.remaining <= 2 && rateInfo.remaining > 0 && !rateInfo.blockedUntil && (
                       <span className="text-orange-600 font-semibold">Low!</span>
                     )}
                   </div>

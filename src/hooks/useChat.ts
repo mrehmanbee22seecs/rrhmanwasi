@@ -183,7 +183,8 @@ export function useChat(userId: string | null, chatId?: string) {
         );
       }
 
-      const filteredText = filterProfanity(text);
+      const filteredText = filterProfanity(text).trim();
+      if (!filteredText) return;
 
       let activeChatId = currentChatId;
 
@@ -233,7 +234,11 @@ export function useChat(userId: string | null, chatId?: string) {
             const match = findBestMatchKb(filteredText, kbPages, 0.4);
             const response = formatResponse(match);
             
-            botResponseText = response.text;
+            // Ensure reasonably complete sentence and avoid abrupt cuts
+            botResponseText = (response.text || '').trim();
+            if (botResponseText.length < 1 && response.sourcePage) {
+              botResponseText = `Here's what I found on ${response.sourcePage}.`;
+            }
             botMeta = {
               sourceUrl: response.sourceUrl,
               sourcePage: response.sourcePage,
@@ -278,6 +283,7 @@ export function useChat(userId: string | null, chatId?: string) {
             botMeta = { needsAdmin: true, escalated: true };
           }
 
+          // Ensure we don't save empty/undefined text
           await addDoc(messagesRef, {
             sender: 'bot',
             text: botResponseText,
@@ -286,7 +292,7 @@ export function useChat(userId: string | null, chatId?: string) {
           });
 
           await updateDoc(chatRef, { lastActivityAt: serverTimestamp() });
-        })();
+        })().catch((err) => console.error('Bot response error:', err));
       }
     },
     [userId, currentChatId, messages, faqs, kbPages, isTakeover, createNewChat]
