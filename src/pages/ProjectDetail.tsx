@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Users, MapPin, Target, Clock, CheckCircle, Send, AlertCircle } from 'lucide-react';
-import { sendEmail, formatProjectApplicationEmail } from '../utils/emailService';
+import { sendEmail, formatProjectApplicationEmail, formatProjectApplicationConfirmationEmail } from '../utils/emailService';
 import { db } from '../config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { ProjectSubmission } from '../types/submissions';
@@ -343,8 +343,17 @@ const ProjectDetail = () => {
       timestamp: new Date().toISOString()
     });
     
-    sendEmail(emailData).then((success) => {
+    sendEmail(emailData).then(async (success) => {
       if (success) {
+        try {
+          await sendEmail(
+            formatProjectApplicationConfirmationEmail({
+              name: applicationData.name,
+              email: applicationData.email,
+              projectTitle: displayProject.title,
+            })
+          );
+        } catch {}
         alert(`Thank you for applying to ${displayProject.title}! We will contact you within 2-3 business days.`);
       } else {
         alert('There was an error with your application. Please try again or contact us directly.');

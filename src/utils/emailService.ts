@@ -10,6 +10,9 @@ export interface EmailData {
   text?: string;
 }
 
+const WEBHOOK_URL: string | undefined = (import.meta as any)?.env?.VITE_EMAIL_WEBHOOK_URL;
+const WEBHOOK_TOKEN: string | undefined = (import.meta as any)?.env?.VITE_EMAIL_WEBHOOK_TOKEN;
+
 export interface ChatMessage {
   message: string;
   timestamp: string;
@@ -99,6 +102,14 @@ export interface SubmissionStatusUpdate {
 }
 
 const ADMIN_EMAIL = 'muneebtahir08@gmail.com';
+
+// Common branding tokens
+const brand = {
+  gradient: 'linear-gradient(135deg, #FF6B9D, #00D9FF)',
+  headerBg: '#0F0F23',
+  accent: '#FF6B9D',
+  textDark: '#2C3E50'
+};
 
 // Format chat message email
 export const formatChatMessageEmail = (data: ChatMessage): EmailData => {
@@ -477,6 +488,126 @@ export const formatSubmissionStatusUpdateEmail = (data: SubmissionStatusUpdate):
   };
 };
 
+// Submission received (to user)
+export const formatSubmissionReceivedEmail = (data: {
+  type: 'project' | 'event';
+  title: string;
+  submitterName: string;
+  submitterEmail: string;
+  summary?: string;
+  when?: string; // date/time or start-end dates
+}): EmailData => {
+  const niceType = data.type.charAt(0).toUpperCase() + data.type.slice(1);
+  return {
+    to: data.submitterEmail,
+    subject: `${niceType} submitted successfully: ${data.title}`,
+    html: `
+      <div style="font-family: Inter, Arial, sans-serif; max-width: 640px; margin: 0 auto; background:#f8fafc">
+        <div style="background: ${brand.gradient}; padding: 20px; text-align:center;">
+          <h1 style="color:#fff; margin:0;">${niceType} Received</h1>
+        </div>
+        <div style="background:#fff; padding:24px;">
+          <p style="color:${brand.textDark}">Hello <strong>${data.submitterName}</strong>,</p>
+          <p style="color:${brand.textDark}">Thank you for your ${data.type} submission. Our team will review it shortly.</p>
+          <div style="background:#f1f5f9; border-radius:12px; padding:16px; margin:16px 0;">
+            <p style="margin:0; color:#0f172a"><strong>Title:</strong> ${data.title}</p>
+            ${data.summary ? `<p style="margin:8px 0 0; color:#334155"><strong>Summary:</strong> ${data.summary}</p>` : ''}
+            ${data.when ? `<p style="margin:8px 0 0; color:#334155"><strong>When:</strong> ${data.when}</p>` : ''}
+          </div>
+          <p style="color:${brand.textDark}">We will notify you as soon as there is an update.</p>
+          <p style="color:${brand.textDark}">— Wasilah Team</p>
+        </div>
+      </div>
+    `
+  };
+};
+
+// Event registration confirmation (to user)
+export const formatEventRegistrationConfirmationEmail = (data: {
+  name: string;
+  email: string;
+  eventTitle: string;
+  eventDate: string;
+  time?: string;
+  location?: string;
+}): EmailData => {
+  return {
+    to: data.email,
+    subject: `You're registered: ${data.eventTitle}`,
+    html: `
+      <div style="font-family: Inter, Arial, sans-serif; max-width: 640px; margin: 0 auto; background:#f8fafc">
+        <div style="background: ${brand.gradient}; padding: 20px; text-align:center;">
+          <h1 style="color:#fff; margin:0;">Registration Confirmed</h1>
+        </div>
+        <div style="background:#fff; padding:24px;">
+          <p style="color:${brand.textDark}">Hello <strong>${data.name}</strong>,</p>
+          <p style="color:${brand.textDark}">You're registered for <strong>${data.eventTitle}</strong>.</p>
+          <div style="background:#f1f5f9; border-radius:12px; padding:16px; margin:16px 0;">
+            <p style="margin:0; color:#0f172a"><strong>Date:</strong> ${data.eventDate}</p>
+            ${data.time ? `<p style=\"margin:8px 0 0; color:#334155\"><strong>Time:</strong> ${data.time}</p>` : ''}
+            ${data.location ? `<p style=\"margin:8px 0 0; color:#334155\"><strong>Location:</strong> ${data.location}</p>` : ''}
+          </div>
+          <p style="color:${brand.textDark}">We look forward to seeing you!</p>
+          <p style="color:${brand.textDark}">— Wasilah Team</p>
+        </div>
+      </div>
+    `
+  };
+};
+
+// Project application confirmation (to user)
+export const formatProjectApplicationConfirmationEmail = (data: {
+  name: string;
+  email: string;
+  projectTitle: string;
+}): EmailData => {
+  return {
+    to: data.email,
+    subject: `Application received: ${data.projectTitle}`,
+    html: `
+      <div style="font-family: Inter, Arial, sans-serif; max-width: 640px; margin: 0 auto; background:#f8fafc">
+        <div style="background: ${brand.gradient}; padding: 20px; text-align:center;">
+          <h1 style="color:#fff; margin:0;">Application Received</h1>
+        </div>
+        <div style="background:#fff; padding:24px;">
+          <p style="color:${brand.textDark}">Hello <strong>${data.name}</strong>,</p>
+          <p style="color:${brand.textDark}">Thank you for applying to <strong>${data.projectTitle}</strong>. Our team will review your application and get back to you.</p>
+          <p style="color:${brand.textDark}">— Wasilah Team</p>
+        </div>
+      </div>
+    `
+  };
+};
+
+// Reminder email (to user)
+export const formatReminderEmail = (data: {
+  to: string;
+  title: string;
+  description?: string;
+  when: string;
+  submissionTitle?: string;
+  submissionType?: 'project' | 'event';
+}): EmailData => {
+  return {
+    to: data.to,
+    subject: `Reminder: ${data.title}`,
+    html: `
+      <div style="font-family: Inter, Arial, sans-serif; max-width: 640px; margin: 0 auto; background:#f8fafc">
+        <div style="background: ${brand.gradient}; padding: 20px; text-align:center;">
+          <h1 style="color:#fff; margin:0;">Reminder</h1>
+        </div>
+        <div style="background:#fff; padding:24px;">
+          ${data.submissionTitle ? `<p style=\"color:${brand.textDark}\">For: <strong>${data.submissionTitle}</strong>${data.submissionType ? ` (${data.submissionType})` : ''}</p>` : ''}
+          <p style="color:${brand.textDark}"><strong>${data.title}</strong></p>
+          <p style="color:${brand.textDark}">When: ${data.when}</p>
+          ${data.description ? `<p style=\"color:${brand.textDark}\">${data.description}</p>` : ''}
+          <p style="color:${brand.textDark}">— Wasilah Team</p>
+        </div>
+      </div>
+    `
+  };
+};
+
 // Store response in Firebase
 const storeResponse = async (type: string, data: any) => {
   try {
@@ -495,6 +626,27 @@ const storeResponse = async (type: string, data: any) => {
 // Main email sending function (to be implemented with your backend)
 export const sendEmail = async (emailData: EmailData): Promise<boolean> => {
   try {
+    // If webhook is configured (Apps Script or any HTTPS email relay), use it
+    if (WEBHOOK_URL) {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'send',
+          token: WEBHOOK_TOKEN || '',
+          to: emailData.to,
+          subject: emailData.subject,
+          html: emailData.html,
+          text: emailData.text || undefined,
+        }),
+      });
+      if (!res.ok) {
+        console.warn('Email webhook responded with non-2xx');
+      }
+    }
+
     // Store in Firebase based on email subject/type
     const emailType = emailData.subject.toLowerCase();
     if (emailType.includes('volunteer')) {
@@ -512,7 +664,7 @@ export const sendEmail = async (emailData: EmailData): Promise<boolean> => {
     }
 
     // In a real application, this would call your backend API
-    // For now, we'll log the email data
+    // For now, also log the email data for visibility
     console.log('Sending email to:', emailData.to);
     console.log('Subject:', emailData.subject);
     console.log('HTML Content:', emailData.html);
@@ -523,6 +675,37 @@ export const sendEmail = async (emailData: EmailData): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error('Error sending email:', error);
+    return false;
+  }
+};
+
+// Spark-friendly reminder scheduler via webhook (Apps Script or any HTTPS endpoint)
+export const scheduleReminderEmails = async (params: {
+  recipients: string[];
+  subject: string;
+  html: string;
+  sendAtISO: string; // ISO datetime string
+}): Promise<boolean> => {
+  try {
+    if (!WEBHOOK_URL) {
+      console.warn('No WEBHOOK_URL configured; skipping scheduleReminderEmails');
+      return false;
+    }
+    const res = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'schedule',
+        token: WEBHOOK_TOKEN || '',
+        to: params.recipients,
+        subject: params.subject,
+        html: params.html,
+        sendAt: params.sendAtISO,
+      }),
+    });
+    return res.ok;
+  } catch (e) {
+    console.error('scheduleReminderEmails failed', e);
     return false;
   }
 };

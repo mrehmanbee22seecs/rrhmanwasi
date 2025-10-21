@@ -20,6 +20,24 @@ const admin = require('firebase-admin');
 
 admin.initializeApp();
 const db = admin.firestore();
+const { Timestamp } = admin.firestore;
+
+// Simple mail sender via 3rd-party API placeholder (HTTP webhook)
+// Replace MAIL_WEBHOOK_URL with your transactional email provider endpoint
+const axios = require('axios');
+const MAIL_WEBHOOK_URL = process.env.MAIL_WEBHOOK_URL || '';
+
+async function sendMail(emailData) {
+  if (!MAIL_WEBHOOK_URL) {
+    console.log('MAIL_WEBHOOK_URL not set; skipping actual email send. Data:', emailData.subject);
+    return;
+  }
+  try {
+    await axios.post(MAIL_WEBHOOK_URL, emailData, { timeout: 10000 });
+  } catch (e) {
+    console.error('Email send failed', e?.response?.data || e.message);
+  }
+}
 
 // Server-side rate limiting
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
@@ -182,6 +200,89 @@ exports.generateBotResponse = functions.firestore
   });
 
 /**
+ * Submission created: send confirmation to submitter and notification to admin.
+ */
+exports.onSubmissionCreate = functions.firestore
+  .document('{collectionId}/{docId}')
+  .onCreate(async (snap, context) => {
+    const { collectionId } = context.params;
+    if (collectionId !== 'project_submissions' && collectionId !== 'event_submissions') return null;
+    const data = snap.data();
+    try {
+      // Admin notification
+      await db.collection('admin_notifications').add({
+        type: 'submission_created',
+        collection: collectionId,
+        title: data.title,
+        submitterEmail: data.submitterEmail,
+        createdAt: Timestamp.now()
+      });
+    } catch (e) {
+      console.error('Failed to write admin notification', e);
+    }
+    // Optionally send email via webhook (payload mirrors emailService.EmailData)
+    const submitterEmail = data.submitterEmail;
+    if (submitterEmail) {
+      const subject = `${collectionId === 'project_submissions' ? 'Project' : 'Event'} submitted successfully: ${data.title}`;
+      const html = `<div style="font-family:Inter,Arial,sans-serif"><h2>Thank you for your submission</h2><p>We received your ${collectionId === 'project_submissions' ? 'project' : 'event'}: <strong>${data.title}</strong>.</p></div>`;
+      await sendMail({ to: submitterEmail, subject, html });
+    }
+    return null;
+  });
+
+/**
+ * Registration/applications stored in subcollections 'applications' or 'registrations'.
+ * Send a confirmation to the user on create.
+ */
+exports.onApplicationCreate = functions.firestore
+  .document('{parentCollection}/{parentId}/{subCollection}/{id}')
+  .onCreate(async (snap, context) => {
+    const { parentCollection, subCollection } = context.params;
+    const validParent = parentCollection === 'project_submissions' || parentCollection === 'event_submissions';
+    const validSub = subCollection === 'applications' || subCollection === 'registrations';
+    if (!validParent || !validSub) return null;
+    const data = snap.data();
+    const title = (await db.doc(`${parentCollection}/${context.params.parentId}`).get()).data()?.title || '';
+    const to = data.email || data.submitterEmail;
+    if (!to) return null;
+    const subject = `${parentCollection === 'project_submissions' ? 'Application' : 'Registration'} received: ${title}`;
+    const html = `<div style="font-family:Inter,Arial,sans-serif"><h2>We received your ${parentCollection === 'project_submissions' ? 'application' : 'registration'}</h2><p>Title: <strong>${title}</strong></p></div>`;
+    await sendMail({ to, subject, html });
+    return null;
+  });
+
+/**
+ * Reminder scheduler: reads from reminders collection and sends emails at exact time.
+ * Requires Cloud Scheduler + Pub/Sub (Blaze plan). For emulator/dev, it still runs hourly.
+ */
+exports.sendDueReminders = functions.pubsub.schedule('every 5 minutes').onRun(async () => {
+  const now = new Date();
+  const fiveMinAgo = new Date(now.getTime() - 5 * 60 * 1000);
+  try {
+    const snapshot = await db.collection('reminders')
+      .where('sent', '==', false)
+      .where('scheduledAt', '>=', fiveMinAgo)
+      .where('scheduledAt', '<=', now)
+      .get();
+    const batch = db.batch();
+    for (const docSnap of snapshot.docs) {
+      const rem = docSnap.data();
+      const to = Array.isArray(rem.notifyEmails) ? rem.notifyEmails : [rem.email].filter(Boolean);
+      const subject = `Reminder: ${rem.title}`;
+      const html = `<div style="font-family:Inter,Arial,sans-serif"><h2>${rem.title}</h2><p>${rem.description || ''}</p><p>When: ${rem.when || new Date(rem.scheduledAt.toDate?.() || rem.scheduledAt).toLocaleString()}</p></div>`;
+      for (const recipient of to) {
+        await sendMail({ to: recipient, subject, html });
+      }
+      batch.update(docSnap.ref, { sent: true, sentAt: Timestamp.now() });
+    }
+    await batch.commit();
+  } catch (e) {
+    console.error('sendDueReminders failed', e);
+  }
+  return null;
+});
+
+/**
  * Audit logging for admin actions
  */
 exports.logAdminAction = functions.firestore
@@ -303,5 +404,71 @@ exports.getChatAnalytics = functions.https.onCall(async (data, context) => {
   } catch (error) {
     console.error('Error getting analytics:', error);
     throw new functions.https.HttpsError('internal', 'Failed to fetch analytics');
+  }
+});
+
+/**
+ * Custom email: Verification and Password Reset (templates via webhook email provider)
+ */
+exports.sendVerificationEmailCustom = functions.https.onCall(async (data, context) => {
+  const email = (data && data.email) || (context.auth && context.auth.token && context.auth.token.email);
+  if (!email) {
+    throw new functions.https.HttpsError('invalid-argument', 'Email is required');
+  }
+  const appUrl = process.env.APP_URL || 'https://wasilah-new.web.app';
+  const actionCodeSettings = { url: `${appUrl}/dashboard`, handleCodeInApp: true };
+  try {
+    const link = await admin.auth().generateEmailVerificationLink(email, actionCodeSettings);
+    const html = `
+      <div style="font-family:Inter,Arial,sans-serif;max-width:640px;margin:0 auto;background:#0F0F23;color:#fff">
+        <div style="background:linear-gradient(135deg,#FF6B9D,#00D9FF);padding:20px;text-align:center">
+          <h1 style="margin:0;color:#fff">Verify your email</h1>
+        </div>
+        <div style="background:#ffffff;padding:24px;color:#0f172a">
+          <p>Hello,</p>
+          <p>Thanks for joining Wasilah. Please verify your email to finish setting up your account.</p>
+          <p style="margin:24px 0"><a href="${link}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 18px;border-radius:10px;text-decoration:none">Verify Email</a></p>
+          <p>If the button doesn't work, copy and paste this link into your browser:</p>
+          <p style="word-break:break-all;color:#334155">${link}</p>
+          <p>— Wasilah Team</p>
+        </div>
+      </div>`;
+    await sendMail({ to: email, subject: 'Verify your Wasilah account', html });
+    return { ok: true };
+  } catch (e) {
+    console.error('sendVerificationEmailCustom failed', e);
+    throw new functions.https.HttpsError('internal', 'Failed to send verification email');
+  }
+});
+
+exports.sendPasswordResetEmailCustom = functions.https.onCall(async (data) => {
+  const email = data && data.email;
+  if (!email) {
+    throw new functions.https.HttpsError('invalid-argument', 'Email is required');
+  }
+  const appUrl = process.env.APP_URL || 'https://wasilah-new.web.app';
+  const actionCodeSettings = { url: `${appUrl}/dashboard`, handleCodeInApp: true };
+  try {
+    const link = await admin.auth().generatePasswordResetLink(email, actionCodeSettings);
+    const html = `
+      <div style="font-family:Inter,Arial,sans-serif;max-width:640px;margin:0 auto;background:#0F0F23;color:#fff">
+        <div style="background:linear-gradient(135deg,#FF6B9D,#00D9FF);padding:20px;text-align:center">
+          <h1 style="margin:0;color:#fff">Reset your password</h1>
+        </div>
+        <div style="background:#ffffff;padding:24px;color:#0f172a">
+          <p>Hello,</p>
+          <p>You requested a password reset for your Wasilah account.</p>
+          <p style="margin:24px 0"><a href="${link}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 18px;border-radius:10px;text-decoration:none">Reset Password</a></p>
+          <p>If you didn't request this, you can safely ignore this email.</p>
+          <p>If the button doesn't work, copy and paste this link into your browser:</p>
+          <p style="word-break:break-all;color:#334155">${link}</p>
+          <p>— Wasilah Team</p>
+        </div>
+      </div>`;
+    await sendMail({ to: email, subject: 'Reset your Wasilah password', html });
+    return { ok: true };
+  } catch (e) {
+    console.error('sendPasswordResetEmailCustom failed', e);
+    throw new functions.https.HttpsError('internal', 'Failed to send password reset email');
   }
 });

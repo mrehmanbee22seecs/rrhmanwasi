@@ -141,8 +141,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const { user } = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(user, { displayName });
 
-    // Send email verification
-    await sendEmailVerification(user);
+    // Send email verification with action code settings for proper redirection
+    const actionCodeSettings = {
+      url: window.location.origin + '/dashboard',
+      handleCodeInApp: true
+    } as const;
+    await sendEmailVerification(user, actionCodeSettings);
 
     await createUserDocument(user, { phoneNumber: phone });
   };
@@ -202,7 +206,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const resetPassword = async (email: string) => {
-    await sendPasswordResetEmail(auth, email);
+    const actionCodeSettings = {
+      url: window.location.origin + '/dashboard',
+      handleCodeInApp: true
+    } as const;
+    await sendPasswordResetEmail(auth, email, actionCodeSettings);
   };
 
   const updatePassword = async (newPassword: string) => {
@@ -212,7 +220,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const resendEmailVerification = async () => {
     if (!currentUser) throw new Error('No user logged in');
-    await sendEmailVerification(currentUser);
+    const actionCodeSettings = {
+      url: window.location.origin + '/dashboard',
+      handleCodeInApp: true
+    } as const;
+    await sendEmailVerification(currentUser, actionCodeSettings);
   };
 
   const refreshUserData = async () => {

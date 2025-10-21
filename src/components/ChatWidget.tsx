@@ -187,22 +187,22 @@ const ChatWidget = () => {
   // Floating CTA button (mirrors donation widget position/animation)
   if (!isOpen) {
     return !suppressButton ? (
-      <div className="fixed bottom-6 left-1/2 translate-x-[calc(50%+100px)] z-50">
+      <div className="fixed bottom-5 md:bottom-6 left-1/2 translate-x-[calc(50%+72px)] md:translate-x-[calc(50%+100px)] z-50">
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-4 rounded-full shadow-2xl transition-all relative hover:scale-110 group"
+          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-5 py-3 md:px-6 md:py-4 rounded-full shadow-2xl transition-all relative hover:scale-110 group"
           aria-label="Open chat"
           title="Chat with us"
         >
-          <MessageCircle className="w-6 h-6 mr-2 inline" />
-          <span className="font-luxury-semibold text-lg align-middle">CHAT</span>
+          <MessageCircle className="w-5 h-5 md:w-6 md:h-6 mr-2 inline" />
+          <span className="font-luxury-semibold text-base md:text-lg align-middle">CHAT</span>
           {hasIntelligentKb && (
             <Sparkles className="w-3 h-3 absolute -top-1 -left-1 text-yellow-300 animate-pulse" title="AI-Powered" />
           )}
           {hasUnreadAdminMessages ? (
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white animate-pulse" title="Admin replied!" />
           ) : chats.length > 0 ? (
-            <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">{chats.length}</span>
+            <span className="absolute -top-2 -right-2 bg-green-500 text-white text-[10px] md:text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">{chats.length}</span>
           ) : null}
         </button>
       </div>
@@ -232,7 +232,7 @@ const ChatWidget = () => {
   return (
     <div className="fixed inset-0 z-[60]">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
-      <div ref={modalRef} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-full max-w-2xl h-[80vh] max-h-[90vh] bg-white rounded-lg shadow-2xl overflow-hidden">
+      <div ref={modalRef} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-[96vw] max-w-lg md:max-w-2xl h-[75vh] md:h-[80vh] max-h-[90vh] bg-white rounded-lg shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
           <div className="flex items-center gap-2">
             <MessageCircle className="w-5 h-5" />

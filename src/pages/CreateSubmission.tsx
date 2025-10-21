@@ -5,9 +5,11 @@ import { db } from '../config/firebase';
 import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { ProjectSubmission, EventSubmission, SubmissionType, ChecklistItem, Reminder, HeadInfo } from '../types/submissions';
+import { sendEmail, formatSubmissionReceivedEmail } from '../utils/emailService';
 import InteractiveMap from '../components/InteractiveMap';
 import ChecklistBuilder from '../components/ChecklistBuilder';
 import ReminderManager from '../components/ReminderManager';
+import { scheduleReminderEmails, formatReminderEmail } from '../utils/emailService';
 import ImageUploadField from '../components/ImageUploadField';
 import HeadsManager from '../components/HeadsManager';
 
@@ -322,6 +324,46 @@ const CreateSubmission = () => {
       } else {
         const docRef = await addDoc(collection(db, collectionName), insertData);
         console.log(`${submissionType} successfully saved with ID:`, docRef.id);
+        // Send confirmation email to submitter (client-side best-effort; server also sends)
+        try {
+          const when = submissionType === 'project'
+            ? `${projectData.startDate || ''}${projectData.endDate ? ' - ' + projectData.endDate : ''}`
+            : `${eventData.date || ''}${eventData.time ? ' @ ' + eventData.time : ''}`;
+          await sendEmail(formatSubmissionReceivedEmail({
+            type: submissionType,
+            title: submissionType === 'project' ? projectData.title : eventData.title,
+            submitterName: userData.displayName || 'Friend',
+            submitterEmail: userData.email || '',
+            summary: submissionType === 'project' ? projectData.shortSummary : eventData.shortSummary,
+            when
+          }));
+
+          // Spark-friendly reminder scheduling via webhook
+          const reminders = submissionType === 'project' ? projectData.reminders : eventData.reminders;
+          for (const rem of reminders) {
+            try {
+              const sendAt = new Date(`${rem.reminderDate}T${rem.reminderTime}`);
+              const html = formatReminderEmail({
+                to: '',
+                title: rem.title,
+                description: rem.description,
+                when: sendAt.toLocaleString(),
+                submissionTitle: submissionType === 'project' ? projectData.title : eventData.title,
+                submissionType: submissionType,
+              }).html;
+              await scheduleReminderEmails({
+                recipients: rem.notifyEmails,
+                subject: `Reminder: ${rem.title}`,
+                html,
+                sendAtISO: sendAt.toISOString(),
+              });
+            } catch (e) {
+              console.warn('Failed to schedule reminder (webhook)', e);
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to send confirmation email (client-side)', e);
+        }
       }
 
       if (finalStatus === 'pending') {
