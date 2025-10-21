@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, MessageSquare, Mail, Calendar, Target, Settings, CreditCard as Edit3, Save, X, Plus, Trash2, Eye, EyeOff, Download, CheckCircle, XCircle, Clock, FileText, Mail as MailIcon, RefreshCw, Database } from 'lucide-react';
+import { Users, MessageSquare, Mail, Calendar, Target, Settings, CreditCard as Edit3, Save, X, Plus, Trash2, Eye, EyeOff, Download, CheckCircle, XCircle, Clock, FileText, Mail as MailIcon, RefreshCw, Database, ExternalLink } from 'lucide-react';
 import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
@@ -439,14 +439,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
         {/* Navigation Tabs */}
         <div className="flex border-b border-gray-300 bg-gray-100 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400">
           {[
-            { id: 'responses', label: 'Responses', icon: MessageSquare },
-            { id: 'submissions', label: 'Submissions', icon: FileText },
-            { id: 'chats', label: 'Chats', icon: MessageSquare },
-            { id: 'kb', label: 'Knowledge Base', icon: Database },
-            { id: 'content', label: 'Edit Content', icon: Edit3 },
-            { id: 'events', label: 'Manage Events', icon: Calendar },
-            { id: 'users', label: 'User Activity', icon: Users },
-            { id: 'settings', label: 'Settings', icon: Settings }
+            { id: 'responses', label: 'Responses', shortLabel: 'Resp', icon: MessageSquare },
+            { id: 'submissions', label: 'Submissions', shortLabel: 'Sub', icon: FileText },
+            { id: 'chats', label: 'Chats', shortLabel: 'Chat', icon: MessageSquare },
+            { id: 'kb', label: 'Knowledge Base', shortLabel: 'KB', icon: Database },
+            { id: 'content', label: 'Edit Content', shortLabel: 'Edit', icon: Edit3 },
+            { id: 'events', label: 'Manage Events', shortLabel: 'Events', icon: Calendar },
+            { id: 'users', label: 'User Activity', shortLabel: 'Users', icon: Users },
+            { id: 'settings', label: 'Settings', shortLabel: 'Set', icon: Settings }
           ].map((tab) => (
             <button
               key={tab.id}

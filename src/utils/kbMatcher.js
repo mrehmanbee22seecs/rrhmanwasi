@@ -160,9 +160,9 @@ function fuzzyKeywordScore(queryTokens, docTokens) {
 }
 
 /**
- * Extract relevant snippet from content
+ * Extract relevant snippet from content with enhanced context
  */
-function extractSnippet(content, queryTokens, maxLength = 500) {
+function extractSnippet(content, queryTokens, maxLength = 800) {
   const sentences = content
     .split(/([.!?]+)\s+/) // keep punctuation delimiters
     .reduce((acc, cur, idx, arr) => {
@@ -192,10 +192,22 @@ function extractSnippet(content, queryTokens, maxLength = 500) {
     }
   }
 
-  // Prefer 1-2 sentences around the best one for completeness
+  // Enhanced snippet extraction - include more context
   if (bestIndex >= 0) {
-    const candidates = [sentences[bestIndex]];
+    const candidates = [];
+    
+    // Include 1-2 sentences before the best match for context
+    if (bestIndex > 0) candidates.push(sentences[bestIndex - 1]);
+    if (bestIndex > 1) candidates.push(sentences[bestIndex - 2]);
+    
+    // Include the best matching sentence
+    candidates.push(sentences[bestIndex]);
+    
+    // Include 2-3 sentences after for completeness
     if (sentences[bestIndex + 1]) candidates.push(sentences[bestIndex + 1]);
+    if (sentences[bestIndex + 2]) candidates.push(sentences[bestIndex + 2]);
+    if (sentences[bestIndex + 3]) candidates.push(sentences[bestIndex + 3]);
+    
     let snippet = candidates.join(' ').trim();
 
     if (snippet.length > maxLength) {
@@ -220,7 +232,7 @@ function extractSnippet(content, queryTokens, maxLength = 500) {
  * @param {number} threshold - Minimum confidence score (default: 0.4)
  * @returns {Object|null} - Matched page with score and snippet
  */
-export function findBestMatch(query, pages, threshold = 0.4) {
+export function findBestMatch(query, pages, threshold = 0.2) {
   if (!query || !pages || pages.length === 0) return null;
   
   // Expand query to include synonyms (including Roman Urdu) for better recall
@@ -237,15 +249,18 @@ export function findBestMatch(query, pages, threshold = 0.4) {
     const tfidfScore = cosineSimilarity(queryTokens, page.tokens, pages);
     const fuzzyScore = fuzzyKeywordScore(queryTokens, page.tokens);
     
-    // Weighted combination
-    const finalScore = (tfidfScore * 0.6) + (fuzzyScore * 0.4);
+    // Enhanced scoring with exact keyword matches
+    const exactMatchScore = calculateExactMatchScore(queryTokens, page.tokens);
+    
+    // Weighted combination with exact matches getting higher priority
+    const finalScore = (tfidfScore * 0.4) + (fuzzyScore * 0.3) + (exactMatchScore * 0.3);
     
     if (finalScore > bestScore && finalScore >= threshold) {
       bestScore = finalScore;
       bestMatch = {
         page,
         score: finalScore,
-        snippet: extractSnippet(page.content, queryTokens)
+        snippet: extractSnippet(page.content, queryTokens, 800) // Increased snippet length
       };
     }
   }
@@ -254,12 +269,29 @@ export function findBestMatch(query, pages, threshold = 0.4) {
 }
 
 /**
+ * Calculate exact keyword match score
+ */
+function calculateExactMatchScore(queryTokens, docTokens) {
+  let exactMatches = 0;
+  const querySet = new Set(queryTokens.map(t => t.toLowerCase()));
+  const docSet = new Set(docTokens.map(t => t.toLowerCase()));
+  
+  for (const queryToken of querySet) {
+    if (docSet.has(queryToken)) {
+      exactMatches++;
+    }
+  }
+  
+  return exactMatches / Math.max(1, queryTokens.length);
+}
+
+/**
  * Get common synonyms for query expansion
  */
 const SYNONYMS = {
   // English core
   'help': ['assist', 'support', 'aid'],
-  'volunteer': ['help', 'participate', 'contribute', 'join'],
+  'volunteer': ['help', 'participate', 'contribute', 'join', 'apply', 'register'],
   'donate': ['give', 'contribute', 'support', 'fund'],
   'project': ['program', 'initiative', 'activity'],
   'projects': ['programs', 'initiatives', 'activities'],
@@ -268,27 +300,34 @@ const SYNONYMS = {
   'location': ['address', 'place', 'office', 'where'],
   'contact': ['reach', 'email', 'phone', 'call'],
   'about': ['info', 'information', 'what', 'who'],
+  'apply': ['join', 'register', 'participate', 'volunteer', 'signup', 'sign', 'up', 'enroll', 'enrollment'],
+  'join': ['apply', 'register', 'participate', 'volunteer', 'signup', 'sign', 'up', 'enroll', 'enrollment'],
+  'register': ['apply', 'join', 'participate', 'volunteer', 'signup', 'sign', 'up', 'enroll', 'enrollment'],
+  'participate': ['join', 'apply', 'register', 'volunteer', 'involve', 'take', 'part'],
+  'how': ['way', 'method', 'process', 'steps', 'procedure'],
 
   // Roman Urdu → English bridges
   'kya': ['what', 'about', 'info'],
   'kia': ['what', 'about', 'info'],
   'hai': ['is', 'about'],
-  'kaise': ['how', 'apply', 'join', 'register'],
-  'kesay': ['how', 'apply', 'join', 'register'],
+  'kaise': ['how', 'apply', 'join', 'register', 'way', 'method'],
+  'kesay': ['how', 'apply', 'join', 'register', 'way', 'method'],
   'kahan': ['where', 'location', 'address', 'office'],
   'kidhar': ['where', 'location', 'address', 'office'],
   'kab': ['when', 'time', 'schedule'],
   'madad': ['help', 'support', 'assist'],
   'rabta': ['contact', 'reach', 'email', 'phone'],
   'raabta': ['contact', 'reach', 'email', 'phone'],
-  'volunteer': ['join', 'madad'], // keep both
-  'shamil': ['join', 'participate'],
-  'apply': ['register', 'join'],
-  'register': ['apply', 'join'],
+  'shamil': ['join', 'participate', 'apply', 'register'],
   'projectz': ['projects'],
   'ivent': ['event'],
   'ivents': ['events'],
   'wasilah': ['wasila', 'waseela', 'waseelaa'], // common variations
+  'form': ['application', 'apply', 'register'],
+  'application': ['form', 'apply', 'register'],
+  'signup': ['sign', 'up', 'join', 'apply', 'register'],
+  'enroll': ['enrollment', 'join', 'apply', 'register'],
+  'enrollment': ['enroll', 'join', 'apply', 'register'],
 };
 
 /**
@@ -308,12 +347,12 @@ export function expandQuery(query) {
 }
 
 /**
- * Format bot response with source link
+ * Format bot response with source link and enhanced details
  */
 export function formatResponse(match) {
   if (!match) {
     return {
-      text: "Hmm, I couldn't find that right now, but I've noted it for our admin to check. You'll get an update soon!",
+      text: "I couldn't find specific information about that topic in our knowledge base. However, I can help you with:\n\n• Information about Wasilah projects & events\n• How to volunteer and join our community\n• Contact information and office locations\n• General questions about our mission\n\nWould you like to know more about any of these topics, or would you prefer to speak with an admin?",
       sourceUrl: null,
       confidence: 0,
       needsAdmin: true
@@ -322,8 +361,22 @@ export function formatResponse(match) {
   
   const { page, score, snippet } = match;
   
+  // Enhanced response with additional context
+  let enhancedText = snippet;
+  
+  // Add helpful context based on the page type
+  if (page.title && page.title.toLowerCase().includes('volunteer')) {
+    enhancedText += "\n\n💡 Quick tip: You can start volunteering immediately by filling out our volunteer form. We'll contact you within 3-5 business days!";
+  } else if (page.title && page.title.toLowerCase().includes('project')) {
+    enhancedText += "\n\n💡 Quick tip: Check our Projects page to see current opportunities and apply directly online.";
+  } else if (page.title && page.title.toLowerCase().includes('event')) {
+    enhancedText += "\n\n💡 Quick tip: Visit our Events page to see upcoming activities and register for free.";
+  } else if (page.title && page.title.toLowerCase().includes('contact')) {
+    enhancedText += "\n\n💡 Quick tip: You can also reach us through this chat for immediate assistance!";
+  }
+  
   return {
-    text: snippet,
+    text: enhancedText,
     sourceUrl: page.url,
     sourcePage: page.title || page.url,
     confidence: score,
