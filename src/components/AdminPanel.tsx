@@ -217,6 +217,63 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const exportApplicationsToExcel = () => {
+    try {
+      const dateStr = new Date().toISOString().split('T')[0];
+
+      // Prepare rows
+      const projectRows = projectApplications.map((p) => ({
+        'Project Title': p.projectTitle,
+        'Name': p.name,
+        'Email': p.email,
+        'Phone': p.phone,
+        'Experience': p.experience || '',
+        'Motivation': p.motivation || '',
+        'Submitted': formatTimestamp(p.submittedAt),
+      }));
+
+      const eventRows = eventRegistrations.map((e) => ({
+        'Event Title': e.eventTitle,
+        'Event Date': e.eventDate || '',
+        'Name': e.name,
+        'Email': e.email,
+        'Phone': e.phone,
+        'Emergency Contact': e.emergencyContact || '',
+        'Dietary Restrictions': e.dietaryRestrictions || '',
+        'Experience': e.experience || '',
+        'Submitted': formatTimestamp(e.submittedAt),
+      }));
+
+      const volunteerRows = volunteerApplications.map((v) => ({
+        'First Name': v.firstName,
+        'Last Name': v.lastName,
+        'Email': v.email,
+        'Phone': v.phone,
+        'Age': v.age || '',
+        'City': v.city,
+        'Occupation': v.occupation || '',
+        'Availability': v.availability,
+        'Skills': (v.skills || []).join('; '),
+        'Interests': (v.interests || []).join('; '),
+        'Experience': v.experience || '',
+        'Motivation': v.motivation || '',
+        'Submitted': formatTimestamp(v.submittedAt),
+      }));
+
+      const wb = XLSX.utils.book_new();
+      const ws1 = XLSX.utils.json_to_sheet(projectRows);
+      const ws2 = XLSX.utils.json_to_sheet(eventRows);
+      const ws3 = XLSX.utils.json_to_sheet(volunteerRows);
+      XLSX.utils.book_append_sheet(wb, ws1, 'Project Users');
+      XLSX.utils.book_append_sheet(wb, ws2, 'Event Users');
+      XLSX.utils.book_append_sheet(wb, ws3, 'Join Us');
+      XLSX.writeFile(wb, `wasilah-applications-${dateStr}.xlsx`);
+    } catch (e) {
+      console.error('Excel export failed', e);
+      alert('Failed to export Excel. See console for details.');
+    }
+  };
+
   const fetchEditableContent = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, 'editableContent'));
@@ -798,7 +855,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                           <td className="px-3 py-2 border-b text-black whitespace-pre-wrap max-w-xs">{v.experience || '—'}</td>
                           <td className="px-3 py-2 border-b text-black whitespace-pre-wrap max-w-xs">{v.motivation || '—'}</td>
                           <td className="px-3 py-2 border-b text-black">{formatTimestamp(v.submittedAt)}</td>
-                        </tr)
+                        </tr>
                       ))}
                       {volunteerApplications.length === 0 && (
                         <tr>
@@ -1625,6 +1682,4 @@ function renderGroupedTable<T>(
   );
 }
 
-function exportApplicationsToExcel(this: any) {
-  // @ts-ignore access component state via closure if needed; here we rely on window-scoped refs is not ideal
-}
+// removed unused stub
