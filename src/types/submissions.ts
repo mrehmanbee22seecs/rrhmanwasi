@@ -45,6 +45,11 @@ export interface ProjectSubmission {
   sponsors?: string[];
   donationLink?: string;
   faq?: Array<{ question: string; answer: string }>;
+  affiliation?: {
+    type: string; // NGO, University Club, Company, Other
+    customType?: string;
+    name: string;
+  };
   budget?: string;
   timeline: string;
   submittedBy: string;
@@ -107,6 +112,12 @@ export interface EventSubmission {
     track?: string;
   }>;
   faq?: Array<{ question: string; answer: string }>;
+  projectId?: string; // Link to parent project
+  affiliation?: {
+    type: string;
+    customType?: string;
+    name: string;
+  };
   submittedBy: string;
   submitterName: string;
   submitterEmail: string;
@@ -224,6 +235,12 @@ export interface VolunteerApplicationEntry {
   interests: string[];
   availability: string;
   motivation?: string;
+  preferredRole?: string;
+  languages?: string[];
+  tShirtSize?: string;
+  emergencyContact?: { name: string; phone: string; relation?: string };
+  heardAboutUs?: string;
+  whatsappConsent?: boolean;
   submittedAt: any;
 }
 

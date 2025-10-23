@@ -539,6 +539,23 @@ const ProjectDetail = () => {
                 Quick Apply Now
                 <Send className="ml-3 w-6 h-6" />
               </button>
+
+              <button
+                onClick={() => {
+                  // Redirect to create event with prefill of affiliation and projectId via query params
+                  const params = new URLSearchParams();
+                  params.set('type', 'event');
+                  if (project) {
+                    params.set('prefillProjectId', project.id);
+                    const name = project.title || 'Affiliated Organization';
+                    params.set('prefillAffiliationName', name);
+                  }
+                  window.location.href = `/dashboard/create?${params.toString()}`;
+                }}
+                className="ml-3 inline-flex items-center px-6 py-4 rounded-luxury border-2 border-vibrant-orange text-vibrant-orange hover:bg-vibrant-orange/10"
+              >
+                Add Event to this Project
+              </button>
             </div>
             
             <div className="relative">
