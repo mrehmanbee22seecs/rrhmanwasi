@@ -29,6 +29,13 @@ const ProjectDetail = () => {
     consentLiability: false,
     consentPhoto: false,
     consentBackgroundCheck: false,
+    startAvailabilityDate: '',
+    endAvailabilityDate: '',
+    preferredContactMethod: '',
+    portfolioUrls: '' as unknown as string,
+    heardAboutUs: '',
+    emergencyContactRelation: '',
+    whatsappConsent: false,
   });
 
   useEffect(() => {
@@ -373,6 +380,13 @@ const ProjectDetail = () => {
           photo: !!applicationData.consentPhoto,
           backgroundCheck: !!applicationData.consentBackgroundCheck,
         },
+        startAvailabilityDate: applicationData.startAvailabilityDate || '',
+        endAvailabilityDate: applicationData.endAvailabilityDate || '',
+        preferredContactMethod: applicationData.preferredContactMethod || '',
+        portfolioUrls: (applicationData.portfolioUrls || '').split(',').map((s: string) => s.trim()).filter(Boolean),
+        heardAboutUs: applicationData.heardAboutUs || '',
+        emergencyContactRelation: applicationData.emergencyContactRelation || '',
+        whatsappConsent: !!applicationData.whatsappConsent,
         submittedAt: serverTimestamp(),
       });
     } catch (error) {
@@ -421,6 +435,13 @@ const ProjectDetail = () => {
       consentLiability: false,
       consentPhoto: false,
       consentBackgroundCheck: false,
+      startAvailabilityDate: '',
+      endAvailabilityDate: '',
+      preferredContactMethod: '',
+      portfolioUrls: '' as unknown as string,
+      heardAboutUs: '',
+      emergencyContactRelation: '',
+      whatsappConsent: false,
     });
     setShowApplication(false);
   };
@@ -850,6 +871,73 @@ const ProjectDetail = () => {
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Available From</label>
+                  <input
+                    type="date"
+                    value={applicationData.startAvailabilityDate}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, startAvailabilityDate: e.target.value }))}
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Available Till</label>
+                  <input
+                    type="date"
+                    value={applicationData.endAvailabilityDate}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, endAvailabilityDate: e.target.value }))}
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Preferred Contact Method</label>
+                  <input
+                    type="text"
+                    value={applicationData.preferredContactMethod}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, preferredContactMethod: e.target.value }))}
+                    placeholder="WhatsApp, Email, Phone"
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Portfolio URLs (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={applicationData.portfolioUrls as unknown as string}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, portfolioUrls: e.target.value as unknown as string }))}
+                    placeholder="LinkedIn, GitHub, Drive, etc."
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">How did you hear about us?</label>
+                  <input
+                    type="text"
+                    value={applicationData.heardAboutUs}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, heardAboutUs: e.target.value }))}
+                    placeholder="Friend, Social media, University, etc."
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Emergency Contact Relation</label>
+                  <input
+                    type="text"
+                    value={applicationData.emergencyContactRelation}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, emergencyContactRelation: e.target.value }))}
+                    placeholder="Parent, Sibling, Friend"
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block font-luxury-medium text-black mb-2">Skills (comma-separated)</label>
                 <input
@@ -938,6 +1026,10 @@ const ProjectDetail = () => {
                 <label className="flex items-center gap-2">
                   <input type="checkbox" checked={applicationData.consentBackgroundCheck} onChange={(e) => setApplicationData((p) => ({ ...p, consentBackgroundCheck: e.target.checked }))} />
                   <span className="text-black">Background Check</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={applicationData.whatsappConsent} onChange={(e) => setApplicationData((p) => ({ ...p, whatsappConsent: e.target.checked }))} />
+                  <span className="text-black">Contact via WhatsApp</span>
                 </label>
               </div>
 

@@ -25,6 +25,10 @@ const EventDetail = () => {
     accessibilityNeeds: '',
     consentLiability: false,
     consentPhoto: false,
+    preferredContactMethod: '',
+    heardAboutUs: '',
+    medicalConditions: '',
+    whatsappConsent: false,
   });
 
   useEffect(() => {
@@ -334,6 +338,10 @@ const EventDetail = () => {
         tShirtSize: registrationData.tShirtSize || '',
         accessibilityNeeds: registrationData.accessibilityNeeds || '',
         consents: { liability: !!registrationData.consentLiability, photo: !!registrationData.consentPhoto },
+        preferredContactMethod: registrationData.preferredContactMethod || '',
+        heardAboutUs: registrationData.heardAboutUs || '',
+        medicalConditions: registrationData.medicalConditions || '',
+        whatsappConsent: !!registrationData.whatsappConsent,
         submittedAt: serverTimestamp(),
       });
     } catch (error) {
@@ -383,6 +391,10 @@ const EventDetail = () => {
       accessibilityNeeds: '',
       consentLiability: false,
       consentPhoto: false,
+      preferredContactMethod: '',
+      heardAboutUs: '',
+      medicalConditions: '',
+      whatsappConsent: false,
     });
     setShowRegistration(false);
   };
@@ -920,6 +932,49 @@ const EventDetail = () => {
                   placeholder="Any accommodations required"
                   className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Preferred Contact Method</label>
+                  <input
+                    type="text"
+                    name="preferredContactMethod"
+                    value={registrationData.preferredContactMethod}
+                    onChange={handleInputChange}
+                    placeholder="WhatsApp, Email, Phone"
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">How did you hear about us?</label>
+                  <input
+                    type="text"
+                    name="heardAboutUs"
+                    value={registrationData.heardAboutUs}
+                    onChange={handleInputChange}
+                    placeholder="Friend, Social media, University, etc."
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Medical Conditions (optional)</label>
+                  <input
+                    type="text"
+                    name="medicalConditions"
+                    value={registrationData.medicalConditions}
+                    onChange={handleInputChange}
+                    placeholder="Any important information for organizers"
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+                <label className="flex items-center gap-2 mt-8">
+                  <input type="checkbox" checked={registrationData.whatsappConsent} onChange={(e) => setRegistrationData((p) => ({ ...p, whatsappConsent: e.target.checked }))} />
+                  <span className="text-black">Contact via WhatsApp</span>
+                </label>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

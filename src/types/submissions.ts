@@ -174,6 +174,14 @@ export interface ProjectApplicationEntry {
   accessibilityNeeds?: string;
   emergencyContact?: { name: string; phone: string };
   consents?: { liability?: boolean; photo?: boolean; backgroundCheck?: boolean };
+  // New UI/UX data
+  startAvailabilityDate?: string;
+  endAvailabilityDate?: string;
+  preferredContactMethod?: string;
+  portfolioUrls?: string[];
+  heardAboutUs?: string;
+  emergencyContactRelation?: string;
+  whatsappConsent?: boolean;
   submittedAt: any;
 }
 
@@ -194,6 +202,11 @@ export interface EventRegistrationEntry {
   tShirtSize?: string;
   accessibilityNeeds?: string;
   consents?: { liability?: boolean; photo?: boolean };
+  // New UI/UX data
+  preferredContactMethod?: string;
+  heardAboutUs?: string;
+  medicalConditions?: string;
+  whatsappConsent?: boolean;
   submittedAt: any;
 }
 
