@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { ProjectSubmission, EventSubmission, SubmissionStatus, ProjectApplicationEntry, EventRegistrationEntry, VolunteerApplicationEntry } from '../types/submissions';
+import { ProjectSubmission, EventSubmission, SubmissionStatus, ProjectApplicationEntry, EventRegistrationEntry, VolunteerApplicationEntry, NewsletterSubscriberEntry } from '../types/submissions';
 import { sendEmail, formatSubmissionStatusUpdateEmail } from '../utils/emailService';
 import { migrateApprovedSubmissions } from '../utils/migrateVisibility';
 import ChatsPanel from './Admin/ChatsPanel';
@@ -42,6 +42,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const [projectApplications, setProjectApplications] = useState<ProjectApplicationEntry[]>([]);
   const [eventRegistrations, setEventRegistrations] = useState<EventRegistrationEntry[]>([]);
   const [volunteerApplications, setVolunteerApplications] = useState<VolunteerApplicationEntry[]>([]);
+  const [newsletterSubscribers, setNewsletterSubscribers] = useState<NewsletterSubscriberEntry[]>([]);
   const [editableContent, setEditableContent] = useState<EditableContent[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingContent, setEditingContent] = useState<string | null>(null);
@@ -175,6 +176,21 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
         });
       });
       setVolunteerApplications(volRows);
+
+      // Newsletter Subscribers
+      const nsQ = query(collection(db, 'newsletter_subscribers'), orderBy('subscribedAt', 'desc'));
+      const nsSnap = await getDocs(nsQ);
+      const nsRows: NewsletterSubscriberEntry[] = [];
+      nsSnap.forEach((d) => {
+        const data: any = d.data();
+        nsRows.push({
+          id: d.id,
+          email: data.email || '',
+          source: data.source || '',
+          subscribedAt: data.subscribedAt,
+        });
+      });
+      setNewsletterSubscribers(nsRows);
     } catch (e) {
       console.error('Error fetching applications', e);
     }
@@ -270,6 +286,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
       XLSX.writeFile(wb, `wasilah-applications-${dateStr}.xlsx`);
     } catch (e) {
       console.error('Excel export failed', e);
+      alert('Failed to export Excel. See console for details.');
+    }
+  };
+
+  const exportRegisteredToExcel = () => {
+    try {
+      const dateStr = new Date().toISOString().split('T')[0];
+      const rows = newsletterSubscribers.map((n) => ({
+        Email: n.email,
+        Source: n.source || '',
+        Subscribed: formatTimestamp(n.subscribedAt),
+      }));
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(rows);
+      XLSX.utils.book_append_sheet(wb, ws, 'Registered Users');
+      XLSX.writeFile(wb, `wasilah-registered-users-${dateStr}.xlsx`);
+    } catch (e) {
+      console.error('Registered users export failed', e);
       alert('Failed to export Excel. See console for details.');
     }
   };
@@ -579,6 +613,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
             { id: 'responses', label: 'Responses', shortLabel: 'Resp', icon: MessageSquare },
             { id: 'submissions', label: 'Submissions', shortLabel: 'Sub', icon: FileText },
             { id: 'applications', label: 'Applications', shortLabel: 'Apps', icon: Users },
+            { id: 'registered', label: 'Registered Users', shortLabel: 'Reg', icon: Users },
             { id: 'chats', label: 'Chats', shortLabel: 'Chat', icon: MessageSquare },
             { id: 'kb', label: 'Knowledge Base', shortLabel: 'KB', icon: Database },
             { id: 'content', label: 'Edit Content', shortLabel: 'Edit', icon: Edit3 },
@@ -730,6 +765,54 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
             </div>
           )}
 
+          {activeTab === 'registered' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-luxury-heading text-black">Registered Users (Newsletter)</h3>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => exportRegisteredToExcel()}
+                    className="flex items-center px-4 py-2 bg-vibrant-orange text-white rounded-luxury hover:bg-vibrant-orange-dark transition-colors"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Excel
+                  </button>
+                  <button
+                    onClick={fetchApplications}
+                    className="flex items-center px-4 py-2 bg-logo-navy text-cream-elegant rounded-luxury hover:bg-logo-navy-light transition-colors"
+                  >
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full border text-sm">
+                  <thead className="bg-gray-100">
+                    <tr className="text-left">
+                      {['Email', 'Source', 'Subscribed'].map((h) => (
+                        <th key={h} className="px-3 py-2 border-b text-black">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {newsletterSubscribers.map((n) => (
+                      <tr key={n.id} className="odd:bg-white even:bg-gray-50">
+                        <td className="px-3 py-2 border-b text-black">{n.email}</td>
+                        <td className="px-3 py-2 border-b text-black">{n.source || '—'}</td>
+                        <td className="px-3 py-2 border-b text-black">{formatTimestamp(n.subscribedAt)}</td>
+                      </tr>
+                    ))}
+                    {newsletterSubscribers.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="px-3 py-6 text-center text-gray-600">No subscribers yet.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
           {/* KB Manager Tab */}
           {activeTab === 'kb' && (
             <div className="space-y-6">

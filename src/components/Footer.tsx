@@ -1,8 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Heart, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Send } from 'lucide-react';
 import Logo from './Logo';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 const Footer = () => {
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+
+  const handleSubscribe = async () => {
+    const email = newsletterEmail.trim();
+    if (!email) return;
+    try {
+      await addDoc(collection(db, 'newsletter_subscribers'), {
+        email: email.toLowerCase(),
+        source: 'footer',
+        subscribedAt: serverTimestamp(),
+      });
+      setNewsletterEmail('');
+      alert('Subscribed! You will receive our updates.');
+    } catch (e) {
+      console.error('Newsletter subscribe failed', e);
+      alert('Subscription failed. Please try again.');
+    }
+  };
+
   return (
     <footer className="bg-logo-navy text-cream-elegant relative overflow-hidden">
       {/* Luxury Background Elements */}
@@ -41,9 +62,11 @@ const Footer = () => {
                 <input
                   type="email"
                   placeholder="Enter your email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
                   className="flex-1 px-6 py-4 bg-logo-navy-light/60 border-2 border-vibrant-orange/30 rounded-l-luxury text-cream-elegant placeholder-cream-elegant/60 focus:outline-none focus:border-vibrant-orange font-luxury-body backdrop-blur-luxury"
                 />
-                <button className="bg-gradient-to-r from-vibrant-orange to-vibrant-orange-light text-white px-8 py-4 rounded-r-luxury font-luxury-semibold hover:from-vibrant-orange-light hover:to-vibrant-orange transition-all duration-300 flex items-center">
+                <button onClick={handleSubscribe} className="bg-gradient-to-r from-vibrant-orange to-vibrant-orange-light text-white px-8 py-4 rounded-r-luxury font-luxury-semibold hover:from-vibrant-orange-light hover:to-vibrant-orange transition-all duration-300 flex items-center">
                   <Send className="w-5 h-5" />
                 </button>
               </div>

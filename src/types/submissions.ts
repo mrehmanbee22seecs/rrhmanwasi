@@ -165,3 +165,10 @@ export interface VolunteerApplicationEntry {
   motivation?: string;
   submittedAt: any;
 }
+
+export interface NewsletterSubscriberEntry {
+  id: string;
+  email: string;
+  source?: string; // 'contact' | 'footer' | etc.
+  subscribedAt: any;
+}
