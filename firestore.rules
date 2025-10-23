@@ -16,40 +16,24 @@ service cloud.firestore {
       return isOwner(userId) || isAdmin();
     }
 
-    // === NEW CHATBOT RULES ===
-    
+    // === CHATBOT AND SUPPORTING COLLECTIONS ===
+
     // Knowledge Base - Public read, admin write
     match /kb/{document=**} {
       allow read: if true;
       allow write: if isAdmin();
     }
-    
-    // Chats - Users can read/write their own chats
-    match /chats/{chatId} {
-      allow read, write: if isAuthenticated();
-      allow create: if true; // Allow guest creation
-      
-      match /messages/{messageId} {
-        allow read, write: if isAuthenticated();
-        allow create: if true; // Allow guest messages
-      }
-    }
-    
-    // Unanswered queries - Admin only
+
+    // Unanswered queries - public create, admin manage
     match /unanswered_queries/{queryId} {
-      allow read: if isAdmin();
-      allow write: if true; // Bot can create
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
     }
-    
-    // Admin notifications - Admin only
+
+    // Admin notifications - admin manage; allow create from clients
     match /admin_notifications/{notificationId} {
-      allow read, write: if isAdmin();
-      allow create: if true; // Users can create notifications
-    }
-    
-    // System logs - Admin only
-    match /system/{document=**} {
-      allow read, write: if isAdmin();
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
     }
 
     // === EXISTING RULES ===
@@ -62,23 +46,20 @@ service cloud.firestore {
     }
 
     match /project_submissions/{submissionId} {
-      allow get: if isAdmin() || (isAuthenticated() && request.auth.uid == resource.data.submittedBy) || (resource.data.status == 'approved' && resource.data.isVisible == true);
-      allow list: if isAdmin() || (isAuthenticated() && resource.data.submittedBy == request.auth.uid) || (resource.data.status == 'approved' && resource.data.isVisible == true);
+      // Anyone can read approved + visible submissions; owners and admins can read theirs
+      allow read: if (resource.data.status == 'approved' && resource.data.isVisible == true)
+                  || (isAuthenticated() && request.auth.uid == resource.data.submittedBy)
+                  || isAdmin();
       allow create: if isAuthenticated();
-      allow update: if isAuthenticated() &&
-        (request.auth.uid == resource.data.submittedBy || isAdmin());
-      allow delete: if isAuthenticated() &&
-        (request.auth.uid == resource.data.submittedBy || isAdmin());
+      allow update, delete: if isAuthenticated() && (request.auth.uid == resource.data.submittedBy || isAdmin());
     }
 
     match /event_submissions/{submissionId} {
-      allow get: if isAdmin() || (isAuthenticated() && request.auth.uid == resource.data.submittedBy) || (resource.data.status == 'approved' && resource.data.isVisible == true);
-      allow list: if isAdmin() || (isAuthenticated() && resource.data.submittedBy == request.auth.uid) || (resource.data.status == 'approved' && resource.data.isVisible == true);
+      allow read: if (resource.data.status == 'approved' && resource.data.isVisible == true)
+                  || (isAuthenticated() && request.auth.uid == resource.data.submittedBy)
+                  || isAdmin();
       allow create: if isAuthenticated();
-      allow update: if isAuthenticated() &&
-        (request.auth.uid == resource.data.submittedBy || isAdmin());
-      allow delete: if isAuthenticated() &&
-        (request.auth.uid == resource.data.submittedBy || isAdmin());
+      allow update, delete: if isAuthenticated() && (request.auth.uid == resource.data.submittedBy || isAdmin());
     }
 
     match /hero_content/{docId} { allow read: if true; allow write: if isAdmin(); }
@@ -104,7 +85,12 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    match /system/{docId} { allow read: if true; allow write: if isAuthenticated(); }
+    // System docs (e.g., health checks, KB updates log)
+    match /system/{docId} {
+      allow read: if true;
+      // Allow authenticated writes for health checks; tighten if needed
+      allow write: if isAuthenticated();
+    }
 
     match /content/{contentId} { allow read: if true; allow write: if isAdmin(); }
     match /page_content/{pageId} { allow read: if true; allow write: if isAdmin(); }
@@ -124,6 +110,27 @@ service cloud.firestore {
 
     match /auditLogs/{logId} {
       allow read, write: if isAdmin();
+    }
+
+    // === APPLICATIONS, REGISTRATIONS, NEWSLETTER, EVENTS ===
+    match /project_applications/{id} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /event_registrations/{id} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /newsletter_subscribers/{id} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /{document=**} { allow read, write: if false; }

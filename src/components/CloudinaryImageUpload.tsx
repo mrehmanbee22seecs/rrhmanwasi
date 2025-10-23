@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, X, AlertCircle, CheckCircle, Loader } from 'lucide-react';
-import axios from 'axios';
-import { compressImage, getCloudinaryConfig } from '../utils/cloudinaryHelpers';
+import { compressImage } from '../utils/cloudinaryHelpers';
+import { uploadWithSignature } from '../utils/cloudinarySignedUpload';
 
 interface CloudinaryImageUploadProps {
   label: string;
@@ -82,35 +82,14 @@ export default function CloudinaryImageUpload({
       }
     }
 
-    let config;
     try {
-      config = getCloudinaryConfig('uploads');
-    } catch (err: any) {
-      setError(err.message);
-      setUploading(false);
-      return;
-    }
+      const res = await uploadWithSignature({
+        file: fileToUpload,
+        folder: 'uploads',
+        onProgress: (p) => setUploadProgress(p),
+      });
 
-    const formData = new FormData();
-    formData.append('file', fileToUpload);
-    formData.append('upload_preset', config.uploadPreset);
-    formData.append('folder', config.folder);
-
-    try {
-      const res = await axios.post(
-        `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`,
-        formData,
-        {
-          onUploadProgress: (progressEvent) => {
-            if (progressEvent.total) {
-              const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-              setUploadProgress(progress);
-            }
-          },
-        }
-      );
-
-      const uploadedUrl = res.data.secure_url;
+      const uploadedUrl = res.secure_url;
       setPreview(uploadedUrl);
       onChange(uploadedUrl);
       setUploadProgress(100);
@@ -119,7 +98,7 @@ export default function CloudinaryImageUpload({
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
       console.error('Cloudinary upload error:', err);
-      const errorMessage = err.response?.data?.error?.message || 'Upload failed. Please try again.';
+      const errorMessage = err?.message || 'Upload failed. Please try again.';
       setError(errorMessage);
     } finally {
       setUploading(false);

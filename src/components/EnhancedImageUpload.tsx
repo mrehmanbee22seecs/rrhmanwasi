@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, X, AlertCircle, CheckCircle, Loader, RefreshCw } from 'lucide-react';
 import axios, { CancelTokenSource } from 'axios';
-import { compressImage, getCloudinaryConfig } from '../utils/cloudinaryHelpers';
+import { compressImage } from '../utils/cloudinaryHelpers';
+import { uploadWithSignature } from '../utils/cloudinarySignedUpload';
 
 interface EnhancedImageUploadProps {
   label: string;
@@ -135,19 +136,6 @@ export default function EnhancedImageUpload({
           }
         }
 
-        let config;
-        try {
-          config = getCloudinaryConfig(folder);
-        } catch (err: any) {
-          reject(err);
-          return;
-        }
-
-        const formData = new FormData();
-        formData.append('file', fileToUpload);
-        formData.append('upload_preset', config.uploadPreset);
-        formData.append('folder', config.folder);
-
         console.log('Starting Cloudinary upload. Size:', (fileToUpload.size / 1024).toFixed(2), 'KB');
 
         // Create cancel token
@@ -164,28 +152,21 @@ export default function EnhancedImageUpload({
         // Start stall detection
         stallCheckRef.current = setInterval(checkForStall, STALL_CHECK_INTERVAL_MS);
 
-        const res = await axios.post(
-          `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`,
-          formData,
-          {
-            cancelToken: cancelToken.token,
-            onUploadProgress: (progressEvent) => {
-              if (progressEvent.total) {
-                const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                setUploadProgress(progress);
-                lastProgressRef.current = progress;
-                lastProgressTimeRef.current = Date.now();
-                console.log(`Upload progress: ${progress}% (${progressEvent.loaded}/${progressEvent.total} bytes)`);
-              }
-            },
-          }
-        );
+        const res = await uploadWithSignature({
+          file: fileToUpload,
+          folder,
+          onProgress: (p) => {
+            setUploadProgress(p);
+            lastProgressRef.current = p;
+            lastProgressTimeRef.current = Date.now();
+          },
+        });
 
         // Cleanup
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         if (stallCheckRef.current) clearInterval(stallCheckRef.current);
 
-        const downloadURL = res.data.secure_url;
+        const downloadURL = res.secure_url;
         console.log('Upload completed. URL:', downloadURL);
         resolve(downloadURL);
       } catch (error: any) {

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Upload, Trash2 } from 'lucide-react';
 import axios from 'axios';
-import { compressImage, getCloudinaryConfig } from '../utils/cloudinaryHelpers';
+import { compressImage } from '../utils/cloudinaryHelpers';
+import { uploadWithSignature } from '../utils/cloudinarySignedUpload';
 
 interface Field {
   name: string;
@@ -76,19 +77,12 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
         }
       }
 
-      const config = getCloudinaryConfig('content');
+      const res = await uploadWithSignature({
+        file: fileToUpload,
+        folder: 'content',
+      });
 
-      const formData = new FormData();
-      formData.append('file', fileToUpload);
-      formData.append('upload_preset', config.uploadPreset);
-      formData.append('folder', config.folder);
-
-      const res = await axios.post(
-        `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`,
-        formData
-      );
-
-      const url = res.data.secure_url;
+      const url = res.secure_url;
       setFormData(prev => ({ ...prev, [fieldName]: url }));
     } catch (error: any) {
       console.error('Error uploading image:', error);

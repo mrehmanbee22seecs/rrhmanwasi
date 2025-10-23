@@ -71,6 +71,14 @@
       ]
     },
     {
+      "collectionGroup": "project_submissions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "submittedBy", "order": "ASCENDING" },
+        { "fieldPath": "submittedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "event_submissions",
       "queryScope": "COLLECTION",
       "fields": [
@@ -86,6 +94,29 @@
           "fieldPath": "submittedAt",
           "order": "DESCENDING"
         }
+      ]
+    }
+    ,
+    {
+      "collectionGroup": "event_submissions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "submittedBy", "order": "ASCENDING" },
+        { "fieldPath": "submittedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "unanswered_queries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "newsletter_subscribers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "subscribedAt", "order": "DESCENDING" }
       ]
     }
   ],
