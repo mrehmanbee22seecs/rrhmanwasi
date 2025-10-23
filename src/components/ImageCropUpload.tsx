@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, X, AlertCircle, CheckCircle, Loader, Crop, RotateCw, ZoomIn, ZoomOut } from 'lucide-react';
 import axios from 'axios';
+import { uploadWithSignature } from '../utils/cloudinarySignedUpload';
 
 interface ImageCropUploadProps {
   label: string;
@@ -248,32 +249,12 @@ export default function ImageCropUpload({
   };
 
   const uploadToCloudinary = async (blob: Blob): Promise<string> => {
-    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-
-    if (!cloudName || !uploadPreset) {
-      throw new Error('Cloudinary configuration missing. Please contact support.');
-    }
-
-    const formData = new FormData();
-    formData.append('file', blob);
-    formData.append('upload_preset', uploadPreset);
-    formData.append('folder', `wasilah/${folder}`);
-
-    const res = await axios.post(
-      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-      formData,
-      {
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setUploadProgress(progress);
-          }
-        }
-      }
-    );
-
-    return res.data.secure_url;
+    const res = await uploadWithSignature({
+      file: blob,
+      folder,
+      onProgress: (p) => setUploadProgress(p),
+    });
+    return res.secure_url;
   };
 
   const handleCropConfirm = async () => {

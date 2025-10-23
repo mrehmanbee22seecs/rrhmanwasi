@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, X, Image as ImageIcon, Loader, AlertCircle, CheckCircle } from 'lucide-react';
-import axios from 'axios';
-import { compressImage, getCloudinaryConfig } from '../utils/cloudinaryHelpers';
+import { compressImage } from '../utils/cloudinaryHelpers';
+import { uploadWithSignature } from '../utils/cloudinarySignedUpload';
 
 interface ImageUploadFieldProps {
   label: string;
@@ -79,36 +79,14 @@ export default function ImageUploadField({
       }
     }
 
-    let config;
     try {
-      config = getCloudinaryConfig(folder);
-    } catch (err: any) {
-      setError(err.message);
-      setUploading(false);
-      e.target.value = '';
-      return;
-    }
+      const res = await uploadWithSignature({
+        file: fileToUpload,
+        folder,
+        onProgress: (p) => setUploadProgress(p),
+      });
 
-    const formData = new FormData();
-    formData.append('file', fileToUpload);
-    formData.append('upload_preset', config.uploadPreset);
-    formData.append('folder', config.folder);
-
-    try {
-      const res = await axios.post(
-        `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`,
-        formData,
-        {
-          onUploadProgress: (progressEvent) => {
-            if (progressEvent.total) {
-              const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-              setUploadProgress(progress);
-            }
-          },
-        }
-      );
-
-      const downloadURL = res.data.secure_url;
+      const downloadURL = res.secure_url;
       setUploadProgress(100);
       setPreview(downloadURL);
       onChange(downloadURL);
@@ -117,7 +95,7 @@ export default function ImageUploadField({
       setTimeout(() => setSuccess(false), 3000);
     } catch (error: any) {
       console.error('Error uploading image:', error);
-      const errorMessage = error.response?.data?.error?.message || 'Failed to upload image. Please try again.';
+      const errorMessage = error?.message || 'Failed to upload image. Please try again.';
       setError(errorMessage);
     } finally {
       setUploading(false);
