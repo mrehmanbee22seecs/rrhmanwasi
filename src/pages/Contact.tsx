@@ -5,6 +5,53 @@ import { useAuth } from '../contexts/AuthContext';
 import { useActivityLogger } from '../hooks/useActivityLogger';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { useMagneticEffect } from '../hooks/useMagneticEffect';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../config/firebase';
+
+const NewsletterSignup: React.FC<{ source?: 'contact' | 'footer' | 'other'; }> = ({ source = 'contact' }) => {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const subscribe = async () => {
+    const value = email.trim();
+    if (!value) return;
+    setLoading(true);
+    try {
+      await addDoc(collection(db, 'newsletter_subscribers'), {
+        email: value.toLowerCase(),
+        source,
+        subscribedAt: serverTimestamp(),
+      });
+      setEmail('');
+      alert('Subscribed! You will receive our updates.');
+    } catch (e) {
+      console.error('Newsletter subscribe failed', e);
+      alert('Subscription failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex w-full">
+      <input
+        type="email"
+        placeholder="Your email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        disabled={loading}
+        className="flex-1 px-4 py-3 border-2 border-gold-accent/30 rounded-l-luxury focus:outline-none focus:ring-2 focus:ring-gold-accent font-luxury-body"
+      />
+      <button
+        onClick={subscribe}
+        disabled={loading}
+        className="bg-gold-accent text-navy-deep px-6 py-3 rounded-r-luxury hover:bg-gold-light transition-colors font-luxury-semibold disabled:opacity-60"
+      >
+        {loading ? 'Subscribing...' : 'Subscribe'}
+      </button>
+    </div>
+  );
+};
 
 const Contact = () => {
   const { logCustomActivity } = useActivityLogger();
@@ -313,14 +360,7 @@ const Contact = () => {
                 Subscribe to our newsletter to receive updates about our latest projects and events.
               </p>
               <div className="flex">
-                <input
-                  type="email"
-                  placeholder="Your email"
-                  className="flex-1 px-4 py-3 border-2 border-gold-accent/30 rounded-l-luxury focus:outline-none focus:ring-2 focus:ring-gold-accent font-luxury-body"
-                />
-                <button className="bg-gold-accent text-navy-deep px-6 py-3 rounded-r-luxury hover:bg-gold-light transition-colors font-luxury-semibold">
-                  Subscribe
-                </button>
+                <NewsletterSignup source="contact" />
               </div>
             </div>
           </div>

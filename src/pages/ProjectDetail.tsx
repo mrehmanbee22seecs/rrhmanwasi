@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Users, MapPin, Target, Clock, CheckCircle, Send, AlertCircle } from 'lucide-react';
 import { sendEmail, formatProjectApplicationEmail, formatProjectApplicationConfirmationEmail } from '../utils/emailService';
 import { db } from '../config/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { ProjectSubmission } from '../types/submissions';
 
 const ProjectDetail = () => {
@@ -16,7 +16,26 @@ const ProjectDetail = () => {
     email: '',
     phone: '',
     experience: '',
-    motivation: ''
+    motivation: '',
+    preferredRole: '',
+    availability: '',
+    skills: [] as string[],
+    languageProficiency: [] as string[],
+    transportAvailable: false,
+    equipment: [] as string[],
+    accessibilityNeeds: '',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+    consentLiability: false,
+    consentPhoto: false,
+    consentBackgroundCheck: false,
+    startAvailabilityDate: '',
+    endAvailabilityDate: '',
+    preferredContactMethod: '',
+    portfolioUrls: '' as unknown as string,
+    heardAboutUs: '',
+    emergencyContactRelation: '',
+    whatsappConsent: false,
   });
 
   useEffect(() => {
@@ -331,10 +350,48 @@ const ProjectDetail = () => {
     }));
   };
 
-  const handleApplicationSubmit = (e: React.FormEvent) => {
+  const handleApplicationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!displayProject) return;
+
+    // Save structured application entry
+    try {
+      await addDoc(collection(db, 'project_applications'), {
+        projectId: id,
+        projectTitle: displayProject.title,
+        name: applicationData.name,
+        email: applicationData.email,
+        phone: applicationData.phone,
+        experience: applicationData.experience || '',
+        motivation: applicationData.motivation || '',
+        preferredRole: applicationData.preferredRole || '',
+        availability: applicationData.availability || '',
+        skills: applicationData.skills || [],
+        languageProficiency: applicationData.languageProficiency || [],
+        transportAvailable: !!applicationData.transportAvailable,
+        equipment: applicationData.equipment || [],
+        accessibilityNeeds: applicationData.accessibilityNeeds || '',
+        emergencyContact: applicationData.emergencyContactName || applicationData.emergencyContactPhone
+          ? { name: applicationData.emergencyContactName, phone: applicationData.emergencyContactPhone }
+          : null,
+        consents: {
+          liability: !!applicationData.consentLiability,
+          photo: !!applicationData.consentPhoto,
+          backgroundCheck: !!applicationData.consentBackgroundCheck,
+        },
+        startAvailabilityDate: applicationData.startAvailabilityDate || '',
+        endAvailabilityDate: applicationData.endAvailabilityDate || '',
+        preferredContactMethod: applicationData.preferredContactMethod || '',
+        portfolioUrls: (applicationData.portfolioUrls || '').split(',').map((s: string) => s.trim()).filter(Boolean),
+        heardAboutUs: applicationData.heardAboutUs || '',
+        emergencyContactRelation: applicationData.emergencyContactRelation || '',
+        whatsappConsent: !!applicationData.whatsappConsent,
+        submittedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Failed to save project application:', error);
+    }
 
     // Send email notification
     const emailData = formatProjectApplicationEmail({
@@ -360,7 +417,32 @@ const ProjectDetail = () => {
       }
     });
     
-    setApplicationData({ name: '', email: '', phone: '', experience: '', motivation: '' });
+    setApplicationData({
+      name: '',
+      email: '',
+      phone: '',
+      experience: '',
+      motivation: '',
+      preferredRole: '',
+      availability: '',
+      skills: [],
+      languageProficiency: [],
+      transportAvailable: false,
+      equipment: [],
+      accessibilityNeeds: '',
+      emergencyContactName: '',
+      emergencyContactPhone: '',
+      consentLiability: false,
+      consentPhoto: false,
+      consentBackgroundCheck: false,
+      startAvailabilityDate: '',
+      endAvailabilityDate: '',
+      preferredContactMethod: '',
+      portfolioUrls: '' as unknown as string,
+      heardAboutUs: '',
+      emergencyContactRelation: '',
+      whatsappConsent: false,
+    });
     setShowApplication(false);
   };
 
@@ -410,9 +492,19 @@ const ProjectDetail = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <div className="flex items-center space-x-4 mb-6">
-                <span className="px-4 py-2 bg-green-100 text-green-800 rounded-luxury font-luxury-semibold">
-                  Active
-                </span>
+                {(() => {
+                  const now = new Date();
+                  const start = displayProject.startDate ? new Date(displayProject.startDate) : null;
+                  const end = displayProject.endDate ? new Date(displayProject.endDate) : null;
+                  let tag = 'Active';
+                  if (start && now < start) tag = 'Upcoming';
+                  else if (end && now > end) tag = 'Completed';
+                  return (
+                    <span className={`px-4 py-2 ${tag === 'Upcoming' ? 'bg-blue-100 text-blue-800' : tag === 'Completed' ? 'bg-gray-200 text-gray-800' : 'bg-green-100 text-green-800'} rounded-luxury font-luxury-semibold`}>
+                      {tag}
+                    </span>
+                  );
+                })()}
                 <span className="px-4 py-2 bg-vibrant-orange/20 text-vibrant-orange-dark rounded-luxury font-luxury-semibold capitalize">
                   {displayProject.category}
                 </span>
@@ -446,6 +538,23 @@ const ProjectDetail = () => {
               >
                 Quick Apply Now
                 <Send className="ml-3 w-6 h-6" />
+              </button>
+
+              <button
+                onClick={() => {
+                  // Redirect to create event with prefill of affiliation and projectId via query params
+                  const params = new URLSearchParams();
+                  params.set('type', 'event');
+                  if (project) {
+                    params.set('prefillProjectId', project.id);
+                    const name = project.title || 'Affiliated Organization';
+                    params.set('prefillAffiliationName', name);
+                  }
+                  window.location.href = `/dashboard/create?${params.toString()}`;
+                }}
+                className="ml-3 inline-flex items-center px-6 py-4 rounded-luxury border-2 border-vibrant-orange text-vibrant-orange hover:bg-vibrant-orange/10"
+              >
+                Add Event to this Project
               </button>
             </div>
             
@@ -523,6 +632,104 @@ const ProjectDetail = () => {
 
             {/* Sidebar */}
             <div className="space-y-8">
+              {/* Capacity & Skills */}
+              {(displayProject.capacity || displayProject.requiredSkills || displayProject.preferredSkills) && (
+                <div className="luxury-card bg-cream-white p-8">
+                  <h3 className="text-2xl font-luxury-heading text-black mb-4">Participation & Skills</h3>
+                  <div className="space-y-3 text-black">
+                    {typeof displayProject.capacity === 'number' && (
+                      <div>
+                        <strong>Capacity:</strong> {displayProject.capacity}
+                      </div>
+                    )}
+                    {Array.isArray(displayProject.requiredSkills) && displayProject.requiredSkills.length > 0 && (
+                      <div>
+                        <strong>Required Skills:</strong>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {displayProject.requiredSkills.map((s: string, i: number) => (
+                            <span key={i} className="px-2 py-1 bg-vibrant-orange/10 rounded text-black">{s}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {Array.isArray(displayProject.preferredSkills) && displayProject.preferredSkills.length > 0 && (
+                      <div>
+                        <strong>Preferred Skills:</strong>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {displayProject.preferredSkills.map((s: string, i: number) => (
+                            <span key={i} className="px-2 py-1 bg-cream-elegant rounded text-black">{s}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Roles */}
+              {Array.isArray(displayProject.roles) && displayProject.roles.length > 0 && (
+                <div className="luxury-card bg-cream-white p-8">
+                  <h3 className="text-2xl font-luxury-heading text-black mb-4">Roles Needed</h3>
+                  <div className="space-y-4">
+                    {displayProject.roles.map((r: any, i: number) => (
+                      <div key={i} className="border rounded-lg p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="text-black font-semibold">{r.name}</div>
+                          {typeof r.capacity === 'number' && (
+                            <div className="text-sm text-black/70">Spots: {r.capacity}</div>
+                          )}
+                        </div>
+                        {Array.isArray(r.duties) && r.duties.length > 0 && (
+                          <ul className="list-disc list-inside mt-2 text-black/90 text-sm">
+                            {r.duties.map((d: string, idx: number) => <li key={idx}>{d}</li>)}
+                          </ul>
+                        )}
+                        {r.minHoursPerWeek && (
+                          <div className="text-xs text-black/70 mt-1">Min hours/week: {r.minHoursPerWeek}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Logistics */}
+              {(displayProject.materialsList || displayProject.accessibilityInfo || displayProject.safetyNotes) && (
+                <div className="luxury-card bg-cream-white p-8">
+                  <h3 className="text-2xl font-luxury-heading text-black mb-4">Logistics</h3>
+                  <div className="space-y-3 text-black">
+                    {Array.isArray(displayProject.materialsList) && displayProject.materialsList.length > 0 && (
+                      <div>
+                        <strong>What to bring:</strong>
+                        <ul className="list-disc list-inside mt-2">
+                          {displayProject.materialsList.map((m: string, i: number) => <li key={i}>{m}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {displayProject.accessibilityInfo && (
+                      <div><strong>Accessibility:</strong> {displayProject.accessibilityInfo}</div>
+                    )}
+                    {displayProject.safetyNotes && (
+                      <div><strong>Safety:</strong> {displayProject.safetyNotes}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* FAQ */}
+              {Array.isArray(displayProject.faq) && displayProject.faq.length > 0 && (
+                <div className="luxury-card bg-cream-white p-8">
+                  <h3 className="text-2xl font-luxury-heading text-black mb-4">FAQ</h3>
+                  <div className="space-y-3">
+                    {displayProject.faq.map((f: any, i: number) => (
+                      <div key={i}>
+                        <div className="font-semibold text-black">{f.question}</div>
+                        <div className="text-black/80">{f.answer}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {/* Requirements */}
               {displayProject.requirements && displayProject.requirements.length > 0 && displayProject.requirements[0] !== '' && (
               <div className="luxury-card bg-cream-white p-8">
@@ -556,13 +763,7 @@ const ProjectDetail = () => {
                 )}
               </div>
 
-              {/* Quick Apply Button */}
-              <button
-                onClick={() => setShowApplication(true)}
-                className="w-full btn-luxury-primary py-4 px-6 text-lg"
-              >
-                Apply for This Project
-              </button>
+              {/* Single Apply Button (kept primary above) */}
             </div>
           </div>
         </div>
@@ -659,6 +860,194 @@ const ProjectDetail = () => {
                   placeholder="Briefly describe any relevant experience or skills..."
                   className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
                 />
+              </div>
+
+              {/* New Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Preferred Role</label>
+                  <input
+                    type="text"
+                    name="preferredRole"
+                    value={applicationData.preferredRole}
+                    onChange={handleInputChange}
+                    placeholder="Coordinator, Field Volunteer, Media, etc."
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Availability (hours/week)</label>
+                  <input
+                    type="text"
+                    name="availability"
+                    value={applicationData.availability}
+                    onChange={handleInputChange}
+                    placeholder="e.g. 6-8 hrs/week, evenings, weekends"
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Available From</label>
+                  <input
+                    type="date"
+                    value={applicationData.startAvailabilityDate}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, startAvailabilityDate: e.target.value }))}
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Available Till</label>
+                  <input
+                    type="date"
+                    value={applicationData.endAvailabilityDate}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, endAvailabilityDate: e.target.value }))}
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Preferred Contact Method</label>
+                  <input
+                    type="text"
+                    value={applicationData.preferredContactMethod}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, preferredContactMethod: e.target.value }))}
+                    placeholder="WhatsApp, Email, Phone"
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Portfolio URLs (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={applicationData.portfolioUrls as unknown as string}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, portfolioUrls: e.target.value as unknown as string }))}
+                    placeholder="LinkedIn, GitHub, Drive, etc."
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">How did you hear about us?</label>
+                  <input
+                    type="text"
+                    value={applicationData.heardAboutUs}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, heardAboutUs: e.target.value }))}
+                    placeholder="Friend, Social media, University, etc."
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Emergency Contact Relation</label>
+                  <input
+                    type="text"
+                    value={applicationData.emergencyContactRelation}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, emergencyContactRelation: e.target.value }))}
+                    placeholder="Parent, Sibling, Friend"
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-luxury-medium text-black mb-2">Skills (comma-separated)</label>
+                <input
+                  type="text"
+                  value={applicationData.skills.join(', ')}
+                  onChange={(e) => setApplicationData((p) => ({ ...p, skills: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+                  placeholder="Project mgmt, First Aid, Urdu, Photography, etc."
+                  className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Languages (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={applicationData.languageProficiency.join(', ')}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, languageProficiency: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+                    placeholder="Urdu, English, Punjabi"
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+                <div className="flex items-center gap-3 mt-8">
+                  <input
+                    type="checkbox"
+                    id="transportAvailable"
+                    checked={applicationData.transportAvailable}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, transportAvailable: e.target.checked }))}
+                  />
+                  <label htmlFor="transportAvailable" className="text-black">I have my own transport</label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-luxury-medium text-black mb-2">Equipment (comma-separated)</label>
+                <input
+                  type="text"
+                  value={applicationData.equipment.join(', ')}
+                  onChange={(e) => setApplicationData((p) => ({ ...p, equipment: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+                  placeholder="Laptop, Camera, Gloves"
+                  className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                />
+              </div>
+
+              <div>
+                <label className="block font-luxury-medium text-black mb-2">Accessibility Needs (optional)</label>
+                <input
+                  type="text"
+                  value={applicationData.accessibilityNeeds}
+                  onChange={(e) => setApplicationData((p) => ({ ...p, accessibilityNeeds: e.target.value }))}
+                  placeholder="Any accommodations required"
+                  className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Emergency Contact Name</label>
+                  <input
+                    type="text"
+                    value={applicationData.emergencyContactName}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, emergencyContactName: e.target.value }))}
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Emergency Contact Phone</label>
+                  <input
+                    type="tel"
+                    value={applicationData.emergencyContactPhone}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, emergencyContactPhone: e.target.value }))}
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={applicationData.consentLiability} onChange={(e) => setApplicationData((p) => ({ ...p, consentLiability: e.target.checked }))} />
+                  <span className="text-black">Liability Waiver</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={applicationData.consentPhoto} onChange={(e) => setApplicationData((p) => ({ ...p, consentPhoto: e.target.checked }))} />
+                  <span className="text-black">Photo Consent</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={applicationData.consentBackgroundCheck} onChange={(e) => setApplicationData((p) => ({ ...p, consentBackgroundCheck: e.target.checked }))} />
+                  <span className="text-black">Background Check</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={applicationData.whatsappConsent} onChange={(e) => setApplicationData((p) => ({ ...p, whatsappConsent: e.target.checked }))} />
+                  <span className="text-black">Contact via WhatsApp</span>
+                </label>
               </div>
 
               <div>

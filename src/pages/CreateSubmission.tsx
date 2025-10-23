@@ -24,9 +24,20 @@ const CreateSubmission = () => {
   useEffect(() => {
     const typeParam = searchParams.get('type');
     const draftParam = searchParams.get('draft');
+    const prefillProjectId = searchParams.get('prefillProjectId');
+    const prefillAffiliationName = searchParams.get('prefillAffiliationName');
 
     if (typeParam === 'event' || typeParam === 'project') {
       setSubmissionType(typeParam as SubmissionType);
+    }
+
+    if (prefillProjectId) {
+      setSubmissionType('event');
+      setEventData(prev => ({
+        ...prev,
+        projectId: prefillProjectId,
+        affiliation: { ...prev.affiliation, name: prefillAffiliationName || prev.affiliation.name, type: prev.affiliation.type || 'University Club' }
+      }));
     }
 
     if (draftParam) {
@@ -67,7 +78,8 @@ const CreateSubmission = () => {
     notes: '',
     checklist: [] as ChecklistItem[],
     reminders: [] as Reminder[],
-    heads: [] as HeadInfo[]
+    heads: [] as HeadInfo[],
+    affiliation: { type: '', customType: '', name: '' }
   });
 
   const [eventData, setEventData] = useState({
@@ -99,7 +111,9 @@ const CreateSubmission = () => {
     notes: '',
     checklist: [] as ChecklistItem[],
     reminders: [] as Reminder[],
-    heads: [] as HeadInfo[]
+    heads: [] as HeadInfo[],
+    affiliation: { type: '', customType: '', name: '' },
+    projectId: ''
   });
 
   const projectCategories = ['Education', 'Healthcare', 'Environment', 'Technology', 'Community Development', 'Youth Programs'];
@@ -265,6 +279,7 @@ const CreateSubmission = () => {
           timeline: projectData.timeline,
           notes: projectData.notes,
           heads: projectData.heads,
+          affiliation: projectData.affiliation,
           submittedBy: currentUser.uid,
           submitterName: userData.displayName || 'Unknown User',
           submitterEmail: userData.email || '',
@@ -304,6 +319,8 @@ const CreateSubmission = () => {
           internalNotes: eventData.internalNotes,
           notes: eventData.notes,
           heads: eventData.heads,
+          affiliation: eventData.affiliation,
+          projectId: eventData.projectId,
           submittedBy: currentUser.uid,
           submitterName: userData.displayName || 'Unknown User',
           submitterEmail: userData.email || '',
@@ -499,6 +516,47 @@ const CreateSubmission = () => {
                     className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
                     placeholder={`Enter ${submissionType} title`}
                   />
+                </div>
+
+                {/* Affiliation */}
+                <div className="md:col-span-2">
+                  <h4 className="text-xl font-luxury-heading text-black mb-2">Affiliated with a community organization?</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <select
+                      value={(submissionType === 'project' ? projectData.affiliation.type : eventData.affiliation.type) || ''}
+                      onChange={(e) => handleInputChange('affiliation', {
+                        ...(submissionType === 'project' ? projectData.affiliation : eventData.affiliation),
+                        type: e.target.value
+                      })}
+                      className="px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury"
+                    >
+                      <option value="">Select type</option>
+                      <option value="NGO">NGO</option>
+                      <option value="University Club">University Club</option>
+                      <option value="Company">Company</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="Custom type (optional)"
+                      value={(submissionType === 'project' ? projectData.affiliation.customType : eventData.affiliation.customType) || ''}
+                      onChange={(e) => handleInputChange('affiliation', {
+                        ...(submissionType === 'project' ? projectData.affiliation : eventData.affiliation),
+                        customType: e.target.value
+                      })}
+                      className="px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Organization name"
+                      value={(submissionType === 'project' ? projectData.affiliation.name : eventData.affiliation.name) || ''}
+                      onChange={(e) => handleInputChange('affiliation', {
+                        ...(submissionType === 'project' ? projectData.affiliation : eventData.affiliation),
+                        name: e.target.value
+                      })}
+                      className="px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury"
+                    />
+                  </div>
                 </div>
 
                 <div>

@@ -58,28 +58,38 @@ function calculateKeywordScore(query: string, faq: FAQ): number {
   const faqTokens = tokenize(faq.question);
   const keywords = faq.keywords.map(k => normalizeText(k));
 
-  let score = 0;
-  let matches = 0;
+  let sumScores = 0;
+  let matchedTokenCount = 0;
 
   for (const queryToken of queryTokens) {
+    let tokenBest = 0;
+    let tokenMatched = false;
+
+    // Match against explicit keywords (preferred)
     for (const keyword of keywords) {
       const similarity = calculateSimilarity(queryToken, keyword);
-      if (similarity > 0.7) {
-        score += similarity;
-        matches++;
+      if (similarity >= 0.7) {
+        tokenBest = Math.max(tokenBest, similarity);
+        tokenMatched = true;
       }
     }
 
+    // Also consider words from the FAQ question text (lower weight)
     for (const faqToken of faqTokens) {
       const similarity = calculateSimilarity(queryToken, faqToken);
-      if (similarity > 0.8) {
-        score += similarity * 0.8;
-        matches++;
+      if (similarity >= 0.8) {
+        tokenBest = Math.max(tokenBest, similarity * 0.8);
+        tokenMatched = true;
       }
+    }
+
+    if (tokenMatched) {
+      sumScores += tokenBest;
+      matchedTokenCount++;
     }
   }
 
-  return matches > 0 ? score / queryTokens.length : 0;
+  return matchedTokenCount > 0 ? sumScores / matchedTokenCount : 0;
 }
 
 export function findBestMatch(
@@ -95,7 +105,8 @@ export function findBestMatch(
     const questionSimilarity = calculateSimilarity(query, faq.question);
     const keywordScore = calculateKeywordScore(query, faq);
 
-    const finalScore = questionSimilarity * 0.6 + keywordScore * 0.4;
+    // Favor keyword/token matches over whole-question similarity for robustness
+    const finalScore = questionSimilarity * 0.4 + keywordScore * 0.6;
 
     if (finalScore >= threshold) {
       if (!bestMatch || finalScore > bestMatch.score) {

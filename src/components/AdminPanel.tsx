@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, MessageSquare, Mail, Calendar, Target, Settings, CreditCard as Edit3, Save, X, Plus, Trash2, Eye, EyeOff, Download, CheckCircle, XCircle, Clock, FileText, Mail as MailIcon, RefreshCw, Database, ExternalLink } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { ProjectSubmission, EventSubmission, SubmissionStatus } from '../types/submissions';
+import { ProjectSubmission, EventSubmission, SubmissionStatus, ProjectApplicationEntry, EventRegistrationEntry, VolunteerApplicationEntry, NewsletterSubscriberEntry } from '../types/submissions';
 import { sendEmail, formatSubmissionStatusUpdateEmail } from '../utils/emailService';
 import { migrateApprovedSubmissions } from '../utils/migrateVisibility';
 import ChatsPanel from './Admin/ChatsPanel';
@@ -38,6 +39,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState('responses');
   const [responses, setResponses] = useState<Response[]>([]);
   const [submissions, setSubmissions] = useState<SubmissionWithType[]>([]);
+  const [projectApplications, setProjectApplications] = useState<ProjectApplicationEntry[]>([]);
+  const [eventRegistrations, setEventRegistrations] = useState<EventRegistrationEntry[]>([]);
+  const [volunteerApplications, setVolunteerApplications] = useState<VolunteerApplicationEntry[]>([]);
+  const [newsletterSubscribers, setNewsletterSubscribers] = useState<NewsletterSubscriberEntry[]>([]);
   const [editableContent, setEditableContent] = useState<EditableContent[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingContent, setEditingContent] = useState<string | null>(null);
@@ -68,6 +73,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     if (isOpen && isAdmin) {
       fetchResponses();
       fetchSubmissions();
+      fetchApplications();
       fetchEditableContent();
     }
   }, [isOpen, isAdmin]);
@@ -99,6 +105,94 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
       console.error('Error fetching responses:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchApplications = async () => {
+    try {
+      // Project Applications
+      const projQ = query(collection(db, 'project_applications'), orderBy('submittedAt', 'desc'));
+      const projSnap = await getDocs(projQ);
+      const projRows: ProjectApplicationEntry[] = [];
+      projSnap.forEach((d) => {
+        const data: any = d.data();
+        projRows.push({
+          id: d.id,
+          projectId: data.projectId || '',
+          projectTitle: data.projectTitle || 'Untitled',
+          name: data.name || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          experience: data.experience || '',
+          motivation: data.motivation || '',
+          submittedAt: data.submittedAt,
+        });
+      });
+      setProjectApplications(projRows);
+
+      // Event Registrations
+      const evtQ = query(collection(db, 'event_registrations'), orderBy('submittedAt', 'desc'));
+      const evtSnap = await getDocs(evtQ);
+      const evtRows: EventRegistrationEntry[] = [];
+      evtSnap.forEach((d) => {
+        const data: any = d.data();
+        evtRows.push({
+          id: d.id,
+          eventId: data.eventId || '',
+          eventTitle: data.eventTitle || 'Untitled',
+          eventDate: data.eventDate || '',
+          name: data.name || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          emergencyContact: data.emergencyContact || '',
+          dietaryRestrictions: data.dietaryRestrictions || '',
+          experience: data.experience || '',
+          submittedAt: data.submittedAt,
+        });
+      });
+      setEventRegistrations(evtRows);
+
+      // Volunteer Applications
+      const volQ = query(collection(db, 'volunteer_applications'), orderBy('submittedAt', 'desc'));
+      const volSnap = await getDocs(volQ);
+      const volRows: VolunteerApplicationEntry[] = [];
+      volSnap.forEach((d) => {
+        const data: any = d.data();
+        volRows.push({
+          id: d.id,
+          firstName: data.firstName || '',
+          lastName: data.lastName || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          age: data.age || '',
+          city: data.city || '',
+          occupation: data.occupation || '',
+          experience: data.experience || '',
+          skills: Array.isArray(data.skills) ? data.skills : [],
+          interests: Array.isArray(data.interests) ? data.interests : [],
+          availability: data.availability || '',
+          motivation: data.motivation || '',
+          submittedAt: data.submittedAt,
+        });
+      });
+      setVolunteerApplications(volRows);
+
+      // Newsletter Subscribers
+      const nsQ = query(collection(db, 'newsletter_subscribers'), orderBy('subscribedAt', 'desc'));
+      const nsSnap = await getDocs(nsQ);
+      const nsRows: NewsletterSubscriberEntry[] = [];
+      nsSnap.forEach((d) => {
+        const data: any = d.data();
+        nsRows.push({
+          id: d.id,
+          email: data.email || '',
+          source: data.source || '',
+          subscribedAt: data.subscribedAt,
+        });
+      });
+      setNewsletterSubscribers(nsRows);
+    } catch (e) {
+      console.error('Error fetching applications', e);
     }
   };
 
@@ -136,6 +230,89 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
       console.error('Error fetching submissions:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const exportApplicationsToExcel = () => {
+    try {
+      const dateStr = new Date().toISOString().split('T')[0];
+
+      // Prepare rows
+      const projectRows = projectApplications.map((p) => ({
+        'Project Title': p.projectTitle,
+        'Name': p.name,
+        'Email': p.email,
+        'Phone': p.phone,
+        'Preferred Role': p.preferredRole || '',
+        'Availability': p.availability || '',
+        'Skills': Array.isArray(p.skills) ? p.skills.join('; ') : '',
+        'Experience': p.experience || '',
+        'Motivation': p.motivation || '',
+        'Submitted': formatTimestamp(p.submittedAt),
+      }));
+
+      const eventRows = eventRegistrations.map((e) => ({
+        'Event Title': e.eventTitle,
+        'Event Date': e.eventDate || '',
+        'Name': e.name,
+        'Email': e.email,
+        'Phone': e.phone,
+        'Emergency Contact': e.emergencyContact || '',
+        'Dietary Restrictions': e.dietaryRestrictions || '',
+        'Shift Preference': e.shiftPreference || '',
+        'Sessions': Array.isArray(e.sessionSelections) ? e.sessionSelections.join('; ') : '',
+        'Team Preference': e.teamPreference || '',
+        'T-shirt Size': e.tShirtSize || '',
+        'Accessibility Needs': e.accessibilityNeeds || '',
+        'Experience': e.experience || '',
+        'Submitted': formatTimestamp(e.submittedAt),
+      }));
+
+      const volunteerRows = volunteerApplications.map((v) => ({
+        'First Name': v.firstName,
+        'Last Name': v.lastName,
+        'Email': v.email,
+        'Phone': v.phone,
+        'Age': v.age || '',
+        'City': v.city,
+        'Occupation': v.occupation || '',
+        'Availability': v.availability,
+        'Skills': (v.skills || []).join('; '),
+        'Interests': (v.interests || []).join('; '),
+        'Experience': v.experience || '',
+        'Motivation': v.motivation || '',
+        'Submitted': formatTimestamp(v.submittedAt),
+      }));
+
+      const wb = XLSX.utils.book_new();
+      const ws1 = XLSX.utils.json_to_sheet(projectRows);
+      const ws2 = XLSX.utils.json_to_sheet(eventRows);
+      const ws3 = XLSX.utils.json_to_sheet(volunteerRows);
+      XLSX.utils.book_append_sheet(wb, ws1, 'Project Users');
+      XLSX.utils.book_append_sheet(wb, ws2, 'Event Users');
+      XLSX.utils.book_append_sheet(wb, ws3, 'Join Us');
+      XLSX.writeFile(wb, `wasilah-applications-${dateStr}.xlsx`);
+    } catch (e) {
+      console.error('Excel export failed', e);
+      alert('Failed to export Excel. See console for details.');
+    }
+  };
+
+  const exportRegisteredToExcel = () => {
+    try {
+      const dateStr = new Date().toISOString().split('T')[0];
+      const rows = newsletterSubscribers.map((n) => ({
+        Email: n.email,
+        Source: n.source || '',
+        Subscribed: formatTimestamp(n.subscribedAt),
+      }));
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(rows);
+      XLSX.utils.book_append_sheet(wb, ws, 'Registered Users');
+      XLSX.writeFile(wb, `wasilah-registered-users-${dateStr}.xlsx`);
+    } catch (e) {
+      console.error('Registered users export failed', e);
+      alert('Failed to export Excel. See console for details.');
     }
   };
 
@@ -443,6 +620,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
           {[
             { id: 'responses', label: 'Responses', shortLabel: 'Resp', icon: MessageSquare },
             { id: 'submissions', label: 'Submissions', shortLabel: 'Sub', icon: FileText },
+            { id: 'applications', label: 'Applications', shortLabel: 'Apps', icon: Users },
+            { id: 'registered', label: 'Registered Users', shortLabel: 'Reg', icon: Users },
             { id: 'chats', label: 'Chats', shortLabel: 'Chat', icon: MessageSquare },
             { id: 'kb', label: 'Knowledge Base', shortLabel: 'KB', icon: Database },
             { id: 'content', label: 'Edit Content', shortLabel: 'Edit', icon: Edit3 },
@@ -594,6 +773,54 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
             </div>
           )}
 
+          {activeTab === 'registered' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-luxury-heading text-black">Registered Users (Newsletter)</h3>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => exportRegisteredToExcel()}
+                    className="flex items-center px-4 py-2 bg-vibrant-orange text-white rounded-luxury hover:bg-vibrant-orange-dark transition-colors"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Excel
+                  </button>
+                  <button
+                    onClick={fetchApplications}
+                    className="flex items-center px-4 py-2 bg-logo-navy text-cream-elegant rounded-luxury hover:bg-logo-navy-light transition-colors"
+                  >
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full border text-sm">
+                  <thead className="bg-gray-100">
+                    <tr className="text-left">
+                      {['Email', 'Source', 'Subscribed'].map((h) => (
+                        <th key={h} className="px-3 py-2 border-b text-black">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {newsletterSubscribers.map((n) => (
+                      <tr key={n.id} className="odd:bg-white even:bg-gray-50">
+                        <td className="px-3 py-2 border-b text-black">{n.email}</td>
+                        <td className="px-3 py-2 border-b text-black">{n.source || '—'}</td>
+                        <td className="px-3 py-2 border-b text-black">{formatTimestamp(n.subscribedAt)}</td>
+                      </tr>
+                    ))}
+                    {newsletterSubscribers.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="px-3 py-6 text-center text-gray-600">No subscribers yet.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
           {/* KB Manager Tab */}
           {activeTab === 'kb' && (
             <div className="space-y-6">
@@ -627,6 +854,126 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
             <ChatsPanel />
           )}
 
+          {activeTab === 'applications' && (
+            <div className="space-y-8">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-luxury-heading text-black">Applications & Registrations</h3>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => exportApplicationsToExcel()}
+                    className="flex items-center px-4 py-2 bg-vibrant-orange text-white rounded-luxury hover:bg-vibrant-orange-dark transition-colors"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Excel
+                  </button>
+                  <button
+                    onClick={fetchApplications}
+                    className="flex items-center px-4 py-2 bg-logo-navy text-cream-elegant rounded-luxury hover:bg-logo-navy-light transition-colors"
+                  >
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              {/* Project Users */}
+              <section>
+                <h4 className="text-xl font-luxury-heading text-black mb-4">Project Users</h4>
+                {renderGroupedTable(
+                  groupBy(projectApplications, (a) => a.projectTitle || 'Untitled Project'),
+                  ['Name', 'Email', 'Phone', 'Preferred Role', 'Availability', 'Skills', 'Languages', 'Transport', 'Equipment', 'Accessibility', 'Emergency Contact', 'Consents', 'Experience', 'Motivation', 'Submitted'],
+                  (row) => [
+                    row.name,
+                    row.email,
+                    row.phone,
+                    (row.preferredRole || '—'),
+                    (row.availability || '—'),
+                    Array.isArray(row.skills) ? row.skills.join(', ') : '—',
+                    Array.isArray(row.languageProficiency) ? row.languageProficiency.join(', ') : '—',
+                    row.transportAvailable ? 'Yes' : 'No',
+                    Array.isArray(row.equipment) ? row.equipment.join(', ') : '—',
+                    row.accessibilityNeeds || '—',
+                    row.emergencyContact ? `${row.emergencyContact.name || ''} ${row.emergencyContact.phone || ''}`.trim() || '—' : '—',
+                    row.consents ? [row.consents.liability ? 'Liability' : null, row.consents.photo ? 'Photo' : null, row.consents.backgroundCheck ? 'Background' : null].filter(Boolean).join(', ') || '—' : '—',
+                    row.experience || '—',
+                    row.motivation || '—',
+                    formatTimestamp(row.submittedAt),
+                  ]
+                )}
+                {projectApplications.length === 0 && (
+                  <div className="text-sm text-gray-600">No project applications yet.</div>
+                )}
+              </section>
+
+              {/* Event Users */}
+              <section>
+                <h4 className="text-xl font-luxury-heading text-black mb-4">Event Users</h4>
+                {renderGroupedTable(
+                  groupBy(eventRegistrations, (a) => a.eventTitle || 'Untitled Event'),
+                  ['Name', 'Email', 'Phone', 'Emergency Contact', 'Dietary', 'Shift', 'Sessions', 'Team', 'T‑shirt', 'Accessibility', 'Consents', 'Experience', 'Submitted'],
+                  (row) => [
+                    row.name,
+                    row.email,
+                    row.phone,
+                    row.emergencyContact || '—',
+                    row.dietaryRestrictions || '—',
+                    row.shiftPreference || '—',
+                    Array.isArray(row.sessionSelections) ? row.sessionSelections.join(', ') : '—',
+                    row.teamPreference || '—',
+                    row.tShirtSize || '—',
+                    row.accessibilityNeeds || '—',
+                    row.consents ? [row.consents.liability ? 'Liability' : null, row.consents.photo ? 'Photo' : null].filter(Boolean).join(', ') || '—' : '—',
+                    row.experience || '—',
+                    formatTimestamp(row.submittedAt),
+                  ]
+                )}
+                {eventRegistrations.length === 0 && (
+                  <div className="text-sm text-gray-600">No event registrations yet.</div>
+                )}
+              </section>
+
+              {/* Join Us Responses */}
+              <section>
+                <h4 className="text-xl font-luxury-heading text-black mb-4">Join Us Responses</h4>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full border text-sm">
+                    <thead className="bg-gray-100">
+                      <tr className="text-left">
+                        {[
+                          'First Name','Last Name','Email','Phone','Age','City','Occupation','Availability','Skills','Interests','Experience','Motivation','Submitted'
+                        ].map((h) => (
+                          <th key={h} className="px-3 py-2 border-b text-black">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {volunteerApplications.map((v) => (
+                        <tr key={v.id} className="odd:bg-white even:bg-gray-50">
+                          <td className="px-3 py-2 border-b text-black">{v.firstName}</td>
+                          <td className="px-3 py-2 border-b text-black">{v.lastName}</td>
+                          <td className="px-3 py-2 border-b text-black">{v.email}</td>
+                          <td className="px-3 py-2 border-b text-black">{v.phone}</td>
+                          <td className="px-3 py-2 border-b text-black">{v.age || '—'}</td>
+                          <td className="px-3 py-2 border-b text-black">{v.city}</td>
+                          <td className="px-3 py-2 border-b text-black">{v.occupation || '—'}</td>
+                          <td className="px-3 py-2 border-b text-black">{v.availability}</td>
+                          <td className="px-3 py-2 border-b text-black break-words">{(v.skills || []).join(', ')}</td>
+                          <td className="px-3 py-2 border-b text-black break-words">{(v.interests || []).join(', ')}</td>
+                          <td className="px-3 py-2 border-b text-black whitespace-pre-wrap max-w-xs">{v.experience || '—'}</td>
+                          <td className="px-3 py-2 border-b text-black whitespace-pre-wrap max-w-xs">{v.motivation || '—'}</td>
+                          <td className="px-3 py-2 border-b text-black">{formatTimestamp(v.submittedAt)}</td>
+                        </tr>
+                      ))}
+                      {volunteerApplications.length === 0 && (
+                        <tr>
+                          <td colSpan={13} className="px-3 py-6 text-center text-gray-600">No join us responses yet.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          )}
           {activeTab === 'submissions' && (
             <div>
               <div className="flex items-center justify-between mb-6">
@@ -1378,3 +1725,67 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
 };
 
 export default AdminPanel;
+
+// Helpers
+function formatTimestamp(ts: any): string {
+  if (!ts) return '—';
+  try {
+    if (typeof ts === 'string') return new Date(ts).toLocaleString();
+    if (typeof ts?.toDate === 'function') return ts.toDate().toLocaleString();
+    if (ts?.seconds) return new Date(ts.seconds * 1000).toLocaleString();
+  } catch {}
+  return '—';
+}
+
+function groupBy<T>(items: T[], keyFn: (t: T) => string): Record<string, T[]> {
+  return items.reduce((acc: Record<string, T[]>, item) => {
+    const key = keyFn(item) || 'Other';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+    return acc;
+  }, {} as Record<string, T[]>);
+}
+
+function renderGroupedTable<T>(
+  groups: Record<string, T[]>,
+  headers: string[],
+  rowFn: (row: any) => (string | number | undefined)[],
+) {
+  const groupNames = Object.keys(groups);
+  if (groupNames.length === 0) return (
+    <div className="text-sm text-gray-600">No data.</div>
+  );
+  return (
+    <div className="space-y-6">
+      {groupNames.map((group) => (
+        <div key={group} className="luxury-card bg-cream-white p-4">
+          <h5 className="text-lg font-luxury-heading text-black mb-3">{group}</h5>
+          <div className="overflow-x-auto">
+            <table className="min-w-full border text-sm">
+              <thead className="bg-gray-100">
+                <tr className="text-left">
+                  {headers.map((h) => (
+                    <th key={h} className="px-3 py-2 border-b text-black">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {groups[group].map((row: any, idx: number) => (
+                  <tr key={idx} className="odd:bg-white even:bg-gray-50">
+                    {rowFn(row).map((cell, i) => (
+                      <td key={i} className="px-3 py-2 border-b text-black">
+                        {cell as any}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// removed unused stub
