@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useActivityLogger } from '../hooks/useActivityLogger';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { useMagneticEffect } from '../hooks/useMagneticEffect';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 const Volunteer = () => {
   const { logCustomActivity } = useActivityLogger();
@@ -58,13 +60,34 @@ const Volunteer = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Log activity
     logCustomActivity('volunteer_application_submitted', formData);
     
-    // Send email notification
+    // Persist structured volunteer application
+    try {
+      await addDoc(collection(db, 'volunteer_applications'), {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        age: formData.age || null,
+        city: formData.city,
+        occupation: formData.occupation || null,
+        experience: formData.experience || '',
+        skills: formData.skills || [],
+        interests: formData.interests || [],
+        availability: formData.availability,
+        motivation: formData.motivation || '',
+        submittedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Failed to save volunteer application:', error);
+    }
+
+    // Send email notification (and store generic response)
     const emailData = formatVolunteerApplicationEmail({
       ...formData,
       timestamp: new Date().toISOString()

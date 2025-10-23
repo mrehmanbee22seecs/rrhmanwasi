@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Users, MapPin, Clock, CheckCircle, Send, AlertCircle, Star } from 'lucide-react';
 import { sendEmail, formatEventRegistrationEmail, formatEventRegistrationConfirmationEmail } from '../utils/emailService';
 import { db } from '../config/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { EventSubmission } from '../types/submissions';
 
 const EventDetail = () => {
@@ -304,10 +304,28 @@ const EventDetail = () => {
     }));
   };
 
-  const handleRegistrationSubmit = (e: React.FormEvent) => {
+  const handleRegistrationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!displayEvent) return;
+
+    // Save structured registration entry
+    try {
+      await addDoc(collection(db, 'event_registrations'), {
+        eventId: id,
+        eventTitle: displayEvent.title,
+        eventDate: displayEvent.date,
+        name: registrationData.name,
+        email: registrationData.email,
+        phone: registrationData.phone,
+        emergencyContact: registrationData.emergencyContact || '',
+        dietaryRestrictions: registrationData.dietaryRestrictions || '',
+        experience: registrationData.experience || '',
+        submittedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Failed to save event registration:', error);
+    }
 
     // Send email notification
     const emailData = formatEventRegistrationEmail({
@@ -619,13 +637,7 @@ const EventDetail = () => {
                 )}
               </div>
 
-              {/* Register Button */}
-              <button
-                onClick={() => setShowRegistration(true)}
-                className="w-full btn-luxury-primary py-4 px-6 text-lg"
-              >
-                Register for This Event
-              </button>
+              {/* Single Register Button (kept primary above) */}
             </div>
           </div>
         </div>

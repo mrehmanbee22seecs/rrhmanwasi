@@ -121,3 +121,47 @@ export interface AuditEntry {
 
 export type SubmissionType = 'project' | 'event';
 export type SubmissionStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'completed';
+
+// Structured application/registration entries captured when users apply/register
+export interface ProjectApplicationEntry {
+  id: string;
+  projectId: string;
+  projectTitle: string;
+  name: string;
+  email: string;
+  phone: string;
+  experience?: string;
+  motivation?: string;
+  submittedAt: any;
+}
+
+export interface EventRegistrationEntry {
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  eventDate?: string;
+  name: string;
+  email: string;
+  phone: string;
+  emergencyContact?: string;
+  dietaryRestrictions?: string;
+  experience?: string;
+  submittedAt: any;
+}
+
+export interface VolunteerApplicationEntry {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  age?: string;
+  city: string;
+  occupation?: string;
+  experience?: string;
+  skills: string[];
+  interests: string[];
+  availability: string;
+  motivation?: string;
+  submittedAt: any;
+}

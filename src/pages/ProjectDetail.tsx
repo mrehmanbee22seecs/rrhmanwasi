@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Users, MapPin, Target, Clock, CheckCircle, Send, AlertCircle } from 'lucide-react';
 import { sendEmail, formatProjectApplicationEmail, formatProjectApplicationConfirmationEmail } from '../utils/emailService';
 import { db } from '../config/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { ProjectSubmission } from '../types/submissions';
 
 const ProjectDetail = () => {
@@ -331,10 +331,26 @@ const ProjectDetail = () => {
     }));
   };
 
-  const handleApplicationSubmit = (e: React.FormEvent) => {
+  const handleApplicationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!displayProject) return;
+
+    // Save structured application entry
+    try {
+      await addDoc(collection(db, 'project_applications'), {
+        projectId: id,
+        projectTitle: displayProject.title,
+        name: applicationData.name,
+        email: applicationData.email,
+        phone: applicationData.phone,
+        experience: applicationData.experience || '',
+        motivation: applicationData.motivation || '',
+        submittedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Failed to save project application:', error);
+    }
 
     // Send email notification
     const emailData = formatProjectApplicationEmail({
@@ -556,13 +572,7 @@ const ProjectDetail = () => {
                 )}
               </div>
 
-              {/* Quick Apply Button */}
-              <button
-                onClick={() => setShowApplication(true)}
-                className="w-full btn-luxury-primary py-4 px-6 text-lg"
-              >
-                Apply for This Project
-              </button>
+              {/* Single Apply Button (kept primary above) */}
             </div>
           </div>
         </div>
