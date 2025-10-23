@@ -454,6 +454,16 @@ const EventDetail = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <div className="flex items-center space-x-4 mb-6">
+                {(() => {
+                  const now = new Date();
+                  const date = displayEvent.date ? new Date(displayEvent.date) : null;
+                  const tag = date ? (now < date ? 'Upcoming' : now.toDateString() === date.toDateString() ? 'Active' : 'Completed') : 'Upcoming';
+                  return (
+                    <span className={`px-4 py-2 rounded-luxury font-luxury-semibold ${tag === 'Upcoming' ? 'bg-blue-100 text-blue-800' : tag === 'Completed' ? 'bg-gray-200 text-gray-800' : 'bg-green-100 text-green-800'}`}>
+                      {tag}
+                    </span>
+                  );
+                })()}
                 <span className={`px-4 py-2 rounded-luxury font-luxury-semibold ${getCategoryColor(displayEvent.category)}`}>
                   {displayEvent.category}
                 </span>

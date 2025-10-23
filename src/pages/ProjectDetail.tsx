@@ -471,9 +471,19 @@ const ProjectDetail = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <div className="flex items-center space-x-4 mb-6">
-                <span className="px-4 py-2 bg-green-100 text-green-800 rounded-luxury font-luxury-semibold">
-                  Active
-                </span>
+                {(() => {
+                  const now = new Date();
+                  const start = displayProject.startDate ? new Date(displayProject.startDate) : null;
+                  const end = displayProject.endDate ? new Date(displayProject.endDate) : null;
+                  let tag = 'Active';
+                  if (start && now < start) tag = 'Upcoming';
+                  else if (end && now > end) tag = 'Completed';
+                  return (
+                    <span className={`px-4 py-2 ${tag === 'Upcoming' ? 'bg-blue-100 text-blue-800' : tag === 'Completed' ? 'bg-gray-200 text-gray-800' : 'bg-green-100 text-green-800'} rounded-luxury font-luxury-semibold`}>
+                      {tag}
+                    </span>
+                  );
+                })()}
                 <span className="px-4 py-2 bg-vibrant-orange/20 text-vibrant-orange-dark rounded-luxury font-luxury-semibold capitalize">
                   {displayProject.category}
                 </span>

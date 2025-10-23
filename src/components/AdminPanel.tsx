@@ -880,7 +880,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 <h4 className="text-xl font-luxury-heading text-black mb-4">Project Users</h4>
                 {renderGroupedTable(
                   groupBy(projectApplications, (a) => a.projectTitle || 'Untitled Project'),
-                  ['Name', 'Email', 'Phone', 'Preferred Role', 'Availability', 'Skills', 'Experience', 'Motivation', 'Submitted'],
+                  ['Name', 'Email', 'Phone', 'Preferred Role', 'Availability', 'Skills', 'Languages', 'Transport', 'Equipment', 'Accessibility', 'Emergency Contact', 'Consents', 'Experience', 'Motivation', 'Submitted'],
                   (row) => [
                     row.name,
                     row.email,
@@ -888,6 +888,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                     (row.preferredRole || '—'),
                     (row.availability || '—'),
                     Array.isArray(row.skills) ? row.skills.join(', ') : '—',
+                    Array.isArray(row.languageProficiency) ? row.languageProficiency.join(', ') : '—',
+                    row.transportAvailable ? 'Yes' : 'No',
+                    Array.isArray(row.equipment) ? row.equipment.join(', ') : '—',
+                    row.accessibilityNeeds || '—',
+                    row.emergencyContact ? `${row.emergencyContact.name || ''} ${row.emergencyContact.phone || ''}`.trim() || '—' : '—',
+                    row.consents ? [row.consents.liability ? 'Liability' : null, row.consents.photo ? 'Photo' : null, row.consents.backgroundCheck ? 'Background' : null].filter(Boolean).join(', ') || '—' : '—',
                     row.experience || '—',
                     row.motivation || '—',
                     formatTimestamp(row.submittedAt),
@@ -903,7 +909,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 <h4 className="text-xl font-luxury-heading text-black mb-4">Event Users</h4>
                 {renderGroupedTable(
                   groupBy(eventRegistrations, (a) => a.eventTitle || 'Untitled Event'),
-                  ['Name', 'Email', 'Phone', 'Emergency Contact', 'Dietary', 'Shift', 'Sessions', 'Team', 'T‑shirt', 'Accessibility', 'Experience', 'Submitted'],
+                  ['Name', 'Email', 'Phone', 'Emergency Contact', 'Dietary', 'Shift', 'Sessions', 'Team', 'T‑shirt', 'Accessibility', 'Consents', 'Experience', 'Submitted'],
                   (row) => [
                     row.name,
                     row.email,
@@ -915,6 +921,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                     row.teamPreference || '—',
                     row.tShirtSize || '—',
                     row.accessibilityNeeds || '—',
+                    row.consents ? [row.consents.liability ? 'Liability' : null, row.consents.photo ? 'Photo' : null].filter(Boolean).join(', ') || '—' : '—',
                     row.experience || '—',
                     formatTimestamp(row.submittedAt),
                   ]
