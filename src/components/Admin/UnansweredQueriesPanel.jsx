@@ -56,8 +56,12 @@ const UnansweredQueriesPanel = () => {
     if (!selectedQuery || !replyText.trim()) return;
     
     try {
-      // Add admin response to chat
-      const messagesRef = collection(db, 'chats', selectedQuery.chatId, 'messages');
+      if (!selectedQuery.userId || !selectedQuery.chatId) {
+        throw new Error('Missing userId or chatId on query');
+      }
+
+      // Add admin response to the user's chat messages subcollection
+      const messagesRef = collection(db, `users/${selectedQuery.userId}/chats/${selectedQuery.chatId}/messages`);
       await addDoc(messagesRef, {
         sender: 'admin',
         text: replyText.trim(),
