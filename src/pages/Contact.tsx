@@ -8,7 +8,7 @@ import { useMagneticEffect } from '../hooks/useMagneticEffect';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
-const NewsletterSignup: React.FC<{ source: 'contact' | 'footer' | 'other'?; }> = ({ source = 'contact' }) => {
+const NewsletterSignup: React.FC<{ source?: 'contact' | 'footer' | 'other'; }> = ({ source = 'contact' }) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
