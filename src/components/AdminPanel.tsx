@@ -243,6 +243,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
         'Name': p.name,
         'Email': p.email,
         'Phone': p.phone,
+        'Preferred Role': p.preferredRole || '',
+        'Availability': p.availability || '',
+        'Skills': Array.isArray(p.skills) ? p.skills.join('; ') : '',
         'Experience': p.experience || '',
         'Motivation': p.motivation || '',
         'Submitted': formatTimestamp(p.submittedAt),
@@ -256,6 +259,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
         'Phone': e.phone,
         'Emergency Contact': e.emergencyContact || '',
         'Dietary Restrictions': e.dietaryRestrictions || '',
+        'Shift Preference': e.shiftPreference || '',
+        'Sessions': Array.isArray(e.sessionSelections) ? e.sessionSelections.join('; ') : '',
+        'Team Preference': e.teamPreference || '',
+        'T-shirt Size': e.tShirtSize || '',
+        'Accessibility Needs': e.accessibilityNeeds || '',
         'Experience': e.experience || '',
         'Submitted': formatTimestamp(e.submittedAt),
       }));
@@ -872,11 +880,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 <h4 className="text-xl font-luxury-heading text-black mb-4">Project Users</h4>
                 {renderGroupedTable(
                   groupBy(projectApplications, (a) => a.projectTitle || 'Untitled Project'),
-                  ['Name', 'Email', 'Phone', 'Experience', 'Motivation', 'Submitted'],
+                  ['Name', 'Email', 'Phone', 'Preferred Role', 'Availability', 'Skills', 'Experience', 'Motivation', 'Submitted'],
                   (row) => [
                     row.name,
                     row.email,
                     row.phone,
+                    (row.preferredRole || '—'),
+                    (row.availability || '—'),
+                    Array.isArray(row.skills) ? row.skills.join(', ') : '—',
                     row.experience || '—',
                     row.motivation || '—',
                     formatTimestamp(row.submittedAt),
@@ -892,13 +903,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 <h4 className="text-xl font-luxury-heading text-black mb-4">Event Users</h4>
                 {renderGroupedTable(
                   groupBy(eventRegistrations, (a) => a.eventTitle || 'Untitled Event'),
-                  ['Name', 'Email', 'Phone', 'Emergency Contact', 'Dietary', 'Experience', 'Submitted'],
+                  ['Name', 'Email', 'Phone', 'Emergency Contact', 'Dietary', 'Shift', 'Sessions', 'Team', 'T‑shirt', 'Accessibility', 'Experience', 'Submitted'],
                   (row) => [
                     row.name,
                     row.email,
                     row.phone,
                     row.emergencyContact || '—',
                     row.dietaryRestrictions || '—',
+                    row.shiftPreference || '—',
+                    Array.isArray(row.sessionSelections) ? row.sessionSelections.join(', ') : '—',
+                    row.teamPreference || '—',
+                    row.tShirtSize || '—',
+                    row.accessibilityNeeds || '—',
                     row.experience || '—',
                     formatTimestamp(row.submittedAt),
                   ]

@@ -17,7 +17,14 @@ const EventDetail = () => {
     phone: '',
     emergencyContact: '',
     dietaryRestrictions: '',
-    experience: ''
+    experience: '',
+    shiftPreference: '',
+    sessionSelections: '' as unknown as string, // comma-separated input -> array
+    teamPreference: '',
+    tShirtSize: '',
+    accessibilityNeeds: '',
+    consentLiability: false,
+    consentPhoto: false,
   });
 
   useEffect(() => {
@@ -321,6 +328,12 @@ const EventDetail = () => {
         emergencyContact: registrationData.emergencyContact || '',
         dietaryRestrictions: registrationData.dietaryRestrictions || '',
         experience: registrationData.experience || '',
+        shiftPreference: registrationData.shiftPreference || '',
+        sessionSelections: (registrationData.sessionSelections || '').split(',').map((s: string) => s.trim()).filter(Boolean),
+        teamPreference: registrationData.teamPreference || '',
+        tShirtSize: registrationData.tShirtSize || '',
+        accessibilityNeeds: registrationData.accessibilityNeeds || '',
+        consents: { liability: !!registrationData.consentLiability, photo: !!registrationData.consentPhoto },
         submittedAt: serverTimestamp(),
       });
     } catch (error) {
@@ -356,7 +369,21 @@ const EventDetail = () => {
       }
     });
     
-    setRegistrationData({ name: '', email: '', phone: '', emergencyContact: '', dietaryRestrictions: '', experience: '' });
+    setRegistrationData({
+      name: '',
+      email: '',
+      phone: '',
+      emergencyContact: '',
+      dietaryRestrictions: '',
+      experience: '',
+      shiftPreference: '',
+      sessionSelections: '' as unknown as string,
+      teamPreference: '',
+      tShirtSize: '',
+      accessibilityNeeds: '',
+      consentLiability: false,
+      consentPhoto: false,
+    });
     setShowRegistration(false);
   };
 
@@ -484,7 +511,8 @@ const EventDetail = () => {
         </div>
       </section>
 
-      {/* Event Details */}
+      {/* Event Details */
+      }
       <section className="py-16 bg-cream-elegant">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -582,6 +610,68 @@ const EventDetail = () => {
 
             {/* Sidebar */}
             <div className="space-y-8">
+              {/* Capacity & Services */}
+              {(displayEvent.capacity || displayEvent.servicesIncluded || displayEvent.accessibilityInfo) && (
+                <div className="luxury-card bg-cream-white p-8">
+                  <h3 className="text-2xl font-luxury-heading text-black mb-4">Participation & Services</h3>
+                  <div className="space-y-3 text-black">
+                    {typeof displayEvent.capacity === 'number' && (
+                      <div>
+                        <strong>Capacity:</strong> {displayEvent.capacity}
+                      </div>
+                    )}
+                    {Array.isArray(displayEvent.servicesIncluded) && displayEvent.servicesIncluded.length > 0 && (
+                      <div>
+                        <strong>Included:</strong>
+                        <ul className="list-disc list-inside mt-2">
+                          {displayEvent.servicesIncluded.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {displayEvent.accessibilityInfo && (
+                      <div><strong>Accessibility:</strong> {displayEvent.accessibilityInfo}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Logistics */}
+              {(displayEvent.materialsList || displayEvent.parkingInfo || displayEvent.certifications) && (
+                <div className="luxury-card bg-cream-white p-8">
+                  <h3 className="text-2xl font-luxury-heading text-black mb-4">Logistics</h3>
+                  <div className="space-y-3 text-black">
+                    {Array.isArray(displayEvent.materialsList) && displayEvent.materialsList.length > 0 && (
+                      <div>
+                        <strong>What to bring:</strong>
+                        <ul className="list-disc list-inside mt-2">
+                          {displayEvent.materialsList.map((m: string, i: number) => <li key={i}>{m}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {displayEvent.parkingInfo && (
+                      <div><strong>Parking:</strong> {displayEvent.parkingInfo}</div>
+                    )}
+                    {Array.isArray(displayEvent.certifications) && displayEvent.certifications.length > 0 && (
+                      <div><strong>Certification:</strong> {displayEvent.certifications.join(', ')}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* FAQ */}
+              {Array.isArray(displayEvent.faq) && displayEvent.faq.length > 0 && (
+                <div className="luxury-card bg-cream-white p-8">
+                  <h3 className="text-2xl font-luxury-heading text-black mb-4">FAQ</h3>
+                  <div className="space-y-3">
+                    {displayEvent.faq.map((f: any, i: number) => (
+                      <div key={i}>
+                        <div className="font-semibold text-black">{f.question}</div>
+                        <div className="text-black/80">{f.answer}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {/* Requirements */}
               {displayEvent.requirements && displayEvent.requirements.length > 0 && displayEvent.requirements[0] !== '' && (
               <div className="luxury-card bg-cream-white p-8">
@@ -759,6 +849,78 @@ const EventDetail = () => {
                   placeholder="Any relevant experience or special skills you'd like to share..."
                   className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
                 />
+              </div>
+
+              {/* New Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Shift Preference</label>
+                  <input
+                    type="text"
+                    name="shiftPreference"
+                    value={registrationData.shiftPreference}
+                    onChange={handleInputChange}
+                    placeholder="Morning, Afternoon, Evening"
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Session Selections (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={registrationData.sessionSelections as unknown as string}
+                    onChange={(e) => setRegistrationData((p) => ({ ...p, sessionSelections: e.target.value as unknown as string }))}
+                    placeholder="Track A, Workshop 2, Keynote"
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Team Preference (optional)</label>
+                  <input
+                    type="text"
+                    name="teamPreference"
+                    value={registrationData.teamPreference}
+                    onChange={handleInputChange}
+                    placeholder="Buddy/team name, if any"
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">T‑shirt Size</label>
+                  <input
+                    type="text"
+                    name="tShirtSize"
+                    value={registrationData.tShirtSize}
+                    onChange={handleInputChange}
+                    placeholder="S, M, L, XL"
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-luxury-medium text-black mb-2">Accessibility Needs (optional)</label>
+                <input
+                  type="text"
+                  value={registrationData.accessibilityNeeds}
+                  onChange={(e) => setRegistrationData((p) => ({ ...p, accessibilityNeeds: e.target.value }))}
+                  placeholder="Any accommodations required"
+                  className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={registrationData.consentLiability} onChange={(e) => setRegistrationData((p) => ({ ...p, consentLiability: e.target.checked }))} />
+                  <span className="text-black">Liability Waiver</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={registrationData.consentPhoto} onChange={(e) => setRegistrationData((p) => ({ ...p, consentPhoto: e.target.checked }))} />
+                  <span className="text-black">Photo Consent</span>
+                </label>
               </div>
 
               <div className="flex space-x-4">

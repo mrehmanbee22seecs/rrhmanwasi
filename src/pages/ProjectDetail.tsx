@@ -16,7 +16,19 @@ const ProjectDetail = () => {
     email: '',
     phone: '',
     experience: '',
-    motivation: ''
+    motivation: '',
+    preferredRole: '',
+    availability: '',
+    skills: [] as string[],
+    languageProficiency: [] as string[],
+    transportAvailable: false,
+    equipment: [] as string[],
+    accessibilityNeeds: '',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+    consentLiability: false,
+    consentPhoto: false,
+    consentBackgroundCheck: false,
   });
 
   useEffect(() => {
@@ -346,6 +358,21 @@ const ProjectDetail = () => {
         phone: applicationData.phone,
         experience: applicationData.experience || '',
         motivation: applicationData.motivation || '',
+        preferredRole: applicationData.preferredRole || '',
+        availability: applicationData.availability || '',
+        skills: applicationData.skills || [],
+        languageProficiency: applicationData.languageProficiency || [],
+        transportAvailable: !!applicationData.transportAvailable,
+        equipment: applicationData.equipment || [],
+        accessibilityNeeds: applicationData.accessibilityNeeds || '',
+        emergencyContact: applicationData.emergencyContactName || applicationData.emergencyContactPhone
+          ? { name: applicationData.emergencyContactName, phone: applicationData.emergencyContactPhone }
+          : null,
+        consents: {
+          liability: !!applicationData.consentLiability,
+          photo: !!applicationData.consentPhoto,
+          backgroundCheck: !!applicationData.consentBackgroundCheck,
+        },
         submittedAt: serverTimestamp(),
       });
     } catch (error) {
@@ -376,7 +403,25 @@ const ProjectDetail = () => {
       }
     });
     
-    setApplicationData({ name: '', email: '', phone: '', experience: '', motivation: '' });
+    setApplicationData({
+      name: '',
+      email: '',
+      phone: '',
+      experience: '',
+      motivation: '',
+      preferredRole: '',
+      availability: '',
+      skills: [],
+      languageProficiency: [],
+      transportAvailable: false,
+      equipment: [],
+      accessibilityNeeds: '',
+      emergencyContactName: '',
+      emergencyContactPhone: '',
+      consentLiability: false,
+      consentPhoto: false,
+      consentBackgroundCheck: false,
+    });
     setShowApplication(false);
   };
 
@@ -539,6 +584,104 @@ const ProjectDetail = () => {
 
             {/* Sidebar */}
             <div className="space-y-8">
+              {/* Capacity & Skills */}
+              {(displayProject.capacity || displayProject.requiredSkills || displayProject.preferredSkills) && (
+                <div className="luxury-card bg-cream-white p-8">
+                  <h3 className="text-2xl font-luxury-heading text-black mb-4">Participation & Skills</h3>
+                  <div className="space-y-3 text-black">
+                    {typeof displayProject.capacity === 'number' && (
+                      <div>
+                        <strong>Capacity:</strong> {displayProject.capacity}
+                      </div>
+                    )}
+                    {Array.isArray(displayProject.requiredSkills) && displayProject.requiredSkills.length > 0 && (
+                      <div>
+                        <strong>Required Skills:</strong>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {displayProject.requiredSkills.map((s: string, i: number) => (
+                            <span key={i} className="px-2 py-1 bg-vibrant-orange/10 rounded text-black">{s}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {Array.isArray(displayProject.preferredSkills) && displayProject.preferredSkills.length > 0 && (
+                      <div>
+                        <strong>Preferred Skills:</strong>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {displayProject.preferredSkills.map((s: string, i: number) => (
+                            <span key={i} className="px-2 py-1 bg-cream-elegant rounded text-black">{s}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Roles */}
+              {Array.isArray(displayProject.roles) && displayProject.roles.length > 0 && (
+                <div className="luxury-card bg-cream-white p-8">
+                  <h3 className="text-2xl font-luxury-heading text-black mb-4">Roles Needed</h3>
+                  <div className="space-y-4">
+                    {displayProject.roles.map((r: any, i: number) => (
+                      <div key={i} className="border rounded-lg p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="text-black font-semibold">{r.name}</div>
+                          {typeof r.capacity === 'number' && (
+                            <div className="text-sm text-black/70">Spots: {r.capacity}</div>
+                          )}
+                        </div>
+                        {Array.isArray(r.duties) && r.duties.length > 0 && (
+                          <ul className="list-disc list-inside mt-2 text-black/90 text-sm">
+                            {r.duties.map((d: string, idx: number) => <li key={idx}>{d}</li>)}
+                          </ul>
+                        )}
+                        {r.minHoursPerWeek && (
+                          <div className="text-xs text-black/70 mt-1">Min hours/week: {r.minHoursPerWeek}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Logistics */}
+              {(displayProject.materialsList || displayProject.accessibilityInfo || displayProject.safetyNotes) && (
+                <div className="luxury-card bg-cream-white p-8">
+                  <h3 className="text-2xl font-luxury-heading text-black mb-4">Logistics</h3>
+                  <div className="space-y-3 text-black">
+                    {Array.isArray(displayProject.materialsList) && displayProject.materialsList.length > 0 && (
+                      <div>
+                        <strong>What to bring:</strong>
+                        <ul className="list-disc list-inside mt-2">
+                          {displayProject.materialsList.map((m: string, i: number) => <li key={i}>{m}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {displayProject.accessibilityInfo && (
+                      <div><strong>Accessibility:</strong> {displayProject.accessibilityInfo}</div>
+                    )}
+                    {displayProject.safetyNotes && (
+                      <div><strong>Safety:</strong> {displayProject.safetyNotes}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* FAQ */}
+              {Array.isArray(displayProject.faq) && displayProject.faq.length > 0 && (
+                <div className="luxury-card bg-cream-white p-8">
+                  <h3 className="text-2xl font-luxury-heading text-black mb-4">FAQ</h3>
+                  <div className="space-y-3">
+                    {displayProject.faq.map((f: any, i: number) => (
+                      <div key={i}>
+                        <div className="font-semibold text-black">{f.question}</div>
+                        <div className="text-black/80">{f.answer}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {/* Requirements */}
               {displayProject.requirements && displayProject.requirements.length > 0 && displayProject.requirements[0] !== '' && (
               <div className="luxury-card bg-cream-white p-8">
@@ -669,6 +812,123 @@ const ProjectDetail = () => {
                   placeholder="Briefly describe any relevant experience or skills..."
                   className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
                 />
+              </div>
+
+              {/* New Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Preferred Role</label>
+                  <input
+                    type="text"
+                    name="preferredRole"
+                    value={applicationData.preferredRole}
+                    onChange={handleInputChange}
+                    placeholder="Coordinator, Field Volunteer, Media, etc."
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Availability (hours/week)</label>
+                  <input
+                    type="text"
+                    name="availability"
+                    value={applicationData.availability}
+                    onChange={handleInputChange}
+                    placeholder="e.g. 6-8 hrs/week, evenings, weekends"
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-luxury-medium text-black mb-2">Skills (comma-separated)</label>
+                <input
+                  type="text"
+                  value={applicationData.skills.join(', ')}
+                  onChange={(e) => setApplicationData((p) => ({ ...p, skills: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+                  placeholder="Project mgmt, First Aid, Urdu, Photography, etc."
+                  className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Languages (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={applicationData.languageProficiency.join(', ')}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, languageProficiency: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+                    placeholder="Urdu, English, Punjabi"
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+                <div className="flex items-center gap-3 mt-8">
+                  <input
+                    type="checkbox"
+                    id="transportAvailable"
+                    checked={applicationData.transportAvailable}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, transportAvailable: e.target.checked }))}
+                  />
+                  <label htmlFor="transportAvailable" className="text-black">I have my own transport</label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-luxury-medium text-black mb-2">Equipment (comma-separated)</label>
+                <input
+                  type="text"
+                  value={applicationData.equipment.join(', ')}
+                  onChange={(e) => setApplicationData((p) => ({ ...p, equipment: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+                  placeholder="Laptop, Camera, Gloves"
+                  className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                />
+              </div>
+
+              <div>
+                <label className="block font-luxury-medium text-black mb-2">Accessibility Needs (optional)</label>
+                <input
+                  type="text"
+                  value={applicationData.accessibilityNeeds}
+                  onChange={(e) => setApplicationData((p) => ({ ...p, accessibilityNeeds: e.target.value }))}
+                  placeholder="Any accommodations required"
+                  className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Emergency Contact Name</label>
+                  <input
+                    type="text"
+                    value={applicationData.emergencyContactName}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, emergencyContactName: e.target.value }))}
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">Emergency Contact Phone</label>
+                  <input
+                    type="tel"
+                    value={applicationData.emergencyContactPhone}
+                    onChange={(e) => setApplicationData((p) => ({ ...p, emergencyContactPhone: e.target.value }))}
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={applicationData.consentLiability} onChange={(e) => setApplicationData((p) => ({ ...p, consentLiability: e.target.checked }))} />
+                  <span className="text-black">Liability Waiver</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={applicationData.consentPhoto} onChange={(e) => setApplicationData((p) => ({ ...p, consentPhoto: e.target.checked }))} />
+                  <span className="text-black">Photo Consent</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={applicationData.consentBackgroundCheck} onChange={(e) => setApplicationData((p) => ({ ...p, consentBackgroundCheck: e.target.checked }))} />
+                  <span className="text-black">Background Check</span>
+                </label>
               </div>
 
               <div>

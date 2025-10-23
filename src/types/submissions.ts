@@ -29,6 +29,22 @@ export interface ProjectSubmission {
   reminders?: Reminder[];
   contactEmail: string;
   contactPhone: string;
+  capacity?: number; // Max volunteers
+  perks?: string[]; // Certifications/perks
+  materialsList?: string[]; // What volunteers should bring
+  safetyNotes?: string; // Safety and conduct
+  accessibilityInfo?: string; // Accessibility details
+  preferredSkills?: string[];
+  requiredSkills?: string[];
+  roles?: Array<{
+    name: string;
+    duties: string[];
+    minHoursPerWeek?: number;
+    capacity?: number;
+  }>;
+  sponsors?: string[];
+  donationLink?: string;
+  faq?: Array<{ question: string; answer: string }>;
   budget?: string;
   timeline: string;
   submittedBy: string;
@@ -74,6 +90,23 @@ export interface EventSubmission {
   contactEmail: string;
   contactPhone: string;
   cost: string;
+  capacity?: number; // Max attendees
+  waitlistEnabled?: boolean;
+  servicesIncluded?: string[];
+  materialsList?: string[];
+  parkingInfo?: string;
+  accessibilityInfo?: string;
+  childcareAvailable?: boolean;
+  certifications?: string[];
+  partners?: string[];
+  sessions?: Array<{
+    title: string;
+    start: string; // ISO or time string
+    end: string;
+    room?: string;
+    track?: string;
+  }>;
+  faq?: Array<{ question: string; answer: string }>;
   submittedBy: string;
   submitterName: string;
   submitterEmail: string;
@@ -132,6 +165,15 @@ export interface ProjectApplicationEntry {
   phone: string;
   experience?: string;
   motivation?: string;
+  preferredRole?: string;
+  availability?: string; // hours/week or time window
+  skills?: string[];
+  languageProficiency?: string[];
+  transportAvailable?: boolean;
+  equipment?: string[]; // e.g., laptop, camera
+  accessibilityNeeds?: string;
+  emergencyContact?: { name: string; phone: string };
+  consents?: { liability?: boolean; photo?: boolean; backgroundCheck?: boolean };
   submittedAt: any;
 }
 
@@ -146,6 +188,12 @@ export interface EventRegistrationEntry {
   emergencyContact?: string;
   dietaryRestrictions?: string;
   experience?: string;
+  shiftPreference?: string;
+  sessionSelections?: string[];
+  teamPreference?: string;
+  tShirtSize?: string;
+  accessibilityNeeds?: string;
+  consents?: { liability?: boolean; photo?: boolean };
   submittedAt: any;
 }
 
