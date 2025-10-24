@@ -34,15 +34,46 @@ const CreateSubmission = () => {
 
     if (prefillProjectId) {
       setSubmissionType('event');
-      setEventData(prev => ({
-        ...prev,
-        projectId: prefillProjectId,
-        affiliation: {
-          ...prev.affiliation,
-          name: prefillAffiliationName || prev.affiliation.name,
-          type: prefillAffiliationType || prev.affiliation.type || 'University Club'
+      // Validate that the project actually exists to prevent "not found" errors on Spark
+      (async () => {
+        try {
+          const ref = doc(db, 'project_submissions', prefillProjectId);
+          const snap = await getDoc(ref);
+          if (snap.exists()) {
+            setEventData(prev => ({
+              ...prev,
+              projectId: prefillProjectId,
+              affiliation: {
+                ...prev.affiliation,
+                name: prefillAffiliationName || prev.affiliation.name,
+                type: prefillAffiliationType || prev.affiliation.type || 'University Club'
+              }
+            }));
+          } else {
+            console.warn('Prefill project not found; continuing without link');
+            setEventData(prev => ({
+              ...prev,
+              projectId: '',
+              affiliation: {
+                ...prev.affiliation,
+                name: prefillAffiliationName || prev.affiliation.name,
+                type: prefillAffiliationType || prev.affiliation.type || 'University Club'
+              }
+            }));
+          }
+        } catch (e) {
+          console.warn('Prefill project validation failed; continuing without link', e);
+          setEventData(prev => ({
+            ...prev,
+            projectId: '',
+            affiliation: {
+              ...prev.affiliation,
+              name: prefillAffiliationName || prev.affiliation.name,
+              type: prefillAffiliationType || prev.affiliation.type || 'University Club'
+            }
+          }));
         }
-      }));
+      })();
     }
 
     if (draftParam) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Users, MapPin, Target, Clock, CheckCircle, Send, AlertCircle } from 'lucide-react';
 import { sendEmail, formatProjectApplicationEmail, formatProjectApplicationConfirmationEmail } from '../utils/emailService';
 import { db } from '../config/firebase';
@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 const ProjectDetail = () => {
   const { id } = useParams();
   const { currentUser, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [showApplication, setShowApplication] = useState(false);
   const [project, setProject] = useState<ProjectSubmission | null>(null);
   const [loading, setLoading] = useState(true);
@@ -585,7 +586,7 @@ const ProjectDetail = () => {
                       const name = (displayProject as any).affiliation?.name || displayProject.title || 'Affiliated Organization';
                       params.set('prefillAffiliationName', name);
                     }
-                    window.location.href = `/create-submission?${params.toString()}`;
+                    navigate(`/create-submission?${params.toString()}`);
                   }}
                   className="ml-3 inline-flex items-center px-6 py-4 rounded-luxury border-2 border-vibrant-orange text-vibrant-orange hover:bg-vibrant-orange/10"
                 >
