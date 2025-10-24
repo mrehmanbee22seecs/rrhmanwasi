@@ -197,22 +197,27 @@ Or create the index in Firebase Console.
   };
 
   // Convert approved events to match the expected format
-  const convertedApprovedEvents = approvedEvents.map(event => ({
-    id: event.id,
-    title: event.title,
-    date: event.date,
-    time: event.time,
-    location: event.location,
-    description: (event as any).shortSummary || event.description,
-    image: event.image || 'https://images.pexels.com/photos/4386467/pexels-photo-4386467.jpeg?auto=compress&cs=tinysrgb&w=800',
-    status: 'upcoming',
-    volunteers: 25,
-    capacity: event.expectedAttendees,
-    category: event.category,
-    icon: Heart,
-    registrationDeadline: event.registrationDeadline,
-    cost: event.cost
-  }));
+  const convertedApprovedEvents = approvedEvents.map(event => {
+    const now = new Date();
+    const date = event.date ? new Date(event.date) : null;
+    const status = date ? (now < date ? 'upcoming' : now.toDateString() === date.toDateString() ? 'active' : 'completed') : 'upcoming';
+    return ({
+      id: event.id,
+      title: event.title,
+      date: event.date,
+      time: event.time,
+      location: event.location,
+      description: (event as any).shortSummary || event.description,
+      image: event.image || 'https://images.pexels.com/photos/4386467/pexels-photo-4386467.jpeg?auto=compress&cs=tinysrgb&w=800',
+      status,
+      volunteers: 25,
+      capacity: event.expectedAttendees,
+      category: event.category,
+      icon: Heart,
+      registrationDeadline: event.registrationDeadline,
+      cost: event.cost
+    });
+  });
 
   // Combine static events with approved user submissions
   const allEvents = [...staticEvents, ...convertedApprovedEvents];
@@ -235,6 +240,8 @@ Or create the index in Firebase Console.
     switch (status) {
       case 'upcoming':
         return 'bg-green-100 text-green-800';
+      case 'active':
+        return 'bg-blue-100 text-blue-800';
       case 'completed':
         return 'bg-gray-100 text-gray-800';
       case 'cancelled':
@@ -248,6 +255,8 @@ Or create the index in Firebase Console.
     switch (status) {
       case 'upcoming':
         return 'Upcoming';
+      case 'active':
+        return 'Active';
       case 'completed':
         return 'Completed';
       case 'cancelled':

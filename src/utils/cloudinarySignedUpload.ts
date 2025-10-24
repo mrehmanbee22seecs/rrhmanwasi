@@ -39,23 +39,41 @@ async function getSignature(params: {
 }): Promise<SignatureResponse> {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const unsignedPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Supabase configuration missing');
+  // Prefer Supabase signed path when available
+  if (supabaseUrl && supabaseKey) {
+    const response = await axios.post(
+      `${supabaseUrl}/functions/v1/cloudinary-signature`,
+      params,
+      {
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+    return response.data;
   }
 
-  const response = await axios.post(
-    `${supabaseUrl}/functions/v1/cloudinary-signature`,
-    params,
-    {
-      headers: {
-        'Authorization': `Bearer ${supabaseKey}`,
-        'Content-Type': 'application/json',
-      }
-    }
-  );
+  // Fallback to unsigned config (no signature) - used only when Supabase config is missing
+  if (!cloudName || !unsignedPreset) {
+    throw new Error('Cloudinary configuration missing');
+  }
 
-  return response.data;
+  return {
+    signature: '',
+    timestamp: Math.floor(Date.now() / 1000),
+    api_key: '',
+    cloud_name: cloudName,
+    folder: params.folder,
+    transformation: params.transformation,
+    eager: params.eager,
+    public_id: params.public_id,
+    // Custom marker so uploader switches to unsigned
+    __unsigned: { preset: unsignedPreset }
+  } as any;
 }
 
 /**
@@ -88,9 +106,14 @@ export async function uploadWithSignature(
 
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('api_key', signatureData.api_key);
-  formData.append('timestamp', signatureData.timestamp.toString());
-  formData.append('signature', signatureData.signature);
+  if ((signatureData as any).__unsigned) {
+    // Unsigned upload path
+    formData.append('upload_preset', (signatureData as any).__unsigned.preset);
+  } else {
+    formData.append('api_key', signatureData.api_key);
+    formData.append('timestamp', signatureData.timestamp.toString());
+    formData.append('signature', signatureData.signature);
+  }
 
   if (signatureData.folder) formData.append('folder', signatureData.folder);
   if (signatureData.transformation) formData.append('transformation', signatureData.transformation);

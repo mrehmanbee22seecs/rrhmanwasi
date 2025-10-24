@@ -15,6 +15,13 @@ service cloud.firestore {
     function isOwnerOrAdmin(userId) {
       return isOwner(userId) || isAdmin();
     }
+    // Only admins or the project owner can link an event to a project
+    function canLinkEventToProject(projectId) {
+      let proj = get(/databases/$(database)/documents/project_submissions/$(projectId)).data;
+      return isAdmin() || (
+        isAuthenticated() && proj != null && proj.submittedBy == request.auth.uid
+      );
+    }
 
     // === CHATBOT AND SUPPORTING COLLECTIONS ===
 
@@ -58,8 +65,27 @@ service cloud.firestore {
       allow read: if (resource.data.status == 'approved' && resource.data.isVisible == true)
                   || (isAuthenticated() && request.auth.uid == resource.data.submittedBy)
                   || isAdmin();
-      allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated() && (request.auth.uid == resource.data.submittedBy || isAdmin());
+      // Create allowed for authenticated users, but if linking to a project,
+      // only admins or that project's owner may do so
+      allow create: if isAuthenticated() && (
+        // If no projectId provided, allow create
+        !request.resource.data.keys().hasAny(['projectId']) ||
+        // Empty projectId treated as not linking
+        request.resource.data.projectId == '' ||
+        // When linking, enforce permission
+        canLinkEventToProject(request.resource.data.projectId)
+      );
+      // Updates/deletes allowed to submitter or admin, but changing/setting projectId
+      // must satisfy the same project-link permission
+      allow update, delete: if isAuthenticated() && (
+        (request.auth.uid == resource.data.submittedBy || isAdmin())
+      ) && (
+        // If projectId unchanged or not provided, ok; else must be allowed to link
+        !request.resource.data.keys().hasAny(['projectId']) ||
+        request.resource.data.projectId == resource.data.projectId ||
+        request.resource.data.projectId == '' ||
+        canLinkEventToProject(request.resource.data.projectId)
+      );
     }
 
     match /hero_content/{docId} { allow read: if true; allow write: if isAdmin(); }

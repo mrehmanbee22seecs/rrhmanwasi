@@ -26,6 +26,7 @@ const CreateSubmission = () => {
     const draftParam = searchParams.get('draft');
     const prefillProjectId = searchParams.get('prefillProjectId');
     const prefillAffiliationName = searchParams.get('prefillAffiliationName');
+    const prefillAffiliationType = searchParams.get('prefillAffiliationType');
 
     if (typeParam === 'event' || typeParam === 'project') {
       setSubmissionType(typeParam as SubmissionType);
@@ -36,7 +37,11 @@ const CreateSubmission = () => {
       setEventData(prev => ({
         ...prev,
         projectId: prefillProjectId,
-        affiliation: { ...prev.affiliation, name: prefillAffiliationName || prev.affiliation.name, type: prev.affiliation.type || 'University Club' }
+        affiliation: {
+          ...prev.affiliation,
+          name: prefillAffiliationName || prev.affiliation.name,
+          type: prefillAffiliationType || prev.affiliation.type || 'University Club'
+        }
       }));
     }
 
@@ -291,6 +296,28 @@ const CreateSubmission = () => {
         };
       } else {
         collectionName = 'event_submissions';
+        // If linking to a project, verify permissions client-side: only admins or the
+        // owner of the project may add an event to that project.
+        if (eventData.projectId) {
+          try {
+            const parentProjectRef = doc(db, 'project_submissions', eventData.projectId);
+            const parentSnap = await getDoc(parentProjectRef);
+            if (!parentSnap.exists()) {
+              throw new Error('Parent project not found');
+            }
+            const parent = parentSnap.data();
+            const isOwner = parent.submittedBy === currentUser.uid;
+            if (!isOwner && !isAdmin) {
+              throw new Error('You are not allowed to add an event to this project');
+            }
+          } catch (permErr: any) {
+            console.error('Authorization failed for adding event to project:', permErr);
+            alert(permErr?.message || 'You are not allowed to add an event to this project.');
+            setLoading(false);
+            return;
+          }
+        }
+
         insertData = {
           title: eventData.title,
           shortSummary: eventData.shortSummary,
@@ -341,53 +368,14 @@ const CreateSubmission = () => {
       } else {
         const docRef = await addDoc(collection(db, collectionName), insertData);
         console.log(`${submissionType} successfully saved with ID:`, docRef.id);
-        // Send confirmation email to submitter (client-side best-effort; server also sends)
-        try {
-          const when = submissionType === 'project'
-            ? `${projectData.startDate || ''}${projectData.endDate ? ' - ' + projectData.endDate : ''}`
-            : `${eventData.date || ''}${eventData.time ? ' @ ' + eventData.time : ''}`;
-          await sendEmail(formatSubmissionReceivedEmail({
-            type: submissionType,
-            title: submissionType === 'project' ? projectData.title : eventData.title,
-            submitterName: userData.displayName || 'Friend',
-            submitterEmail: userData.email || '',
-            summary: submissionType === 'project' ? projectData.shortSummary : eventData.shortSummary,
-            when
-          }));
-
-          // Spark-friendly reminder scheduling via webhook
-          const reminders = submissionType === 'project' ? projectData.reminders : eventData.reminders;
-          for (const rem of reminders) {
-            try {
-              const sendAt = new Date(`${rem.reminderDate}T${rem.reminderTime}`);
-              const html = formatReminderEmail({
-                to: '',
-                title: rem.title,
-                description: rem.description,
-                when: sendAt.toLocaleString(),
-                submissionTitle: submissionType === 'project' ? projectData.title : eventData.title,
-                submissionType: submissionType,
-              }).html;
-              await scheduleReminderEmails({
-                recipients: rem.notifyEmails,
-                subject: `Reminder: ${rem.title}`,
-                html,
-                sendAtISO: sendAt.toISOString(),
-              });
-            } catch (e) {
-              console.warn('Failed to schedule reminder (webhook)', e);
-            }
-          }
-        } catch (e) {
-          console.warn('Failed to send confirmation email (client-side)', e);
-        }
       }
 
+      // Show user feedback immediately (no waiting for emails)
       if (finalStatus === 'pending') {
         setShowConfirmation(true);
         setTimeout(() => {
           navigate('/dashboard');
-        }, 3000);
+        }, 1500);
       } else if (isAdmin && finalStatus === 'approved') {
         alert(`${submissionType === 'project' ? 'Project' : 'Event'} has been created and automatically approved!`);
         navigate(submissionType === 'project' ? '/projects' : '/events');
@@ -397,9 +385,46 @@ const CreateSubmission = () => {
       } else {
         navigate('/dashboard');
       }
-    } catch (error) {
+
+      // Fire-and-forget: send confirmation email and schedule reminders
+      try {
+        const when = submissionType === 'project'
+          ? `${projectData.startDate || ''}${projectData.endDate ? ' - ' + projectData.endDate : ''}`
+          : `${eventData.date || ''}${eventData.time ? ' @ ' + eventData.time : ''}`;
+        sendEmail(formatSubmissionReceivedEmail({
+          type: submissionType,
+          title: submissionType === 'project' ? projectData.title : eventData.title,
+          submitterName: userData.displayName || 'Friend',
+          submitterEmail: userData.email || '',
+          summary: submissionType === 'project' ? projectData.shortSummary : eventData.shortSummary,
+          when
+        })).catch((e) => console.warn('Email send failed (non-blocking):', e));
+
+        const reminders = submissionType === 'project' ? projectData.reminders : eventData.reminders;
+        for (const rem of reminders) {
+          const sendAt = new Date(`${rem.reminderDate}T${rem.reminderTime}`);
+          const html = formatReminderEmail({
+            to: '',
+            title: rem.title,
+            description: rem.description,
+            when: sendAt.toLocaleString(),
+            submissionTitle: submissionType === 'project' ? projectData.title : eventData.title,
+            submissionType: submissionType,
+          }).html;
+          scheduleReminderEmails({
+            recipients: rem.notifyEmails,
+            subject: `Reminder: ${rem.title}`,
+            html,
+            sendAtISO: sendAt.toISOString(),
+          }).catch((e) => console.warn('Reminder schedule failed (non-blocking):', e));
+        }
+      } catch (e) {
+        console.warn('Background tasks failed (non-blocking):', e);
+      }
+    } catch (error: any) {
       console.error('Error submitting:', error);
-      alert('Error submitting. Please try again.');
+      const msg = typeof error?.message === 'string' ? error.message : 'Error submitting. Please try again.';
+      alert(msg);
     } finally {
       setLoading(false);
     }
