@@ -68,10 +68,10 @@ const DonationWidget = () => {
   return (
     <>
       {!isOpen && !suppressButton && (
-        <div className="fixed bottom-5 md:bottom-6 left-1/2 -translate-x-[calc(50%+72px)] md:-translate-x-[calc(50%+100px)] z-50">
+        <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0)+16px)] left-4 md:left-6 z-50">
           <button
             onClick={() => setIsOpen(true)}
-            className="bg-gradient-to-r from-green-500 to-green-600 text-white px-5 py-3 md:px-6 md:py-4 rounded-full shadow-luxury-glow flex items-center justify-center hover:scale-110 transition-all duration-300 animate-pulse group"
+            className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-3 md:px-5 md:py-4 rounded-full shadow-luxury-glow flex items-center justify-center hover:scale-110 transition-all duration-300 group"
             title="Support Our Mission"
           >
             <Heart className="w-5 h-5 md:w-6 md:h-6 mr-2" fill="currentColor" />

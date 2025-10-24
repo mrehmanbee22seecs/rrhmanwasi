@@ -33,22 +33,25 @@ const NewsletterSignup: React.FC<{ source?: 'contact' | 'footer' | 'other'; }> =
   };
 
   return (
-    <div className="flex w-full">
-      <input
-        type="email"
-        placeholder="Your email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        disabled={loading}
-        className="flex-1 px-4 py-3 border-2 border-gold-accent/30 rounded-l-luxury focus:outline-none focus:ring-2 focus:ring-gold-accent font-luxury-body"
-      />
-      <button
-        onClick={subscribe}
-        disabled={loading}
-        className="bg-gold-accent text-navy-deep px-6 py-3 rounded-r-luxury hover:bg-gold-light transition-colors font-luxury-semibold disabled:opacity-60"
-      >
-        {loading ? 'Subscribing...' : 'Subscribe'}
-      </button>
+    <div className="w-full max-w-md">
+      <div className="flex w-full">
+        <input
+          type="email"
+          placeholder="Your email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={loading}
+          className="flex-1 h-12 px-4 border-2 border-gold-accent/30 rounded-l-luxury focus:outline-none focus:ring-2 focus:ring-gold-accent font-luxury-body"
+        />
+        <button
+          onClick={subscribe}
+          disabled={loading}
+          aria-label="Subscribe to newsletter"
+          className="btn-luxury-primary btn-sm h-12 rounded-l-none rounded-r-luxury px-5 whitespace-nowrap"
+        >
+          {loading ? 'Subscribing...' : 'Subscribe'}
+        </button>
+      </div>
     </div>
   );
 };

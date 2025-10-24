@@ -184,13 +184,13 @@ const ChatWidget = () => {
   const hasUnreadAdminMessages = chats.some((chat) => chat.takeoverBy);
   const hasIntelligentKb = kbPages.length > 0;
 
-  // Floating CTA button (mirrors donation widget position/animation)
+  // Floating CTA button (anchored to safe bottom-right area)
   if (!isOpen) {
     return !suppressButton ? (
-      <div className="fixed bottom-5 md:bottom-6 left-1/2 translate-x-[calc(50%+72px)] md:translate-x-[calc(50%+100px)] z-50">
+      <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0)+16px)] right-4 md:right-6 z-50">
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-5 py-3 md:px-6 md:py-4 rounded-full shadow-2xl transition-all relative hover:scale-110 group"
+          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-3 md:px-5 md:py-4 rounded-full shadow-2xl transition-all relative hover:scale-110 group"
           aria-label="Open chat"
           title="Chat with us"
         >
