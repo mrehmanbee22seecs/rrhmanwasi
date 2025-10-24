@@ -557,15 +557,41 @@ const EventDetail = () => {
                 <p className="text-black font-luxury-semibold">
                   Registration Deadline: <span className="text-vibrant-orange-dark">{registrationDeadline}</span>
                 </p>
+                {registrationDeadline && (() => {
+                  const now = new Date();
+                  const deadline = new Date(registrationDeadline);
+                  const passed = now > new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate(), 23, 59, 59);
+                  return passed ? (
+                    <p className="mt-2 text-sm text-red-700">Registration is closed for this event.</p>
+                  ) : null;
+                })()}
               </div>
               
-              <button
-                onClick={() => setShowRegistration(true)}
-                className="btn-luxury-primary text-lg px-8 py-4 inline-flex items-center"
-              >
-                Register Now
-                <Send className="ml-3 w-6 h-6" />
-              </button>
+              {(() => {
+                const now = new Date();
+                const eventDate = displayEvent.date ? new Date(displayEvent.date) : null;
+                const isSameDay = eventDate && now.toDateString() === eventDate.toDateString();
+                const deadline = displayEvent.registrationDeadline ? new Date(displayEvent.registrationDeadline) : null;
+                const deadlinePassed = deadline ? now > new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate(), 23, 59, 59) : false;
+
+                if (deadlinePassed) {
+                  return (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-luxury text-black">
+                      Registration deadline has passed. Please browse other events.
+                    </div>
+                  );
+                }
+
+                return (
+                  <button
+                    onClick={() => setShowRegistration(true)}
+                    className="btn-luxury-primary text-lg px-8 py-4 inline-flex items-center"
+                  >
+                    {isSameDay ? 'Register (Today)' : 'Register Now'}
+                    <Send className="ml-3 w-6 h-6" />
+                  </button>
+                );
+              })()}
             </div>
             
             <div className="relative">

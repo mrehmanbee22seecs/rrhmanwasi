@@ -549,10 +549,12 @@ const ProjectDetail = () => {
                   <Calendar className="w-6 h-6 mr-3 text-vibrant-orange" />
                   <span className="font-luxury-body">{startDate} - {endDate}</span>
                 </div>
-                <div className="flex items-center text-black">
-                  <Clock className="w-6 h-6 mr-3 text-vibrant-orange" />
-                  <span className="font-luxury-body">Apply by: {applicationDeadline}</span>
-                </div>
+                {Array.isArray(relatedEvents) && relatedEvents.length > 0 && (
+                  <div className="flex items-center text-black">
+                    <Clock className="w-6 h-6 mr-3 text-vibrant-orange" />
+                    <span className="font-luxury-body">{relatedEvents.length} related event{relatedEvents.length > 1 ? 's' : ''}</span>
+                  </div>
+                )}
               </div>
 
               <button

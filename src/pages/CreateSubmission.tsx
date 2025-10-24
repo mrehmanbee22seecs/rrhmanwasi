@@ -368,53 +368,14 @@ const CreateSubmission = () => {
       } else {
         const docRef = await addDoc(collection(db, collectionName), insertData);
         console.log(`${submissionType} successfully saved with ID:`, docRef.id);
-        // Send confirmation email to submitter (client-side best-effort; server also sends)
-        try {
-          const when = submissionType === 'project'
-            ? `${projectData.startDate || ''}${projectData.endDate ? ' - ' + projectData.endDate : ''}`
-            : `${eventData.date || ''}${eventData.time ? ' @ ' + eventData.time : ''}`;
-          await sendEmail(formatSubmissionReceivedEmail({
-            type: submissionType,
-            title: submissionType === 'project' ? projectData.title : eventData.title,
-            submitterName: userData.displayName || 'Friend',
-            submitterEmail: userData.email || '',
-            summary: submissionType === 'project' ? projectData.shortSummary : eventData.shortSummary,
-            when
-          }));
-
-          // Spark-friendly reminder scheduling via webhook
-          const reminders = submissionType === 'project' ? projectData.reminders : eventData.reminders;
-          for (const rem of reminders) {
-            try {
-              const sendAt = new Date(`${rem.reminderDate}T${rem.reminderTime}`);
-              const html = formatReminderEmail({
-                to: '',
-                title: rem.title,
-                description: rem.description,
-                when: sendAt.toLocaleString(),
-                submissionTitle: submissionType === 'project' ? projectData.title : eventData.title,
-                submissionType: submissionType,
-              }).html;
-              await scheduleReminderEmails({
-                recipients: rem.notifyEmails,
-                subject: `Reminder: ${rem.title}`,
-                html,
-                sendAtISO: sendAt.toISOString(),
-              });
-            } catch (e) {
-              console.warn('Failed to schedule reminder (webhook)', e);
-            }
-          }
-        } catch (e) {
-          console.warn('Failed to send confirmation email (client-side)', e);
-        }
       }
 
+      // Show user feedback immediately (no waiting for emails)
       if (finalStatus === 'pending') {
         setShowConfirmation(true);
         setTimeout(() => {
           navigate('/dashboard');
-        }, 3000);
+        }, 1500);
       } else if (isAdmin && finalStatus === 'approved') {
         alert(`${submissionType === 'project' ? 'Project' : 'Event'} has been created and automatically approved!`);
         navigate(submissionType === 'project' ? '/projects' : '/events');
@@ -423,6 +384,42 @@ const CreateSubmission = () => {
         navigate('/dashboard');
       } else {
         navigate('/dashboard');
+      }
+
+      // Fire-and-forget: send confirmation email and schedule reminders
+      try {
+        const when = submissionType === 'project'
+          ? `${projectData.startDate || ''}${projectData.endDate ? ' - ' + projectData.endDate : ''}`
+          : `${eventData.date || ''}${eventData.time ? ' @ ' + eventData.time : ''}`;
+        sendEmail(formatSubmissionReceivedEmail({
+          type: submissionType,
+          title: submissionType === 'project' ? projectData.title : eventData.title,
+          submitterName: userData.displayName || 'Friend',
+          submitterEmail: userData.email || '',
+          summary: submissionType === 'project' ? projectData.shortSummary : eventData.shortSummary,
+          when
+        })).catch((e) => console.warn('Email send failed (non-blocking):', e));
+
+        const reminders = submissionType === 'project' ? projectData.reminders : eventData.reminders;
+        for (const rem of reminders) {
+          const sendAt = new Date(`${rem.reminderDate}T${rem.reminderTime}`);
+          const html = formatReminderEmail({
+            to: '',
+            title: rem.title,
+            description: rem.description,
+            when: sendAt.toLocaleString(),
+            submissionTitle: submissionType === 'project' ? projectData.title : eventData.title,
+            submissionType: submissionType,
+          }).html;
+          scheduleReminderEmails({
+            recipients: rem.notifyEmails,
+            subject: `Reminder: ${rem.title}`,
+            html,
+            sendAtISO: sendAt.toISOString(),
+          }).catch((e) => console.warn('Reminder schedule failed (non-blocking):', e));
+        }
+      } catch (e) {
+        console.warn('Background tasks failed (non-blocking):', e);
       }
     } catch (error: any) {
       console.error('Error submitting:', error);
