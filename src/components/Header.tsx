@@ -159,11 +159,11 @@ const Header = () => {
                   key={item.name}
                   to={item.href}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`block px-6 py-4 rounded-luxury text-base font-luxury-semibold transition-all duration-400 ${
+                  className={`w-full inline-flex items-center px-6 py-4 rounded-luxury ${
                     location.pathname === item.href
-                      ? 'text-logo-navy bg-cream-elegant'
-                      : 'text-cream-elegant hover:text-vibrant-orange-light hover:bg-logo-navy-light/60'
-                  }`}
+                      ? 'btn-luxury-primary'
+                      : 'btn-luxury-secondary'
+                  } justify-start text-base`}
                 >
                   {item.name}
                 </Link>

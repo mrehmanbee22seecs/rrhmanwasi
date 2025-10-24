@@ -381,7 +381,7 @@ const ProjectDetail = () => {
 
     // Save structured application entry
     try {
-      await addDoc(collection(db, 'project_applications'), {
+      const payload = {
         projectId: id,
         projectTitle: displayProject.title,
         name: applicationData.name,
@@ -412,7 +412,13 @@ const ProjectDetail = () => {
         emergencyContactRelation: applicationData.emergencyContactRelation || '',
         whatsappConsent: !!applicationData.whatsappConsent,
         submittedAt: serverTimestamp(),
-      });
+      };
+      // 1) Backwards-compatible top-level collection
+      await addDoc(collection(db, 'project_applications'), payload);
+      // 2) New per-project subcollection for explicit linkage
+      if (id) {
+        await addDoc(collection(db, `project_submissions/${id}/applications`), payload);
+      }
     } catch (error) {
       console.error('Failed to save project application:', error);
     }

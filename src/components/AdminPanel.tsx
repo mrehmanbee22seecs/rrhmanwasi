@@ -880,8 +880,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 <h4 className="text-xl font-luxury-heading text-black mb-4">Project Users</h4>
                 {renderGroupedTable(
                   groupBy(projectApplications, (a) => a.projectTitle || 'Untitled Project'),
-                  ['Name', 'Email', 'Phone', 'Preferred Role', 'Availability', 'Skills', 'Languages', 'Transport', 'Equipment', 'Accessibility', 'Emergency Contact', 'Consents', 'Experience', 'Motivation', 'Submitted'],
+                  ['Project', 'Name', 'Email', 'Phone', 'Preferred Role', 'Availability', 'Skills', 'Languages', 'Transport', 'Equipment', 'Accessibility', 'Emergency Contact', 'Consents', 'Experience', 'Motivation', 'Submitted'],
                   (row) => [
+                    row.projectId ? (<a href={`/projects/${row.projectId}`} className="text-blue-600 hover:underline" target="_blank" rel="noreferrer">Open</a>) : '—',
                     row.name,
                     row.email,
                     row.phone,
@@ -909,8 +910,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 <h4 className="text-xl font-luxury-heading text-black mb-4">Event Users</h4>
                 {renderGroupedTable(
                   groupBy(eventRegistrations, (a) => a.eventTitle || 'Untitled Event'),
-                  ['Name', 'Email', 'Phone', 'Emergency Contact', 'Dietary', 'Shift', 'Sessions', 'Team', 'T‑shirt', 'Accessibility', 'Consents', 'Experience', 'Submitted'],
+                  ['Event', 'Name', 'Email', 'Phone', 'Emergency Contact', 'Dietary', 'Shift', 'Sessions', 'Team', 'T‑shirt', 'Accessibility', 'Consents', 'Experience', 'Submitted'],
                   (row) => [
+                    row.eventId ? (<a href={`/events/${row.eventId}`} className="text-blue-600 hover:underline" target="_blank" rel="noreferrer">Open</a>) : '—',
                     row.name,
                     row.email,
                     row.phone,

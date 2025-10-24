@@ -478,7 +478,8 @@ body {
 
 /* Ensure light section classes map to dark surfaces */
 .theme-dark .bg-cream-white,
-.theme-dark .bg-cream-elegant {
+.theme-dark .bg-cream-elegant,
+.theme-dark .bg-cream-soft {
   background-color: var(--color-surface) !important;
 }
 .theme-dark .text-black,
@@ -513,8 +514,13 @@ body {
 .theme-dark .bg-gray-50,
 .theme-dark .bg-gray-100,
 .theme-dark .bg-cream-white,
-.theme-dark .bg-cream-elegant {
-  background-color: var(--color-surface) !important;
+.theme-dark .bg-cream-elegant,
+/* Map common translucent white utilities used in components */
+.theme-dark .bg-white\/95,
+.theme-dark .bg-white\/90,
+.theme-dark .bg-white\/85,
+.theme-dark .bg-white\/80 {
+  background-color: rgba(26, 26, 46, 0.92) !important; /* dark surface with subtle transparency */
 }
 .theme-dark .text-black,
 .theme-dark .text-logo-navy,
