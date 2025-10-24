@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Save, Send, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
 import { db } from '../config/firebase';
 import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { FirebaseError } from 'firebase/app';
 import { useAuth } from '../contexts/AuthContext';
 import { ProjectSubmission, EventSubmission, SubmissionType, ChecklistItem, Reminder, HeadInfo } from '../types/submissions';
 import { sendEmail, formatSubmissionReceivedEmail } from '../utils/emailService';
@@ -43,6 +44,27 @@ const CreateSubmission = () => {
           type: prefillAffiliationType || prev.affiliation.type || 'University Club'
         }
       }));
+
+      // Validate project link early and provide friendly errors
+      (async () => {
+        try {
+          const parentProjectRef = doc(db, 'project_submissions', prefillProjectId);
+          const parentSnap = await getDoc(parentProjectRef);
+          if (!parentSnap.exists()) {
+            alert('Project not found. The project you are linking to may have been removed.');
+            setEventData(prev => ({ ...prev, projectId: '' }));
+            return;
+          }
+          const parent = parentSnap.data();
+          const isOwner = currentUser && parent.submittedBy === currentUser.uid;
+          if (!isOwner && !isAdmin) {
+            alert('You are not allowed to add an event to this project.');
+            setEventData(prev => ({ ...prev, projectId: '' }));
+          }
+        } catch (e) {
+          console.warn('Project prefill validation failed:', e);
+        }
+      })();
     }
 
     if (draftParam) {
@@ -423,7 +445,24 @@ const CreateSubmission = () => {
       }
     } catch (error: any) {
       console.error('Error submitting:', error);
-      const msg = typeof error?.message === 'string' ? error.message : 'Error submitting. Please try again.';
+      let msg = 'Error submitting. Please try again.';
+      if (error instanceof FirebaseError) {
+        switch (error.code) {
+          case 'permission-denied':
+            msg = 'You do not have permission to perform this action.';
+            break;
+          case 'not-found':
+            msg = 'The requested document was not found.';
+            break;
+          case 'unauthenticated':
+            msg = 'You must be signed in to perform this action.';
+            break;
+          default:
+            msg = `An error occurred: ${error.message}`;
+        }
+      } else if (typeof error?.message === 'string') {
+        msg = error.message;
+      }
       alert(msg);
     } finally {
       setLoading(false);
