@@ -372,10 +372,8 @@ const CreateSubmission = () => {
 
       // Show user feedback immediately (no waiting for emails)
       if (finalStatus === 'pending') {
-        setShowConfirmation(true);
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1500);
+        // Navigate immediately for snappy UX
+        navigate('/dashboard');
       } else if (isAdmin && finalStatus === 'approved') {
         alert(`${submissionType === 'project' ? 'Project' : 'Event'} has been created and automatically approved!`);
         navigate(submissionType === 'project' ? '/projects' : '/events');
@@ -423,6 +421,64 @@ const CreateSubmission = () => {
       }
     } catch (error: any) {
       console.error('Error submitting:', error);
+      // If user attempted to link to a project but permissions restrict it,
+      // offer to submit as a standalone event for compatibility.
+      if (
+        submissionType === 'event' &&
+        eventData.projectId &&
+        (error?.code === 'permission-denied' || /insufficient permissions/i.test(error?.message || ''))
+      ) {
+        const proceed = confirm('You are not allowed to link this event to the selected project. Submit the event without linking?');
+        if (proceed) {
+          try {
+            const insertData = {
+              title: eventData.title,
+              shortSummary: eventData.shortSummary,
+              category: eventData.category,
+              image: eventData.image,
+              date: eventData.date,
+              time: eventData.time,
+              location: eventData.location,
+              address: eventData.address,
+              latitude: eventData.latitude,
+              longitude: eventData.longitude,
+              expectedAttendees: eventData.expectedAttendees,
+              cost: eventData.cost,
+              registrationDeadline: eventData.registrationDeadline,
+              description: eventData.description,
+              targetAudience: eventData.targetAudience,
+              durationEstimate: eventData.durationEstimate,
+              durationHours: eventData.durationHours,
+              requirements: eventData.requirements.filter(r => r.trim() !== ''),
+              agenda: eventData.agenda.filter(a => a.trim() !== ''),
+              activities: eventData.activities.filter(a => a.trim() !== ''),
+              contactEmail: eventData.contactEmail,
+              contactPhone: eventData.contactPhone,
+              budget: eventData.budget,
+              sponsorInfo: eventData.sponsorInfo,
+              internalNotes: eventData.internalNotes,
+              notes: eventData.notes,
+              heads: eventData.heads,
+              affiliation: eventData.affiliation,
+              projectId: '',
+              submittedBy: currentUser.uid,
+              submitterName: userData.displayName || 'Unknown User',
+              submitterEmail: userData.email || '',
+              status: 'pending',
+              isVisible: false,
+              auditTrail: [],
+              attendeeIds: [currentUser.uid],
+              submittedAt: serverTimestamp()
+            } as any;
+            const docRef = await addDoc(collection(db, 'event_submissions'), insertData);
+            console.log('event successfully saved without linking, ID:', docRef.id);
+            navigate('/dashboard');
+            return;
+          } catch (e2) {
+            console.error('Fallback submit failed:', e2);
+          }
+        }
+      }
       const msg = typeof error?.message === 'string' ? error.message : 'Error submitting. Please try again.';
       alert(msg);
     } finally {
