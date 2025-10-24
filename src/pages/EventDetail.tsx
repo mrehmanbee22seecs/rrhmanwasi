@@ -360,7 +360,7 @@ const EventDetail = () => {
 
     // Save structured registration entry
     try {
-      await addDoc(collection(db, 'event_registrations'), {
+      const payload = {
         eventId: id,
         eventTitle: displayEvent.title,
         eventDate: displayEvent.date,
@@ -381,7 +381,14 @@ const EventDetail = () => {
         medicalConditions: registrationData.medicalConditions || '',
         whatsappConsent: !!registrationData.whatsappConsent,
         submittedAt: serverTimestamp(),
-      });
+      };
+
+      // 1) Backwards-compatible top-level collection
+      await addDoc(collection(db, 'event_registrations'), payload);
+      // 2) New per-event subcollection for explicit linkage
+      if (id) {
+        await addDoc(collection(db, `event_submissions/${id}/registrations`), payload);
+      }
     } catch (error) {
       console.error('Failed to save event registration:', error);
     }
