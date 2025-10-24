@@ -3,14 +3,16 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Users, MapPin, Clock, CheckCircle, Send, AlertCircle, Star } from 'lucide-react';
 import { sendEmail, formatEventRegistrationEmail, formatEventRegistrationConfirmationEmail } from '../utils/emailService';
 import { db } from '../config/firebase';
-import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { EventSubmission } from '../types/submissions';
+import { doc, getDoc, addDoc, collection, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
+import { EventSubmission, ProjectSubmission } from '../types/submissions';
 
 const EventDetail = () => {
   const { id } = useParams();
   const [showRegistration, setShowRegistration] = useState(false);
   const [event, setEvent] = useState<EventSubmission | null>(null);
   const [loading, setLoading] = useState(true);
+  const [parentProject, setParentProject] = useState<ProjectSubmission | null>(null);
+  const [siblingEvents, setSiblingEvents] = useState<EventSubmission[]>([]);
   const [registrationData, setRegistrationData] = useState({
     name: '',
     email: '',
@@ -56,6 +58,42 @@ const EventDetail = () => {
 
     fetchEvent();
   }, [id]);
+
+  // Fetch parent project (if any) and other events for the same project
+  useEffect(() => {
+    const fetchParentAndSiblings = async () => {
+      try {
+        if (!event?.projectId) {
+          setParentProject(null);
+          setSiblingEvents([]);
+          return;
+        }
+
+        // Parent project
+        const projRef = doc(db, 'project_submissions', event.projectId);
+        const projSnap = await getDoc(projRef);
+        if (projSnap.exists()) {
+          setParentProject({ id: projSnap.id, ...projSnap.data() } as ProjectSubmission);
+        } else {
+          setParentProject(null);
+        }
+
+        // Other events in the same project
+        const eventsRef = collection(db, 'event_submissions');
+        const q = query(eventsRef, where('projectId', '==', event.projectId));
+        const snap = await getDocs(q);
+        const siblings = snap.docs
+          .filter(d => d.id !== id)
+          .map(d => ({ id: d.id, ...d.data() } as EventSubmission))
+          .filter(e => e.status === 'approved' && e.isVisible === true);
+        setSiblingEvents(siblings);
+      } catch (e) {
+        console.error('Error loading parent project/sibling events:', e);
+      }
+    };
+    fetchParentAndSiblings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [event?.projectId, id]);
 
   const staticEvents = {
     '1': {
@@ -462,6 +500,14 @@ const EventDetail = () => {
             <ArrowLeft className="mr-2 w-5 h-5" />
             Back to Events
           </Link>
+          {parentProject && (
+            <div className="mb-6 text-black">
+              <span className="text-black/70">Part of project: </span>
+              <Link to={`/projects/${parentProject.id}`} className="text-vibrant-orange hover:underline">
+                {parentProject.title || 'View project'}
+              </Link>
+            </div>
+          )}
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -775,6 +821,26 @@ const EventDetail = () => {
                   <h3 className="text-xl font-luxury-heading text-black mb-2">{head.name}</h3>
                   <p className="text-vibrant-orange-dark font-luxury-semibold mb-4">{head.designation}</p>
                 </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Other events in the same project */}
+      {parentProject && siblingEvents.length > 0 && (
+        <section className="py-16 bg-cream-elegant">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-luxury-heading text-black mb-8 text-center">
+              More events in "{parentProject.title}"
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {siblingEvents.map(ev => (
+                <Link key={ev.id} to={`/events/${ev.id}`} className="luxury-card bg-cream-white p-6 hover:shadow-luxury-lg transition-all">
+                  <div className="text-sm text-black/70 mb-2">{ev.date}{ev.time ? ` • ${ev.time}` : ''}</div>
+                  <h3 className="text-xl font-luxury-heading text-black mb-2">{ev.title}</h3>
+                  <div className="text-black/80">{ev.location}</div>
+                </Link>
               ))}
             </div>
           </div>
