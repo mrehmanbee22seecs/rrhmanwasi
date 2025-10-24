@@ -291,6 +291,28 @@ const CreateSubmission = () => {
         };
       } else {
         collectionName = 'event_submissions';
+        // If linking to a project, verify permissions client-side: only admins or the
+        // owner of the project may add an event to that project.
+        if (eventData.projectId) {
+          try {
+            const parentProjectRef = doc(db, 'project_submissions', eventData.projectId);
+            const parentSnap = await getDoc(parentProjectRef);
+            if (!parentSnap.exists()) {
+              throw new Error('Parent project not found');
+            }
+            const parent = parentSnap.data();
+            const isOwner = parent.submittedBy === currentUser.uid;
+            if (!isOwner && !isAdmin) {
+              throw new Error('You are not allowed to add an event to this project');
+            }
+          } catch (permErr: any) {
+            console.error('Authorization failed for adding event to project:', permErr);
+            alert(permErr?.message || 'You are not allowed to add an event to this project.');
+            setLoading(false);
+            return;
+          }
+        }
+
         insertData = {
           title: eventData.title,
           shortSummary: eventData.shortSummary,
@@ -397,9 +419,10 @@ const CreateSubmission = () => {
       } else {
         navigate('/dashboard');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting:', error);
-      alert('Error submitting. Please try again.');
+      const msg = typeof error?.message === 'string' ? error.message : 'Error submitting. Please try again.';
+      alert(msg);
     } finally {
       setLoading(false);
     }
