@@ -3,8 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Users, MapPin, Target, Clock, CheckCircle, Send, AlertCircle } from 'lucide-react';
 import { sendEmail, formatProjectApplicationEmail, formatProjectApplicationConfirmationEmail } from '../utils/emailService';
 import { db } from '../config/firebase';
-import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { ProjectSubmission } from '../types/submissions';
+import { doc, getDoc, addDoc, collection, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
+import { ProjectSubmission, EventSubmission } from '../types/submissions';
 import { useAuth } from '../contexts/AuthContext';
 
 const ProjectDetail = () => {
@@ -13,6 +13,7 @@ const ProjectDetail = () => {
   const [showApplication, setShowApplication] = useState(false);
   const [project, setProject] = useState<ProjectSubmission | null>(null);
   const [loading, setLoading] = useState(true);
+  const [relatedEvents, setRelatedEvents] = useState<EventSubmission[]>([]);
   const [applicationData, setApplicationData] = useState({
     name: '',
     email: '',
@@ -345,6 +346,25 @@ const ProjectDetail = () => {
   const displayProject = project || staticProject;
   const canAddEventToThisProject = !!project && !!currentUser && (isAdmin || project.submittedBy === currentUser.uid);
 
+  useEffect(() => {
+    const fetchRelatedEvents = async () => {
+      if (!id) return;
+      try {
+        const eventsRef = collection(db, 'event_submissions');
+        const q = query(eventsRef, where('projectId', '==', id));
+        const snap = await getDocs(q);
+        const events = snap.docs
+          .map(d => ({ id: d.id, ...d.data() } as EventSubmission))
+          .filter(e => e.status === 'approved' && e.isVisible === true);
+        setRelatedEvents(events);
+      } catch (e) {
+        console.error('Error fetching related events:', e);
+        setRelatedEvents([]);
+      }
+    };
+    fetchRelatedEvents();
+  }, [id]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setApplicationData(prev => ({
@@ -551,10 +571,12 @@ const ProjectDetail = () => {
                     params.set('type', 'event');
                     if (project) {
                       params.set('prefillProjectId', project.id);
-                      const name = project.title || 'Affiliated Organization';
+                      const name = (project as any).affiliation?.name || project.title || 'Affiliated Organization';
+                      const affType = (project as any).affiliation?.type || '';
                       params.set('prefillAffiliationName', name);
+                      if (affType) params.set('prefillAffiliationType', affType);
                     }
-                    window.location.href = `/dashboard/create?${params.toString()}`;
+                    window.location.href = `/create-submission?${params.toString()}`;
                   }}
                   className="ml-3 inline-flex items-center px-6 py-4 rounded-luxury border-2 border-vibrant-orange text-vibrant-orange hover:bg-vibrant-orange/10"
                 >
@@ -794,6 +816,28 @@ const ProjectDetail = () => {
                   <h3 className="text-xl font-luxury-heading text-black mb-2">{head.name}</h3>
                   <p className="text-vibrant-orange-dark font-luxury-semibold mb-4">{head.designation}</p>
                 </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Related Events Section */}
+      {relatedEvents.length > 0 && (
+        <section className="py-16 bg-cream-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-luxury-heading text-black mb-8 text-center">Events for this Project</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {relatedEvents.map((ev) => (
+                <Link
+                  key={ev.id}
+                  to={`/events/${ev.id}`}
+                  className="luxury-card bg-cream-white p-6 hover:shadow-luxury-lg transition-all"
+                >
+                  <div className="text-sm text-black/70 mb-2">{ev.date}{ev.time ? ` • ${ev.time}` : ''}</div>
+                  <h3 className="text-xl font-luxury-heading text-black mb-2">{ev.title}</h3>
+                  <div className="text-black/80">{ev.location}</div>
+                </Link>
               ))}
             </div>
           </div>

@@ -26,6 +26,7 @@ const CreateSubmission = () => {
     const draftParam = searchParams.get('draft');
     const prefillProjectId = searchParams.get('prefillProjectId');
     const prefillAffiliationName = searchParams.get('prefillAffiliationName');
+    const prefillAffiliationType = searchParams.get('prefillAffiliationType');
 
     if (typeParam === 'event' || typeParam === 'project') {
       setSubmissionType(typeParam as SubmissionType);
@@ -36,7 +37,11 @@ const CreateSubmission = () => {
       setEventData(prev => ({
         ...prev,
         projectId: prefillProjectId,
-        affiliation: { ...prev.affiliation, name: prefillAffiliationName || prev.affiliation.name, type: prev.affiliation.type || 'University Club' }
+        affiliation: {
+          ...prev.affiliation,
+          name: prefillAffiliationName || prev.affiliation.name,
+          type: prefillAffiliationType || prev.affiliation.type || 'University Club'
+        }
       }));
     }
 
