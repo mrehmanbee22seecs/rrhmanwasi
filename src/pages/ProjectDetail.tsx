@@ -344,7 +344,9 @@ const ProjectDetail = () => {
 
   const staticProject = staticProjects[id as keyof typeof staticProjects];
   const displayProject = project || staticProject;
-  const canAddEventToThisProject = !!project && !!currentUser && (isAdmin || project.submittedBy === currentUser.uid);
+  // Allow admins to always see the button (even for static projects).
+  // Owners can see it when the Firestore project is loaded and they are the submitter.
+  const canAddEventToThisProject = !!currentUser && (isAdmin || (!!project && project.submittedBy === currentUser.uid));
 
   useEffect(() => {
     const fetchRelatedEvents = async () => {
@@ -571,12 +573,17 @@ const ProjectDetail = () => {
                     // Redirect to create event with prefill of affiliation and projectId via query params
                     const params = new URLSearchParams();
                     params.set('type', 'event');
-                    if (project) {
+                    // Only add projectId when a real Firestore project is loaded; static projects won't have an id usable in Firestore
+                    if (project && project.id) {
                       params.set('prefillProjectId', project.id);
                       const name = (project as any).affiliation?.name || project.title || 'Affiliated Organization';
                       const affType = (project as any).affiliation?.type || '';
                       params.set('prefillAffiliationName', name);
                       if (affType) params.set('prefillAffiliationType', affType);
+                    } else if (displayProject) {
+                      // Fallback: only prefill affiliation name from displayed project (no projectId)
+                      const name = (displayProject as any).affiliation?.name || displayProject.title || 'Affiliated Organization';
+                      params.set('prefillAffiliationName', name);
                     }
                     window.location.href = `/create-submission?${params.toString()}`;
                   }}
