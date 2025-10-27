@@ -668,10 +668,17 @@ const CreateSubmission = () => {
                   <input
                     type="number"
                     value={submissionType === 'project' ? (projectData.peopleImpacted ?? '') : (eventData.peopleImpacted ?? '')}
-                    onChange={(e) => handleInputChange(
-                      'peopleImpacted',
-                      e.target.value ? parseInt(e.target.value) : undefined
-                    )}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '') {
+                        handleInputChange('peopleImpacted', undefined);
+                      } else {
+                        const num = parseInt(value, 10);
+                        if (!isNaN(num) && num >= 0) {
+                          handleInputChange('peopleImpacted', num);
+                        }
+                      }
+                    }}
                     className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
                     min="0"
                     placeholder="Optional"
