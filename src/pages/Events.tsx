@@ -487,7 +487,7 @@ Or create the index in Firebase Console.
                       <span className="mr-1">🏢</span>
                       {event.affiliation.name}
                       {(event.affiliation.customType || event.affiliation.type) && (
-                        <span className="text-gray-600 ml-1">
+                        <span className="text-black/60 ml-1">
                           • {event.affiliation.customType || event.affiliation.type}
                         </span>
                       )}
