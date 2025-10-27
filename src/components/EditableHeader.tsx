@@ -77,14 +77,17 @@ const EditableHeader = () => {
               </div>
             </Link>
 
+            {/* FIXED: Desktop Navigation with proper visibility */}
             <div className="hidden lg:flex items-center space-x-2">
               {navigation.map((item) => (
                 (item.name === 'Dashboard' && (isGuest || !currentUser)) ? null : (
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`nav-pill ${
-                      location.pathname === item.href ? 'active' : ''
+                    className={`px-4 py-2.5 rounded-lg font-luxury-semibold text-sm transition-all duration-300 ${
+                      location.pathname === item.href
+                        ? 'bg-vibrant-orange text-cream-elegant shadow-lg'
+                        : 'text-cream-elegant hover:bg-logo-teal hover:text-white'
                     }`}
                   >
                     {item.name}
@@ -93,9 +96,19 @@ const EditableHeader = () => {
               ))}
               {/* Auth actions in the main menu (desktop) */}
               {currentUser && !isGuest ? (
-                <button onClick={logout} className="nav-pill">Sign Out</button>
+                <button 
+                  onClick={logout} 
+                  className="px-4 py-2.5 rounded-lg font-luxury-semibold text-sm text-cream-elegant hover:bg-logo-navy-light hover:text-vibrant-orange-light transition-all duration-300 border border-cream-elegant/30"
+                >
+                  Sign Out
+                </button>
               ) : (
-                <button onClick={() => setShowAuthModal(true)} className="nav-pill">Sign In</button>
+                <button 
+                  onClick={() => setShowAuthModal(true)} 
+                  className="px-5 py-2.5 rounded-lg font-luxury-semibold text-sm bg-vibrant-orange text-cream-elegant hover:bg-vibrant-orange-light transition-all duration-300 shadow-lg"
+                >
+                  Sign In
+                </button>
               )}
             </div>
 
@@ -128,7 +141,7 @@ const EditableHeader = () => {
                   </button>
 
                   {showUserMenu && (
-                    <div className="absolute right-0 top-full mt-2 w-48 luxury-glass-dark rounded-luxury-lg border-2 border-vibrant-orange/30 py-2">
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-logo-navy-light rounded-luxury-lg border-2 border-vibrant-orange/30 py-2 shadow-2xl">
                       {isAdmin && (
                         <button
                           onClick={() => {
@@ -165,7 +178,7 @@ const EditableHeader = () => {
               ) : isGuest ? (
                 <button
                   onClick={() => setShowAuthModal(true)}
-                  className="flex items-center space-x-2 px-6 py-3 bg-vibrant-orange text-cream-elegant rounded-luxury hover:bg-vibrant-orange-light transition-colors font-luxury-semibold shadow-luxury-glow"
+                  className="flex items-center space-x-2 px-6 py-3 bg-vibrant-orange text-cream-elegant rounded-luxury hover:bg-vibrant-orange-light transition-colors font-luxury-semibold shadow-lg"
                 >
                   <LogIn className="w-5 h-5" />
                   <span>Sign In</span>
@@ -173,6 +186,7 @@ const EditableHeader = () => {
               ) : null}
             </div>
 
+            {/* FIXED: Mobile menu button with better contrast */}
             <div className="flex lg:hidden items-center gap-2">
               {currentUser && !isGuest && (
                 <button
@@ -184,16 +198,17 @@ const EditableHeader = () => {
               )}
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2.5 rounded-lg text-cream-elegant hover:bg-logo-teal transition-all duration-300 active:scale-95 transform"
+                className="p-2.5 rounded-lg text-cream-elegant bg-logo-navy-light/60 hover:bg-logo-teal transition-all duration-300 active:scale-95 transform border border-cream-elegant/30"
               >
                 {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
             </div>
           </div>
 
+          {/* FIXED: Mobile menu with better visibility */}
           {isMenuOpen && (
             <div className="lg:hidden animate-fade-in-down">
-              <div className="px-4 pt-4 pb-6 space-y-2 bg-logo-navy-light rounded-2xl mt-4 border border-logo-teal/30 shadow-2xl">
+              <div className="px-4 pt-4 pb-6 space-y-2 bg-logo-navy-light rounded-2xl mt-4 border-2 border-logo-teal/50 shadow-2xl">
                 {navigation.map((item, index) => (
                   <Link
                     key={item.name}
@@ -201,8 +216,8 @@ const EditableHeader = () => {
                     onClick={() => setIsMenuOpen(false)}
                     className={`block px-5 py-3.5 rounded-xl text-base font-bold transition-all duration-300 transform active:scale-95 ${
                       location.pathname === item.href
-                        ? 'text-cream-elegant bg-vibrant-orange shadow-md'
-                        : 'text-cream-elegant hover:text-vibrant-orange-light hover:bg-logo-teal hover:translate-x-2'
+                        ? 'text-white bg-vibrant-orange shadow-md'
+                        : 'text-cream-elegant hover:text-white hover:bg-logo-teal hover:translate-x-2'
                     }`}
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
@@ -214,7 +229,7 @@ const EditableHeader = () => {
                   <div className="mt-4 pt-4 border-t border-white/20">
                     <button
                       onClick={() => { setShowAdminPanel(true); setIsMenuOpen(false); }}
-                      className="w-full block px-6 py-4 rounded-luxury text-base font-luxury-semibold bg-vibrant-orange text-white hover:bg-vibrant-orange-light transition-colors"
+                      className="w-full block px-6 py-4 rounded-luxury text-base font-luxury-semibold bg-vibrant-orange text-white hover:bg-vibrant-orange-light transition-colors shadow-lg"
                     >
                       Open Admin Panel
                     </button>
@@ -226,14 +241,14 @@ const EditableHeader = () => {
                   {currentUser && !isGuest ? (
                     <button
                       onClick={() => { logout(); setIsMenuOpen(false); }}
-                      className="w-full block px-6 py-4 rounded-luxury text-base font-luxury-semibold bg-logo-navy-light/60 text-cream-elegant hover:bg-logo-navy-light transition-colors"
+                      className="w-full block px-6 py-4 rounded-luxury text-base font-luxury-semibold bg-logo-navy-light/60 text-cream-elegant hover:bg-vibrant-orange/30 transition-colors border border-cream-elegant/30"
                     >
                       Sign Out
                     </button>
                   ) : (
                     <button
                       onClick={() => { setShowAuthModal(true); setIsMenuOpen(false); }}
-                      className="w-full block px-6 py-4 rounded-luxury text-base font-luxury-semibold bg-vibrant-orange text-white hover:bg-vibrant-orange-light transition-colors"
+                      className="w-full block px-6 py-4 rounded-luxury text-base font-luxury-semibold bg-vibrant-orange text-white hover:bg-vibrant-orange-light transition-colors shadow-lg"
                     >
                       Sign In
                     </button>
