@@ -50,6 +50,7 @@ export interface ProjectSubmission {
     customType?: string;
     name: string;
   };
+  peopleImpacted?: number;
   budget?: string;
   timeline: string;
   submittedBy: string;
@@ -118,6 +119,7 @@ export interface EventSubmission {
     customType?: string;
     name: string;
   };
+  peopleImpacted?: number;
   submittedBy: string;
   submitterName: string;
   submitterEmail: string;

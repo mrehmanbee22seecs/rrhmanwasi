@@ -541,6 +541,17 @@ const ProjectDetail = () => {
               </div>
 
               <h1 className="text-5xl font-luxury-display text-black mb-6">{displayProject.title}</h1>
+              
+              {displayProject.affiliation && displayProject.affiliation.name && (
+                <div className="mb-4">
+                  <span className="text-lg text-black/70 font-luxury-body">
+                    Organized by: <span className="font-luxury-semibold text-vibrant-orange">{displayProject.affiliation.name}</span>
+                    {displayProject.affiliation.customType && ` (${displayProject.affiliation.customType})`}
+                    {!displayProject.affiliation.customType && displayProject.affiliation.type && ` (${displayProject.affiliation.type})`}
+                  </span>
+                </div>
+              )}
+              
               <p className="text-xl text-black font-luxury-body leading-relaxed mb-8">{displayProject.description}</p>
 
               <div className="grid grid-cols-2 gap-6 mb-8">
@@ -556,6 +567,12 @@ const ProjectDetail = () => {
                   <Calendar className="w-6 h-6 mr-3 text-vibrant-orange" />
                   <span className="font-luxury-body">{startDate} - {endDate}</span>
                 </div>
+                {displayProject.peopleImpacted != null && (
+                  <div className="flex items-center text-black">
+                    <Target className="w-6 h-6 mr-3 text-vibrant-orange" />
+                    <span className="font-luxury-body">{displayProject.peopleImpacted} people impacted</span>
+                  </div>
+                )}
                 {Array.isArray(relatedEvents) && relatedEvents.length > 0 && (
                   <div className="flex items-center text-black">
                     <Clock className="w-6 h-6 mr-3 text-vibrant-orange" />
