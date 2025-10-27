@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Heart, Droplets, Smartphone, Utensils, Wrench, ChevronRight, Users, Calendar, Filter, Search, Plus, Star, Award } from 'lucide-react';
+import { BookOpen, Heart, Droplets, Smartphone, Utensils, Wrench, ChevronRight, Users, Calendar, Filter, Search, Plus, Star, Award, Target, TrendingUp } from 'lucide-react';
 import { db } from '../config/firebase';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { ProjectSubmission } from '../types/submissions';
@@ -177,14 +177,12 @@ To fix: Run 'firebase deploy --only firestore:indexes'
 Or create the index in Firebase Console.
         `);
       }
-      // Set empty array so page still renders with static projects
       setApprovedProjects([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Convert approved projects to match the expected format
   const convertedApprovedProjects = approvedProjects.map(project => ({
     id: project.id,
     title: project.title,
@@ -200,7 +198,6 @@ Or create the index in Firebase Console.
     deadline: 'Open Applications'
   }));
 
-  // Combine static projects with approved user submissions
   const allProjects = [...staticProjects, ...convertedApprovedProjects];
 
   const filteredProjects = allProjects.filter(project => {
@@ -259,7 +256,7 @@ Or create the index in Firebase Console.
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-cream-white via-white to-cream-white">
       {/* Hero Section - Enhanced */}
       <div className="hero-luxury-bg hero-projects text-cream-elegant py-20 relative overflow-hidden">
         <div className="floating-3d-luxury magnetic-element"></div>
@@ -269,7 +266,6 @@ Or create the index in Firebase Console.
         <div className="luxury-particle"></div>
         <div className="luxury-particle"></div>
         
-        {/* Animated Background Shapes */}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-20 left-20 w-32 h-32 bg-vibrant-orange/20 rounded-full animate-float-gentle"></div>
           <div className="absolute top-40 right-32 w-24 h-24 bg-logo-teal/20 rounded-full animate-float-gentle" style={{animationDelay: '2s'}}></div>
@@ -294,23 +290,23 @@ Or create the index in Firebase Console.
         <div className="mb-6 flex justify-end">
           <Link
             to="/create-submission?type=project"
-            className="btn-luxury-primary px-6 py-3 inline-flex items-center"
+            className="btn-luxury-primary px-6 py-3 inline-flex items-center shadow-lg hover:shadow-xl transition-all duration-300"
           >
             <Plus className="w-5 h-5 mr-2" />
             Add New Project
           </Link>
         </div>
 
-        <div className="luxury-card bg-cream-white p-8 mb-8 scroll-reveal">
+        <div className="luxury-card bg-white p-8 mb-8 scroll-reveal shadow-xl border-2 border-logo-navy/10">
           <div className="flex items-center mb-6">
             <Filter className="w-6 h-6 text-vibrant-orange mr-3 animate-pulse-glow" />
-            <h2 className="text-2xl font-luxury-heading text-black">Filter Projects</h2>
+            <h2 className="text-2xl font-luxury-heading text-logo-navy">Filter Projects</h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Search */}
             <div>
-              <label className="block font-luxury-medium text-black mb-2">Search Projects</label>
+              <label className="block font-luxury-medium text-logo-navy mb-2">Search Projects</label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -318,18 +314,18 @@ Or create the index in Firebase Console.
                   placeholder="Search by title, description..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                  className="w-full pl-10 pr-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body text-logo-navy"
                 />
               </div>
             </div>
 
             {/* Category Filter */}
             <div>
-              <label className="block font-luxury-medium text-black mb-2">Category</label>
+              <label className="block font-luxury-medium text-logo-navy mb-2">Category</label>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body text-logo-navy bg-white"
               >
                 {categories.map(category => (
                   <option key={category} value={category}>
@@ -341,11 +337,11 @@ Or create the index in Firebase Console.
 
             {/* Status Filter */}
             <div>
-              <label className="block font-luxury-medium text-black mb-2">Status</label>
+              <label className="block font-luxury-medium text-logo-navy mb-2">Status</label>
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body text-logo-navy bg-white"
               >
                 {statuses.map(status => (
                   <option key={status} value={status}>
@@ -394,8 +390,53 @@ Or create the index in Firebase Console.
           </div>
 
           {/* Results Count */}
-          <div className="mt-4 text-black font-luxury-body">
+          <div className="mt-4 text-logo-navy font-luxury-body font-semibold">
             Showing {filteredProjects.length} of {allProjects.length} projects
+          </div>
+        </div>
+
+        {/* NEW: Introduction Section Before Projects */}
+        <div className="luxury-card bg-gradient-to-br from-logo-navy to-logo-navy-light p-12 mb-12 scroll-reveal shadow-2xl rounded-2xl border-2 border-logo-teal/30">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-vibrant-orange rounded-full mb-4 animate-pulse-glow">
+              <Target className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-4xl font-modern-display text-cream-elegant mb-4">
+              Discover Our Impact Projects
+            </h2>
+            <p className="text-xl text-cream-elegant/90 font-elegant-body max-w-3xl mx-auto leading-relaxed">
+              Each project represents our commitment to creating sustainable change across Pakistan. 
+              From education and healthcare to environmental conservation and community development, 
+              we work hand-in-hand with local communities to address their most pressing needs.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            <div className="text-center p-6 bg-white/10 rounded-xl backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300">
+              <TrendingUp className="w-10 h-10 text-vibrant-orange mx-auto mb-3" />
+              <h3 className="text-2xl font-bold text-cream-elegant mb-2">100%</h3>
+              <p className="text-cream-elegant/80 font-luxury-body">Community-Driven</p>
+            </div>
+            <div className="text-center p-6 bg-white/10 rounded-xl backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300">
+              <Award className="w-10 h-10 text-logo-teal mx-auto mb-3" />
+              <h3 className="text-2xl font-bold text-cream-elegant mb-2">Transparent</h3>
+              <p className="text-cream-elegant/80 font-luxury-body">Full Accountability</p>
+            </div>
+            <div className="text-center p-6 bg-white/10 rounded-xl backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300">
+              <Heart className="w-10 h-10 text-vibrant-orange-light mx-auto mb-3" />
+              <h3 className="text-2xl font-bold text-cream-elegant mb-2">Impactful</h3>
+              <p className="text-cream-elegant/80 font-luxury-body">Measurable Results</p>
+            </div>
+          </div>
+
+          <div className="text-center mt-8">
+            <Link
+              to="/about"
+              className="inline-flex items-center px-8 py-4 bg-vibrant-orange text-cream-elegant rounded-luxury font-luxury-semibold text-lg hover:bg-vibrant-orange-light transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform"
+            >
+              Learn More About Us
+              <ChevronRight className="w-5 h-5 ml-2" />
+            </Link>
           </div>
         </div>
 
@@ -403,7 +444,7 @@ Or create the index in Firebase Console.
         {loading ? (
           <div className="text-center py-16">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-vibrant-orange mx-auto mb-4"></div>
-            <p className="text-xl font-luxury-heading text-black">Loading projects...</p>
+            <p className="text-xl font-luxury-heading text-logo-navy">Loading projects...</p>
           </div>
         ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 stagger-animation">
@@ -413,7 +454,7 @@ Or create the index in Firebase Console.
               <Link
                 key={project.id}
                 to={`/projects/${project.id}`}
-                className="luxury-card bg-cream-white rounded-luxury-lg shadow-luxury overflow-hidden floating-card magnetic-element group"
+                className="luxury-card bg-white rounded-luxury-lg shadow-xl overflow-hidden floating-card magnetic-element group border-2 border-logo-navy/10 hover:border-vibrant-orange/50 transition-all duration-300"
               >
                 <div className="relative">
                   <img
@@ -422,11 +463,11 @@ Or create the index in Firebase Console.
                     className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute top-4 right-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(project.status)}`}>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(project.status)} shadow-lg`}>
                       {getStatusText(project.status)}
                     </span>
                   </div>
-                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-full p-2 group-hover:animate-pulse-glow">
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-full p-2 group-hover:animate-pulse-glow shadow-lg">
                     <IconComponent className="w-6 h-6 text-vibrant-orange group-hover:animate-float-gentle" />
                   </div>
                 </div>
@@ -436,38 +477,38 @@ Or create the index in Firebase Console.
                     <span className={`text-sm font-medium px-3 py-1 rounded-full border ${getCategoryColor(project.category)}`}>
                       {project.category}
                     </span>
-                    <span className="text-sm text-gray-500">{project.location}</span>
+                    <span className="text-sm text-logo-navy-light font-semibold">{project.location}</span>
                   </div>
                   
-                  <h3 className="text-xl font-luxury-heading text-black mb-3 group-hover:text-gradient-animated transition-all duration-500">
+                  <h3 className="text-xl font-luxury-heading text-logo-navy mb-3 group-hover:text-gradient-animated transition-all duration-500">
                     {project.title}
                   </h3>
                   
-                  <p className="text-black font-luxury-body text-sm mb-4 line-clamp-3">
+                  <p className="text-logo-navy-light font-luxury-body text-sm mb-4 line-clamp-3">
                     {project.description}
                   </p>
                   
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center justify-between text-sm text-gray-600">
+                  <div className="space-y-2 mb-4 bg-cream-white p-3 rounded-lg border border-logo-navy/10">
+                    <div className="flex items-center justify-between text-sm text-logo-navy-light font-semibold">
                       <div className="flex items-center">
-                        <Users className="w-4 h-4 mr-1" />
+                        <Users className="w-4 h-4 mr-1 text-vibrant-orange" />
                         <span>{project.volunteers} volunteers</span>
                       </div>
                       <div className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-1" />
+                        <Calendar className="w-4 h-4 mr-1 text-logo-teal" />
                         <span>{project.duration}</span>
                       </div>
                     </div>
-                    <div className="text-sm text-gray-600">
-                      <span className="font-medium">{project.beneficiaries}</span> people impacted
+                    <div className="text-sm text-logo-navy-light font-semibold">
+                      <span className="font-bold text-logo-navy">{project.beneficiaries}</span> people impacted
                     </div>
-                    <div className="text-sm text-vibrant-orange-dark font-medium">
+                    <div className="text-sm text-vibrant-orange-dark font-bold">
                       Apply by: {project.deadline}
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center text-vibrant-orange font-medium">
+                  <div className="flex items-center justify-between pt-3 border-t border-logo-navy/10">
+                    <div className="flex items-center text-vibrant-orange font-bold group-hover:text-vibrant-orange-light transition-colors">
                       <span className="text-sm">Learn More</span>
                       <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                     </div>
@@ -481,10 +522,10 @@ Or create the index in Firebase Console.
 
         {/* No Results */}
         {filteredProjects.length === 0 && (
-          <div className="text-center py-16">
+          <div className="text-center py-16 bg-white rounded-2xl shadow-xl border-2 border-logo-navy/10">
             <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-2xl font-luxury-heading text-black mb-4">No Projects Found</h3>
-            <p className="text-black font-luxury-body mb-6">
+            <h3 className="text-2xl font-luxury-heading text-logo-navy mb-4">No Projects Found</h3>
+            <p className="text-logo-navy-light font-luxury-body mb-6">
               Try adjusting your filters or search terms to find more projects.
             </p>
             <button
@@ -493,7 +534,7 @@ Or create the index in Firebase Console.
                 setSelectedStatus('all');
                 setSearchTerm('');
               }}
-              className="btn-luxury-primary px-6 py-3"
+              className="btn-luxury-primary px-6 py-3 shadow-lg hover:shadow-xl"
             >
               Clear All Filters
             </button>
@@ -501,42 +542,51 @@ Or create the index in Firebase Console.
         )}
       </div>
 
-      {/* Statistics Section - Enhanced */}
-      <div className="bg-cream-white py-16 relative overflow-hidden">
+      {/* Statistics Section - ENHANCED with Better Visibility */}
+      <div className="bg-gradient-to-br from-logo-navy via-logo-navy-light to-logo-navy py-20 relative overflow-hidden">
         <div className="particle-container absolute inset-0 opacity-30"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-vibrant-orange/10 to-logo-teal/10"></div>
+        
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-12 scroll-reveal">
-            <h2 className="text-4xl font-modern-display text-black mb-4">
-              Our Impact
+          <div className="text-center mb-16 scroll-reveal">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-vibrant-orange rounded-full mb-6 animate-pulse-glow">
+              <TrendingUp className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-5xl font-modern-display text-cream-elegant mb-6">
+              Our Impact in Numbers
             </h2>
-            <p className="text-xl text-black font-elegant-body">
-              Together, we're making a measurable difference in our community
+            <p className="text-2xl text-cream-elegant/90 font-elegant-body max-w-2xl mx-auto">
+              Together, we're making a measurable difference in communities across Pakistan
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 stagger-animation">
-            <div className="text-center floating-card magnetic-element group">
-              <div className="text-5xl font-luxury-display text-gradient-animated mb-2 group-hover:animate-pulse-glow">6</div>
-              <div className="text-black font-elegant-body group-hover:text-gray-800 transition-colors">Active Projects</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 stagger-animation">
+            <div className="text-center floating-card magnetic-element group bg-white/10 backdrop-blur-sm p-8 rounded-2xl border-2 border-white/20 hover:border-vibrant-orange/50 transition-all duration-300 hover:shadow-2xl">
+              <div className="text-6xl font-luxury-display text-vibrant-orange mb-4 group-hover:animate-pulse-glow group-hover:scale-110 transition-transform">6</div>
+              <div className="text-2xl font-bold text-cream-elegant mb-2 group-hover:text-vibrant-orange-light transition-colors">Active Projects</div>
+              <p className="text-cream-elegant/70 font-luxury-body text-sm">Currently running initiatives</p>
             </div>
-            <div className="text-center floating-card magnetic-element group">
-              <div className="text-5xl font-luxury-display text-gradient-animated mb-2 group-hover:animate-pulse-glow">208</div>
-              <div className="text-black font-elegant-body group-hover:text-gray-800 transition-colors">Volunteers</div>
+            <div className="text-center floating-card magnetic-element group bg-white/10 backdrop-blur-sm p-8 rounded-2xl border-2 border-white/20 hover:border-logo-teal/50 transition-all duration-300 hover:shadow-2xl">
+              <div className="text-6xl font-luxury-display text-logo-teal mb-4 group-hover:animate-pulse-glow group-hover:scale-110 transition-transform">208</div>
+              <div className="text-2xl font-bold text-cream-elegant mb-2 group-hover:text-logo-teal-light transition-colors">Volunteers</div>
+              <p className="text-cream-elegant/70 font-luxury-body text-sm">Dedicated community members</p>
             </div>
-            <div className="text-center floating-card magnetic-element group">
-              <div className="text-5xl font-luxury-display text-gradient-animated mb-2 group-hover:animate-pulse-glow">1,670</div>
-              <div className="text-black font-elegant-body group-hover:text-gray-800 transition-colors">People Helped</div>
+            <div className="text-center floating-card magnetic-element group bg-white/10 backdrop-blur-sm p-8 rounded-2xl border-2 border-white/20 hover:border-vibrant-orange/50 transition-all duration-300 hover:shadow-2xl">
+              <div className="text-6xl font-luxury-display text-vibrant-orange-light mb-4 group-hover:animate-pulse-glow group-hover:scale-110 transition-transform">1,670</div>
+              <div className="text-2xl font-bold text-cream-elegant mb-2 group-hover:text-vibrant-orange-light transition-colors">People Helped</div>
+              <p className="text-cream-elegant/70 font-luxury-body text-sm">Lives positively impacted</p>
             </div>
-            <div className="text-center floating-card magnetic-element group">
-              <div className="text-5xl font-luxury-display text-gradient-animated mb-2 group-hover:animate-pulse-glow">12</div>
-              <div className="text-black font-elegant-body group-hover:text-gray-800 transition-colors">Communities</div>
+            <div className="text-center floating-card magnetic-element group bg-white/10 backdrop-blur-sm p-8 rounded-2xl border-2 border-white/20 hover:border-logo-teal/50 transition-all duration-300 hover:shadow-2xl">
+              <div className="text-6xl font-luxury-display text-logo-teal-light mb-4 group-hover:animate-pulse-glow group-hover:scale-110 transition-transform">12</div>
+              <div className="text-2xl font-bold text-cream-elegant mb-2 group-hover:text-logo-teal-light transition-colors">Communities</div>
+              <p className="text-cream-elegant/70 font-luxury-body text-sm">Areas served nationwide</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Call to Action - Enhanced */}
-      <div className="cta-parallax py-16 text-cream-elegant relative overflow-hidden">
+      <div className="cta-parallax py-20 text-cream-elegant relative overflow-hidden bg-gradient-to-r from-vibrant-orange to-vibrant-orange-dark">
         <div className="absolute inset-0">
           <div className="floating-3d-luxury opacity-30 magnetic-element"></div>
           <div className="floating-3d-luxury opacity-20 magnetic-element"></div>
@@ -545,19 +595,19 @@ Or create the index in Firebase Console.
         
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <div className="scroll-reveal">
-            <h2 className="text-4xl font-modern-display mb-6 animate-text-reveal">
+            <h2 className="text-5xl font-modern-display mb-6 animate-text-reveal text-white">
               Join Our Mission
             </h2>
-            <p className="text-xl text-cream-elegant/80 font-elegant-body mb-8 animate-text-reveal" style={{animationDelay: '0.3s'}}>
-              Be part of meaningful projects that create lasting positive change in communities
+            <p className="text-2xl text-white/90 font-elegant-body mb-10 animate-text-reveal leading-relaxed" style={{animationDelay: '0.3s'}}>
+              Be part of meaningful projects that create lasting positive change in communities across Pakistan
             </p>
             <Link
               to="/volunteer"
-              className="liquid-button text-lg px-8 py-4 inline-flex items-center group animate-text-reveal"
+              className="inline-flex items-center px-10 py-5 bg-white text-vibrant-orange rounded-luxury font-luxury-semibold text-xl hover:bg-cream-elegant transition-all duration-300 shadow-2xl hover:shadow-3xl hover:scale-110 transform animate-text-reveal"
               style={{animationDelay: '0.6s'}}
             >
-              Get Involved
-              <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              Get Involved Today
+              <ChevronRight className="w-6 h-6 ml-2 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
         </div>
