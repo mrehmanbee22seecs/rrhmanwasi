@@ -107,7 +107,17 @@ const CreateSubmission = () => {
     checklist: [] as ChecklistItem[],
     reminders: [] as Reminder[],
     heads: [] as HeadInfo[],
-    affiliation: { type: '', customType: '', name: '' }
+    affiliation: { type: '', customType: '', name: '' },
+    // New comprehensive fields
+    perks: [''] as string[], // Benefits/certificates
+    materialsList: [''] as string[], // What to bring
+    safetyNotes: '',
+    accessibilityInfo: '',
+    requiredSkills: [''] as string[],
+    preferredSkills: [''] as string[],
+    sponsors: [''] as string[],
+    donationLink: '',
+    faq: [] as Array<{ question: string; answer: string }>
   });
 
   const [eventData, setEventData] = useState({
@@ -142,7 +152,16 @@ const CreateSubmission = () => {
     reminders: [] as Reminder[],
     heads: [] as HeadInfo[],
     affiliation: { type: '', customType: '', name: '' },
-    projectId: ''
+    projectId: '',
+    // New comprehensive fields
+    servicesIncluded: [''] as string[], // What's provided
+    materialsList: [''] as string[], // What to bring
+    parkingInfo: '',
+    accessibilityInfo: '',
+    childcareAvailable: false,
+    certifications: [''] as string[], // Certificates offered
+    partners: [''] as string[],
+    faq: [] as Array<{ question: string; answer: string }>
   });
 
   const projectCategories = ['Education', 'Healthcare', 'Environment', 'Technology', 'Community Development', 'Youth Programs'];
@@ -189,7 +208,16 @@ const CreateSubmission = () => {
             checklist: data.checklist || [],
             reminders: data.reminders || [],
             heads: data.heads || [],
-            affiliation: data.affiliation || { type: '', customType: '', name: '' }
+            affiliation: data.affiliation || { type: '', customType: '', name: '' },
+            perks: data.perks?.length > 0 ? data.perks : [''],
+            materialsList: data.materialsList?.length > 0 ? data.materialsList : [''],
+            safetyNotes: data.safetyNotes || '',
+            accessibilityInfo: data.accessibilityInfo || '',
+            requiredSkills: data.requiredSkills?.length > 0 ? data.requiredSkills : [''],
+            preferredSkills: data.preferredSkills?.length > 0 ? data.preferredSkills : [''],
+            sponsors: data.sponsors?.length > 0 ? data.sponsors : [''],
+            donationLink: data.donationLink || '',
+            faq: data.faq || []
           });
         } else {
           setEventData({
@@ -224,7 +252,15 @@ const CreateSubmission = () => {
             reminders: data.reminders || [],
             heads: data.heads || [],
             affiliation: data.affiliation || { type: '', customType: '', name: '' },
-            projectId: data.projectId || ''
+            projectId: data.projectId || '',
+            servicesIncluded: data.servicesIncluded?.length > 0 ? data.servicesIncluded : [''],
+            materialsList: data.materialsList?.length > 0 ? data.materialsList : [''],
+            parkingInfo: data.parkingInfo || '',
+            accessibilityInfo: data.accessibilityInfo || '',
+            childcareAvailable: data.childcareAvailable || false,
+            certifications: data.certifications?.length > 0 ? data.certifications : [''],
+            partners: data.partners?.length > 0 ? data.partners : [''],
+            faq: data.faq || []
           });
         }
       } else {
@@ -247,23 +283,42 @@ const CreateSubmission = () => {
     }
   };
 
-  const handleArrayFieldChange = (field: 'requirements' | 'objectives' | 'agenda' | 'activities', index: number, value: string) => {
+  const handleArrayFieldChange = (field: 'requirements' | 'objectives' | 'agenda' | 'activities' | 'perks' | 'materialsList' | 'requiredSkills' | 'preferredSkills' | 'sponsors' | 'servicesIncluded' | 'certifications' | 'partners', index: number, value: string) => {
     const data = submissionType === 'project' ? projectData : eventData;
     const newArray = [...(data[field] as string[])];
     newArray[index] = value;
     handleInputChange(field, newArray);
   };
 
-  const addArrayField = (field: 'requirements' | 'objectives' | 'agenda' | 'activities') => {
+  const addArrayField = (field: 'requirements' | 'objectives' | 'agenda' | 'activities' | 'perks' | 'materialsList' | 'requiredSkills' | 'preferredSkills' | 'sponsors' | 'servicesIncluded' | 'certifications' | 'partners') => {
     const data = submissionType === 'project' ? projectData : eventData;
     const newArray = [...(data[field] as string[]), ''];
     handleInputChange(field, newArray);
   };
 
-  const removeArrayField = (field: 'requirements' | 'objectives' | 'agenda' | 'activities', index: number) => {
+  const removeArrayField = (field: 'requirements' | 'objectives' | 'agenda' | 'activities' | 'perks' | 'materialsList' | 'requiredSkills' | 'preferredSkills' | 'sponsors' | 'servicesIncluded' | 'certifications' | 'partners', index: number) => {
     const data = submissionType === 'project' ? projectData : eventData;
     const newArray = (data[field] as string[]).filter((_, i) => i !== index);
     handleInputChange(field, newArray);
+  };
+
+  const handleFaqChange = (index: number, field: 'question' | 'answer', value: string) => {
+    const data = submissionType === 'project' ? projectData : eventData;
+    const newFaq = [...data.faq];
+    newFaq[index] = { ...newFaq[index], [field]: value };
+    handleInputChange('faq', newFaq);
+  };
+
+  const addFaqItem = () => {
+    const data = submissionType === 'project' ? projectData : eventData;
+    const newFaq = [...data.faq, { question: '', answer: '' }];
+    handleInputChange('faq', newFaq);
+  };
+
+  const removeFaqItem = (index: number) => {
+    const data = submissionType === 'project' ? projectData : eventData;
+    const newFaq = data.faq.filter((_, i) => i !== index);
+    handleInputChange('faq', newFaq);
   };
 
   const validateForm = () => {
@@ -315,6 +370,15 @@ const CreateSubmission = () => {
           notes: projectData.notes,
           heads: projectData.heads,
           affiliation: projectData.affiliation,
+          perks: projectData.perks.filter(p => p.trim() !== ''),
+          materialsList: projectData.materialsList.filter(m => m.trim() !== ''),
+          safetyNotes: projectData.safetyNotes,
+          accessibilityInfo: projectData.accessibilityInfo,
+          requiredSkills: projectData.requiredSkills.filter(s => s.trim() !== ''),
+          preferredSkills: projectData.preferredSkills.filter(s => s.trim() !== ''),
+          sponsors: projectData.sponsors.filter(s => s.trim() !== ''),
+          donationLink: projectData.donationLink,
+          faq: projectData.faq,
           submittedBy: currentUser.uid,
           submitterName: userData.displayName || 'Unknown User',
           submitterEmail: userData.email || '',
@@ -379,6 +443,14 @@ const CreateSubmission = () => {
           heads: eventData.heads,
           affiliation: eventData.affiliation,
           projectId: eventData.projectId,
+          servicesIncluded: eventData.servicesIncluded.filter(s => s.trim() !== ''),
+          materialsList: eventData.materialsList.filter(m => m.trim() !== ''),
+          parkingInfo: eventData.parkingInfo,
+          accessibilityInfo: eventData.accessibilityInfo,
+          childcareAvailable: eventData.childcareAvailable,
+          certifications: eventData.certifications.filter(c => c.trim() !== ''),
+          partners: eventData.partners.filter(p => p.trim() !== ''),
+          faq: eventData.faq,
           submittedBy: currentUser.uid,
           submitterName: userData.displayName || 'Unknown User',
           submitterEmail: userData.email || '',
@@ -982,6 +1054,383 @@ const CreateSubmission = () => {
               </div>
             </div>
 
+            {/* New Comprehensive Section */}
+            <div className="border-b-2 border-vibrant-orange/30 pb-8">
+              <h3 className="text-2xl font-luxury-heading text-black mb-2">🎯 Section 3: Additional Details & Benefits</h3>
+              <p className="text-sm text-gray-600 mb-6">Help participants understand what they'll gain and what to expect</p>
+
+              <div className="space-y-6">
+                {/* Certificates/Perks for Projects, Certifications for Events */}
+                {submissionType === 'project' ? (
+                  <div>
+                    <h4 className="text-xl font-luxury-heading text-black mb-4">🏆 Benefits & Recognition</h4>
+                    <p className="text-sm text-gray-600 mb-3">What will volunteers receive? (certificates, skills, experience, etc.)</p>
+                    <div className="space-y-4">
+                      {projectData.perks.map((perk, index) => (
+                        <div key={index} className="flex gap-2">
+                          <input
+                            type="text"
+                            value={perk}
+                            onChange={(e) => handleArrayFieldChange('perks', index, e.target.value)}
+                            className="flex-1 px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                            placeholder={`e.g., Certificate of completion, Skill training, Community service hours`}
+                          />
+                          {projectData.perks.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeArrayField('perks', index)}
+                              className="px-4 py-3 bg-red-500 text-white rounded-luxury hover:bg-red-600"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => addArrayField('perks')}
+                        className="flex items-center px-4 py-2 text-vibrant-orange hover:bg-vibrant-orange/10 rounded-luxury transition-colors"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Benefit
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <h4 className="text-xl font-luxury-heading text-black mb-4">🎓 Certifications Offered</h4>
+                    <p className="text-sm text-gray-600 mb-3">Will attendees receive any certificates or credentials?</p>
+                    <div className="space-y-4">
+                      {eventData.certifications.map((cert, index) => (
+                        <div key={index} className="flex gap-2">
+                          <input
+                            type="text"
+                            value={cert}
+                            onChange={(e) => handleArrayFieldChange('certifications', index, e.target.value)}
+                            className="flex-1 px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                            placeholder={`e.g., Attendance certificate, Professional development certificate`}
+                          />
+                          {eventData.certifications.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeArrayField('certifications', index)}
+                              className="px-4 py-3 bg-red-500 text-white rounded-luxury hover:bg-red-600"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => addArrayField('certifications')}
+                        className="flex items-center px-4 py-2 text-vibrant-orange hover:bg-vibrant-orange/10 rounded-luxury transition-colors"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Certification
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Skills Section for Projects */}
+                {submissionType === 'project' && (
+                  <>
+                    <div>
+                      <h4 className="text-xl font-luxury-heading text-black mb-4">💼 Skills Required</h4>
+                      <p className="text-sm text-gray-600 mb-3">What skills are essential for this project?</p>
+                      <div className="space-y-4">
+                        {projectData.requiredSkills.map((skill, index) => (
+                          <div key={index} className="flex gap-2">
+                            <input
+                              type="text"
+                              value={skill}
+                              onChange={(e) => handleArrayFieldChange('requiredSkills', index, e.target.value)}
+                              className="flex-1 px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                              placeholder={`e.g., First aid training, Teaching experience, Technical skills`}
+                            />
+                            {projectData.requiredSkills.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeArrayField('requiredSkills', index)}
+                                className="px-4 py-3 bg-red-500 text-white rounded-luxury hover:bg-red-600"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => addArrayField('requiredSkills')}
+                          className="flex items-center px-4 py-2 text-vibrant-orange hover:bg-vibrant-orange/10 rounded-luxury transition-colors"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Required Skill
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-xl font-luxury-heading text-black mb-4">✨ Preferred Skills (Nice to Have)</h4>
+                      <p className="text-sm text-gray-600 mb-3">What skills would be helpful but not mandatory?</p>
+                      <div className="space-y-4">
+                        {projectData.preferredSkills.map((skill, index) => (
+                          <div key={index} className="flex gap-2">
+                            <input
+                              type="text"
+                              value={skill}
+                              onChange={(e) => handleArrayFieldChange('preferredSkills', index, e.target.value)}
+                              className="flex-1 px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                              placeholder={`e.g., Photography, Social media management, Event planning`}
+                            />
+                            {projectData.preferredSkills.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeArrayField('preferredSkills', index)}
+                                className="px-4 py-3 bg-red-500 text-white rounded-luxury hover:bg-red-600"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => addArrayField('preferredSkills')}
+                          className="flex items-center px-4 py-2 text-vibrant-orange hover:bg-vibrant-orange/10 rounded-luxury transition-colors"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Preferred Skill
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* What to Bring / Materials */}
+                <div>
+                  <h4 className="text-xl font-luxury-heading text-black mb-4">🎒 What to Bring</h4>
+                  <p className="text-sm text-gray-600 mb-3">What should {submissionType === 'project' ? 'volunteers' : 'attendees'} bring with them?</p>
+                  <div className="space-y-4">
+                    {(submissionType === 'project' ? projectData.materialsList : eventData.materialsList).map((item, index) => (
+                      <div key={index} className="flex gap-2">
+                        <input
+                          type="text"
+                          value={item}
+                          onChange={(e) => handleArrayFieldChange('materialsList', index, e.target.value)}
+                          className="flex-1 px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                          placeholder={`e.g., Water bottle, Comfortable shoes, Notebook, Laptop`}
+                        />
+                        {(submissionType === 'project' ? projectData.materialsList : eventData.materialsList).length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeArrayField('materialsList', index)}
+                            className="px-4 py-3 bg-red-500 text-white rounded-luxury hover:bg-red-600"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => addArrayField('materialsList')}
+                      className="flex items-center px-4 py-2 text-vibrant-orange hover:bg-vibrant-orange/10 rounded-luxury transition-colors"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Item
+                    </button>
+                  </div>
+                </div>
+
+                {/* Services Included for Events */}
+                {submissionType === 'event' && (
+                  <div>
+                    <h4 className="text-xl font-luxury-heading text-black mb-4">✅ What's Included</h4>
+                    <p className="text-sm text-gray-600 mb-3">What services or amenities will be provided?</p>
+                    <div className="space-y-4">
+                      {eventData.servicesIncluded.map((service, index) => (
+                        <div key={index} className="flex gap-2">
+                          <input
+                            type="text"
+                            value={service}
+                            onChange={(e) => handleArrayFieldChange('servicesIncluded', index, e.target.value)}
+                            className="flex-1 px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                            placeholder={`e.g., Lunch, Materials, Parking, WiFi, Refreshments`}
+                          />
+                          {eventData.servicesIncluded.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeArrayField('servicesIncluded', index)}
+                              className="px-4 py-3 bg-red-500 text-white rounded-luxury hover:bg-red-600"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => addArrayField('servicesIncluded')}
+                        className="flex items-center px-4 py-2 text-vibrant-orange hover:bg-vibrant-orange/10 rounded-luxury transition-colors"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Service
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Safety & Accessibility */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {submissionType === 'project' ? (
+                    <div>
+                      <label className="block font-luxury-medium text-black mb-2">🛡️ Safety Notes</label>
+                      <textarea
+                        rows={3}
+                        value={projectData.safetyNotes}
+                        onChange={(e) => handleInputChange('safetyNotes', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                        placeholder="Safety guidelines, protective equipment needed, health precautions..."
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block font-luxury-medium text-black mb-2">🚗 Parking Information</label>
+                      <textarea
+                        rows={3}
+                        value={eventData.parkingInfo}
+                        onChange={(e) => handleInputChange('parkingInfo', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                        placeholder="Parking availability, location, cost, public transport options..."
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <label className="block font-luxury-medium text-black mb-2">♿ Accessibility Information</label>
+                    <textarea
+                      rows={3}
+                      value={submissionType === 'project' ? projectData.accessibilityInfo : eventData.accessibilityInfo}
+                      onChange={(e) => handleInputChange('accessibilityInfo', e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                      placeholder="Wheelchair access, sign language, special accommodations available..."
+                    />
+                  </div>
+                </div>
+
+                {/* Childcare for Events */}
+                {submissionType === 'event' && (
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="childcareAvailable"
+                      checked={eventData.childcareAvailable}
+                      onChange={(e) => handleInputChange('childcareAvailable', e.target.checked)}
+                      className="w-5 h-5 text-vibrant-orange rounded focus:ring-vibrant-orange"
+                    />
+                    <label htmlFor="childcareAvailable" className="font-luxury-medium text-black">
+                      👶 Childcare services available at this event
+                    </label>
+                  </div>
+                )}
+
+                {/* Sponsors/Partners */}
+                <div>
+                  <h4 className="text-xl font-luxury-heading text-black mb-4">🤝 {submissionType === 'project' ? 'Sponsors' : 'Partners'}</h4>
+                  <p className="text-sm text-gray-600 mb-3">Organizations or companies supporting this {submissionType}</p>
+                  <div className="space-y-4">
+                    {(submissionType === 'project' ? projectData.sponsors : eventData.partners).map((item, index) => (
+                      <div key={index} className="flex gap-2">
+                        <input
+                          type="text"
+                          value={item}
+                          onChange={(e) => handleArrayFieldChange(submissionType === 'project' ? 'sponsors' : 'partners', index, e.target.value)}
+                          className="flex-1 px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                          placeholder={`Organization name`}
+                        />
+                        {(submissionType === 'project' ? projectData.sponsors : eventData.partners).length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeArrayField(submissionType === 'project' ? 'sponsors' : 'partners', index)}
+                            className="px-4 py-3 bg-red-500 text-white rounded-luxury hover:bg-red-600"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => addArrayField(submissionType === 'project' ? 'sponsors' : 'partners')}
+                      className="flex items-center px-4 py-2 text-vibrant-orange hover:bg-vibrant-orange/10 rounded-luxury transition-colors"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add {submissionType === 'project' ? 'Sponsor' : 'Partner'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Donation Link for Projects */}
+                {submissionType === 'project' && (
+                  <div>
+                    <label className="block font-luxury-medium text-black mb-2">💝 Donation Link (Optional)</label>
+                    <input
+                      type="url"
+                      value={projectData.donationLink}
+                      onChange={(e) => handleInputChange('donationLink', e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                      placeholder="https://..."
+                    />
+                    <p className="text-sm text-gray-600 mt-1">Link to donation page or fundraising campaign</p>
+                  </div>
+                )}
+
+                {/* FAQ Section */}
+                <div>
+                  <h4 className="text-xl font-luxury-heading text-black mb-4">❓ Frequently Asked Questions</h4>
+                  <p className="text-sm text-gray-600 mb-3">Help participants get answers to common questions</p>
+                  <div className="space-y-6">
+                    {(submissionType === 'project' ? projectData.faq : eventData.faq).map((item, index) => (
+                      <div key={index} className="p-4 bg-cream-elegant rounded-luxury border-2 border-vibrant-orange/20">
+                        <div className="space-y-3">
+                          <input
+                            type="text"
+                            value={item.question}
+                            onChange={(e) => handleFaqChange(index, 'question', e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-semibold"
+                            placeholder="Question"
+                          />
+                          <textarea
+                            rows={2}
+                            value={item.answer}
+                            onChange={(e) => handleFaqChange(index, 'answer', e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                            placeholder="Answer"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeFaqItem(index)}
+                            className="px-4 py-2 bg-red-500 text-white rounded-luxury hover:bg-red-600 text-sm"
+                          >
+                            Remove FAQ
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addFaqItem}
+                      className="flex items-center px-4 py-2 text-vibrant-orange hover:bg-vibrant-orange/10 rounded-luxury transition-colors"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add FAQ
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div>
               <h3 className="text-2xl font-luxury-heading text-black mb-6">Task Checklist</h3>
               <ChecklistBuilder
@@ -1015,7 +1464,7 @@ const CreateSubmission = () => {
             </div>
 
             <div className="border-t-2 border-red-300 pt-8">
-              <h3 className="text-2xl font-luxury-heading text-black mb-2">Section 3: Admin-Only Information</h3>
+              <h3 className="text-2xl font-luxury-heading text-black mb-2">Section 4: Admin-Only Information</h3>
               <p className="text-sm text-red-600 mb-6">Confidential - Only visible to administrators</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
