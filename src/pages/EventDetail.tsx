@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, Users, MapPin, Clock, CheckCircle, Send, AlertCircle, Star } from 'lucide-react';
+import { ArrowLeft, Calendar, Users, MapPin, Clock, CheckCircle, Send, AlertCircle, Star, Target } from 'lucide-react';
 import { sendEmail, formatEventRegistrationEmail, formatEventRegistrationConfirmationEmail } from '../utils/emailService';
 import { db } from '../config/firebase';
 import { doc, getDoc, addDoc, collection, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
@@ -539,6 +539,17 @@ const EventDetail = () => {
               </div>
 
               <h1 className="text-5xl font-luxury-display text-black mb-6">{displayEvent.title}</h1>
+              
+              {displayEvent.affiliation && displayEvent.affiliation.name && (
+                <div className="mb-4">
+                  <span className="text-lg text-black/70 font-luxury-body">
+                    Organized by: <span className="font-luxury-semibold text-vibrant-orange">{displayEvent.affiliation.name}</span>
+                    {displayEvent.affiliation.customType && ` (${displayEvent.affiliation.customType})`}
+                    {!displayEvent.affiliation.customType && displayEvent.affiliation.type && ` (${displayEvent.affiliation.type})`}
+                  </span>
+                </div>
+              )}
+              
               <p className="text-xl text-black font-luxury-body leading-relaxed mb-8">{displayEvent.description}</p>
 
               <div className="grid grid-cols-2 gap-6 mb-8">
@@ -558,6 +569,12 @@ const EventDetail = () => {
                   <Users className="w-6 h-6 mr-3 text-vibrant-orange" />
                   <span className="font-luxury-body">{attendees} expected</span>
                 </div>
+                {displayEvent.peopleImpacted != null && (
+                  <div className="flex items-center text-black">
+                    <Target className="w-6 h-6 mr-3 text-vibrant-orange" />
+                    <span className="font-luxury-body">{displayEvent.peopleImpacted} people impacted</span>
+                  </div>
+                )}
               </div>
 
               <div className="bg-vibrant-orange/10 p-6 rounded-luxury mb-8">

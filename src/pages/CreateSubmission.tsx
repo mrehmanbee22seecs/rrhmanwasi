@@ -87,6 +87,7 @@ const CreateSubmission = () => {
     latitude: undefined as number | undefined,
     longitude: undefined as number | undefined,
     expectedVolunteers: 10,
+    peopleImpacted: undefined as number | undefined,
     startDate: '',
     endDate: '',
     description: '',
@@ -121,6 +122,7 @@ const CreateSubmission = () => {
     latitude: undefined as number | undefined,
     longitude: undefined as number | undefined,
     expectedAttendees: 50,
+    peopleImpacted: undefined as number | undefined,
     cost: 'Free',
     registrationDeadline: '',
     description: '',
@@ -167,6 +169,7 @@ const CreateSubmission = () => {
             latitude: data.latitude,
             longitude: data.longitude,
             expectedVolunteers: data.expectedVolunteers || 10,
+            peopleImpacted: data.peopleImpacted || undefined,
             startDate: data.startDate || '',
             endDate: data.endDate || '',
             description: data.description || '',
@@ -185,7 +188,8 @@ const CreateSubmission = () => {
             notes: data.notes || '',
             checklist: data.checklist || [],
             reminders: data.reminders || [],
-            heads: data.heads || []
+            heads: data.heads || [],
+            affiliation: data.affiliation || { type: '', customType: '', name: '' }
           });
         } else {
           setEventData({
@@ -200,6 +204,7 @@ const CreateSubmission = () => {
             latitude: data.latitude,
             longitude: data.longitude,
             expectedAttendees: data.expectedAttendees || 50,
+            peopleImpacted: data.peopleImpacted || undefined,
             cost: data.cost || 'Free',
             registrationDeadline: data.registrationDeadline || '',
             description: data.description || '',
@@ -217,7 +222,9 @@ const CreateSubmission = () => {
             notes: data.notes || '',
             checklist: data.checklist || [],
             reminders: data.reminders || [],
-            heads: data.heads || []
+            heads: data.heads || [],
+            affiliation: data.affiliation || { type: '', customType: '', name: '' },
+            projectId: data.projectId || ''
           });
         }
       } else {
@@ -289,6 +296,7 @@ const CreateSubmission = () => {
           latitude: projectData.latitude,
           longitude: projectData.longitude,
           expectedVolunteers: projectData.expectedVolunteers,
+          peopleImpacted: projectData.peopleImpacted ?? null,
           startDate: projectData.startDate,
           endDate: projectData.endDate,
           description: projectData.description,
@@ -352,6 +360,7 @@ const CreateSubmission = () => {
           latitude: eventData.latitude,
           longitude: eventData.longitude,
           expectedAttendees: eventData.expectedAttendees,
+          peopleImpacted: eventData.peopleImpacted ?? null,
           cost: eventData.cost,
           registrationDeadline: eventData.registrationDeadline,
           description: eventData.description,
@@ -650,6 +659,33 @@ const CreateSubmission = () => {
                     className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
                     min="1"
                   />
+                </div>
+
+                <div>
+                  <label className="block font-luxury-medium text-black mb-2">
+                    Estimated People Impacted
+                  </label>
+                  <input
+                    type="number"
+                    value={submissionType === 'project' ? (projectData.peopleImpacted ?? '') : (eventData.peopleImpacted ?? '')}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '') {
+                        handleInputChange('peopleImpacted', undefined);
+                      } else {
+                        const num = parseInt(value, 10);
+                        if (!isNaN(num) && num >= 0) {
+                          handleInputChange('peopleImpacted', num);
+                        }
+                      }
+                    }}
+                    className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
+                    min="0"
+                    placeholder="Optional"
+                  />
+                  <p className="text-sm text-gray-600 mt-1 font-luxury-body">
+                    Optional — helps us track broader impact beyond volunteers/attendees.
+                  </p>
                 </div>
 
                 <div className="md:col-span-2">
