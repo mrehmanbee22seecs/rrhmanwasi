@@ -593,7 +593,10 @@ const CreateSubmission = () => {
 
                 {/* Affiliation */}
                 <div className="md:col-span-2">
-                  <h4 className="text-xl font-luxury-heading text-black mb-2">Affiliated with a community organization?</h4>
+                  <h4 className="text-xl font-luxury-heading text-black mb-2">Organization/Community Affiliation 🏢</h4>
+                  <p className="text-sm text-gray-600 mb-3 font-luxury-body">
+                    Are you organizing this {submissionType} on behalf of an organization or community group? This information will be displayed publicly.
+                  </p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <select
                       value={(submissionType === 'project' ? projectData.affiliation.type : eventData.affiliation.type) || ''}
@@ -603,15 +606,18 @@ const CreateSubmission = () => {
                       })}
                       className="px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury"
                     >
-                      <option value="">Select type</option>
+                      <option value="">Select organization type</option>
                       <option value="NGO">NGO</option>
                       <option value="University Club">University Club</option>
                       <option value="Company">Company</option>
+                      <option value="Community Group">Community Group</option>
+                      <option value="Religious Organization">Religious Organization</option>
+                      <option value="Government">Government</option>
                       <option value="Other">Other</option>
                     </select>
                     <input
                       type="text"
-                      placeholder="Custom type (optional)"
+                      placeholder="Custom type (if 'Other' selected)"
                       value={(submissionType === 'project' ? projectData.affiliation.customType : eventData.affiliation.customType) || ''}
                       onChange={(e) => handleInputChange('affiliation', {
                         ...(submissionType === 'project' ? projectData.affiliation : eventData.affiliation),
@@ -661,9 +667,9 @@ const CreateSubmission = () => {
                   />
                 </div>
 
-                <div>
+                <div className="md:col-span-2">
                   <label className="block font-luxury-medium text-black mb-2">
-                    Estimated People Impacted
+                    How many people are you hoping to impact? 🎯
                   </label>
                   <input
                     type="number"
@@ -681,10 +687,10 @@ const CreateSubmission = () => {
                     }}
                     className="w-full px-4 py-3 border-2 border-vibrant-orange/30 rounded-luxury focus:outline-none focus:ring-2 focus:ring-vibrant-orange focus:border-vibrant-orange font-luxury-body"
                     min="0"
-                    placeholder="Optional"
+                    placeholder="Enter estimated number of people who will benefit from this project/event"
                   />
                   <p className="text-sm text-gray-600 mt-1 font-luxury-body">
-                    Optional — helps us track broader impact beyond volunteers/attendees.
+                    This includes direct beneficiaries, families, and communities affected by your {submissionType}. This helps us measure the broader social impact.
                   </p>
                 </div>
 
