@@ -541,12 +541,21 @@ const EventDetail = () => {
               <h1 className="text-5xl font-luxury-display text-black mb-6">{displayEvent.title}</h1>
               
               {displayEvent.affiliation && displayEvent.affiliation.name && (
-                <div className="mb-4">
-                  <span className="text-lg text-black/70 font-luxury-body">
-                    Organized by: <span className="font-luxury-semibold text-vibrant-orange">{displayEvent.affiliation.name}</span>
-                    {displayEvent.affiliation.customType && ` (${displayEvent.affiliation.customType})`}
-                    {!displayEvent.affiliation.customType && displayEvent.affiliation.type && ` (${displayEvent.affiliation.type})`}
-                  </span>
+                <div className="mb-6 p-4 bg-cream-elegant border-l-4 border-vibrant-orange rounded-r-luxury">
+                  <div className="flex items-center">
+                    <div className="mr-3 text-vibrant-orange">🏢</div>
+                    <div>
+                      <div className="text-sm text-black/60 font-luxury-body mb-1">Organized by</div>
+                      <div className="text-lg font-luxury-semibold text-vibrant-orange-dark">
+                        {displayEvent.affiliation.name}
+                      </div>
+                      {(displayEvent.affiliation.customType || displayEvent.affiliation.type) && (
+                        <div className="text-sm text-black/70 font-luxury-body">
+                          {displayEvent.affiliation.customType || displayEvent.affiliation.type}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
               
@@ -555,27 +564,53 @@ const EventDetail = () => {
               <div className="grid grid-cols-2 gap-6 mb-8">
                 <div className="flex items-center text-black">
                   <Calendar className="w-6 h-6 mr-3 text-vibrant-orange" />
-                  <span className="font-luxury-body">{formatDate(displayEvent.date)}</span>
+                  <div className="flex flex-col">
+                    <span className="font-luxury-body">{formatDate(displayEvent.date)}</span>
+                    <span className="text-xs text-black/60">Date</span>
+                  </div>
                 </div>
                 <div className="flex items-center text-black">
                   <Clock className="w-6 h-6 mr-3 text-vibrant-orange" />
-                  <span className="font-luxury-body">{displayEvent.time}</span>
+                  <div className="flex flex-col">
+                    <span className="font-luxury-body">{displayEvent.time}</span>
+                    <span className="text-xs text-black/60">Time</span>
+                  </div>
                 </div>
                 <div className="flex items-center text-black">
                   <MapPin className="w-6 h-6 mr-3 text-vibrant-orange" />
-                  <span className="font-luxury-body">{displayEvent.location}</span>
+                  <div className="flex flex-col">
+                    <span className="font-luxury-body">{displayEvent.location}</span>
+                    <span className="text-xs text-black/60">Venue</span>
+                  </div>
                 </div>
                 <div className="flex items-center text-black">
                   <Users className="w-6 h-6 mr-3 text-vibrant-orange" />
-                  <span className="font-luxury-body">{attendees} expected</span>
-                </div>
-                {displayEvent.peopleImpacted != null && (
-                  <div className="flex items-center text-black">
-                    <Target className="w-6 h-6 mr-3 text-vibrant-orange" />
-                    <span className="font-luxury-body">{displayEvent.peopleImpacted} people impacted</span>
+                  <div className="flex flex-col">
+                    <span className="font-luxury-body">{attendees} expected</span>
+                    <span className="text-xs text-black/60">Attendees</span>
                   </div>
-                )}
+                </div>
               </div>
+
+              {/* Impact Highlight Box */}
+              {displayEvent.peopleImpacted != null && displayEvent.peopleImpacted > 0 && (
+                <div className="bg-vibrant-orange/10 border-2 border-vibrant-orange/30 rounded-luxury p-6 mb-8">
+                  <div className="flex items-center justify-center">
+                    <Target className="w-8 h-8 mr-4 text-vibrant-orange" />
+                    <div className="text-center">
+                      <div className="text-4xl font-luxury-display text-vibrant-orange-dark mb-1">
+                        {displayEvent.peopleImpacted.toLocaleString()}+
+                      </div>
+                      <div className="text-lg font-luxury-semibold text-black">
+                        People Expected to Benefit
+                      </div>
+                      <p className="text-sm text-black/70 mt-1">
+                        Estimated social impact of this event
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="bg-vibrant-orange/10 p-6 rounded-luxury mb-8">
                 <p className="text-black font-luxury-semibold">
@@ -790,6 +825,29 @@ const EventDetail = () => {
                   </div>
                 </div>
               )}
+
+              {/* Partners */}
+              {Array.isArray(displayEvent.partners) && displayEvent.partners.length > 0 && (
+                <div className="luxury-card bg-cream-white p-8">
+                  <h3 className="text-2xl font-luxury-heading text-black mb-4">🤝 Event Partners</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {displayEvent.partners.map((partner: string, i: number) => (
+                      <span key={i} className="px-3 py-2 bg-cream-elegant rounded-luxury text-black font-luxury-semibold border border-vibrant-orange/20">
+                        {partner}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Childcare */}
+              {displayEvent.childcareAvailable && (
+                <div className="luxury-card bg-vibrant-orange/10 p-8">
+                  <h3 className="text-2xl font-luxury-heading text-black mb-2">👶 Childcare Available</h3>
+                  <p className="text-black font-luxury-body">Childcare services will be provided at this event</p>
+                </div>
+              )}
+
               {/* Requirements */}
               {displayEvent.requirements && displayEvent.requirements.length > 0 && displayEvent.requirements[0] !== '' && (
               <div className="luxury-card bg-cream-white p-8">

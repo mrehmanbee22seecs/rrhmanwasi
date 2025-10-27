@@ -212,10 +212,12 @@ Or create the index in Firebase Console.
       status,
       volunteers: 25,
       capacity: event.expectedAttendees,
+      beneficiaries: event.peopleImpacted || 0,
       category: event.category,
       icon: Heart,
       registrationDeadline: event.registrationDeadline,
-      cost: event.cost
+      cost: event.cost,
+      affiliation: event.affiliation
     });
   });
 
@@ -480,6 +482,18 @@ Or create the index in Firebase Console.
                     {event.title}
                   </h3>
                   
+                  {event.affiliation && event.affiliation.name && (
+                    <div className="text-xs text-vibrant-orange-dark font-semibold mb-2 flex items-center">
+                      <span className="mr-1">🏢</span>
+                      {event.affiliation.name}
+                      {(event.affiliation.customType || event.affiliation.type) && (
+                        <span className="text-black/60 ml-1">
+                          • {event.affiliation.customType || event.affiliation.type}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  
                   <p className="text-black font-luxury-body text-sm mb-4 line-clamp-3">
                     {event.description}
                   </p>
@@ -504,6 +518,11 @@ Or create the index in Firebase Console.
                       </div>
                       <span>{event.capacity} capacity</span>
                     </div>
+                    {event.beneficiaries > 0 && (
+                      <div className="text-sm text-black font-semibold">
+                        <span className="font-bold text-vibrant-orange-dark">{event.beneficiaries.toLocaleString()}</span> people impacted
+                      </div>
+                    )}
                     <div className="text-sm text-vibrant-orange-dark font-medium">
                       Register by: {event.registrationDeadline}
                     </div>

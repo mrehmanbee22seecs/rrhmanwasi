@@ -191,11 +191,12 @@ Or create the index in Firebase Console.
     image: project.image || 'https://images.pexels.com/photos/1181533/pexels-photo-1181533.jpeg?auto=compress&cs=tinysrgb&w=800',
     status: 'ongoing',
     volunteers: project.expectedVolunteers,
-    beneficiaries: 200,
+    beneficiaries: project.peopleImpacted || 0,
     duration: project.timeline,
     category: project.category,
     location: project.location,
-    deadline: 'Open Applications'
+    deadline: 'Open Applications',
+    affiliation: project.affiliation
   }));
 
   const allProjects = [...staticProjects, ...convertedApprovedProjects];
@@ -484,6 +485,18 @@ Or create the index in Firebase Console.
                     {project.title}
                   </h3>
                   
+                  {project.affiliation && project.affiliation.name && (
+                    <div className="text-xs text-vibrant-orange-dark font-semibold mb-2 flex items-center">
+                      <span className="mr-1">🏢</span>
+                      {project.affiliation.name}
+                      {(project.affiliation.customType || project.affiliation.type) && (
+                        <span className="text-logo-navy-light ml-1">
+                          • {project.affiliation.customType || project.affiliation.type}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  
                   <p className="text-logo-navy-light font-luxury-body text-sm mb-4 line-clamp-3">
                     {project.description}
                   </p>
@@ -499,9 +512,11 @@ Or create the index in Firebase Console.
                         <span>{project.duration}</span>
                       </div>
                     </div>
-                    <div className="text-sm text-logo-navy-light font-semibold">
-                      <span className="font-bold text-logo-navy">{project.beneficiaries}</span> people impacted
-                    </div>
+                    {project.beneficiaries > 0 && (
+                      <div className="text-sm text-logo-navy-light font-semibold">
+                        <span className="font-bold text-logo-navy">{project.beneficiaries.toLocaleString()}</span> people impacted
+                      </div>
+                    )}
                     <div className="text-sm text-vibrant-orange-dark font-bold">
                       Apply by: {project.deadline}
                     </div>
