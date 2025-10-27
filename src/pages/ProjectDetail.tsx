@@ -543,12 +543,21 @@ const ProjectDetail = () => {
               <h1 className="text-5xl font-luxury-display text-black mb-6">{displayProject.title}</h1>
               
               {displayProject.affiliation && displayProject.affiliation.name && (
-                <div className="mb-4">
-                  <span className="text-lg text-black/70 font-luxury-body">
-                    Organized by: <span className="font-luxury-semibold text-vibrant-orange">{displayProject.affiliation.name}</span>
-                    {displayProject.affiliation.customType && ` (${displayProject.affiliation.customType})`}
-                    {!displayProject.affiliation.customType && displayProject.affiliation.type && ` (${displayProject.affiliation.type})`}
-                  </span>
+                <div className="mb-6 p-4 bg-cream-elegant border-l-4 border-vibrant-orange rounded-r-luxury">
+                  <div className="flex items-center">
+                    <div className="mr-3 text-vibrant-orange">🏢</div>
+                    <div>
+                      <div className="text-sm text-black/60 font-luxury-body mb-1">Organized by</div>
+                      <div className="text-lg font-luxury-semibold text-vibrant-orange-dark">
+                        {displayProject.affiliation.name}
+                      </div>
+                      {(displayProject.affiliation.customType || displayProject.affiliation.type) && (
+                        <div className="text-sm text-black/70 font-luxury-body">
+                          {displayProject.affiliation.customType || displayProject.affiliation.type}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
               
@@ -557,29 +566,55 @@ const ProjectDetail = () => {
               <div className="grid grid-cols-2 gap-6 mb-8">
                 <div className="flex items-center text-black">
                   <Users className="w-6 h-6 mr-3 text-vibrant-orange" />
-                  <span className="font-luxury-body">{participants} volunteers</span>
+                  <div className="flex flex-col">
+                    <span className="font-luxury-body">{participants} volunteers</span>
+                    <span className="text-xs text-black/60">Expected participation</span>
+                  </div>
                 </div>
                 <div className="flex items-center text-black">
                   <MapPin className="w-6 h-6 mr-3 text-vibrant-orange" />
-                  <span className="font-luxury-body">{displayProject.location}</span>
+                  <div className="flex flex-col">
+                    <span className="font-luxury-body">{displayProject.location}</span>
+                    <span className="text-xs text-black/60">Location</span>
+                  </div>
                 </div>
                 <div className="flex items-center text-black">
                   <Calendar className="w-6 h-6 mr-3 text-vibrant-orange" />
-                  <span className="font-luxury-body">{startDate} - {endDate}</span>
-                </div>
-                {displayProject.peopleImpacted != null && (
-                  <div className="flex items-center text-black">
-                    <Target className="w-6 h-6 mr-3 text-vibrant-orange" />
-                    <span className="font-luxury-body">{displayProject.peopleImpacted} people impacted</span>
+                  <div className="flex flex-col">
+                    <span className="font-luxury-body">{startDate} - {endDate}</span>
+                    <span className="text-xs text-black/60">Duration</span>
                   </div>
-                )}
+                </div>
                 {Array.isArray(relatedEvents) && relatedEvents.length > 0 && (
                   <div className="flex items-center text-black">
                     <Clock className="w-6 h-6 mr-3 text-vibrant-orange" />
-                    <span className="font-luxury-body">{relatedEvents.length} related event{relatedEvents.length > 1 ? 's' : ''}</span>
+                    <div className="flex flex-col">
+                      <span className="font-luxury-body">{relatedEvents.length} related event{relatedEvents.length > 1 ? 's' : ''}</span>
+                      <span className="text-xs text-black/60">Part of this project</span>
+                    </div>
                   </div>
                 )}
               </div>
+
+              {/* Impact Highlight Box */}
+              {displayProject.peopleImpacted != null && displayProject.peopleImpacted > 0 && (
+                <div className="bg-vibrant-orange/10 border-2 border-vibrant-orange/30 rounded-luxury p-6 mb-8">
+                  <div className="flex items-center justify-center">
+                    <Target className="w-8 h-8 mr-4 text-vibrant-orange" />
+                    <div className="text-center">
+                      <div className="text-4xl font-luxury-display text-vibrant-orange-dark mb-1">
+                        {displayProject.peopleImpacted.toLocaleString()}+
+                      </div>
+                      <div className="text-lg font-luxury-semibold text-black">
+                        People Expected to Benefit
+                      </div>
+                      <p className="text-sm text-black/70 mt-1">
+                        Estimated social impact of this project
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <button
                 onClick={() => setShowApplication(true)}
