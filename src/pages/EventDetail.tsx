@@ -825,6 +825,29 @@ const EventDetail = () => {
                   </div>
                 </div>
               )}
+
+              {/* Partners */}
+              {Array.isArray(displayEvent.partners) && displayEvent.partners.length > 0 && (
+                <div className="luxury-card bg-cream-white p-8">
+                  <h3 className="text-2xl font-luxury-heading text-black mb-4">🤝 Event Partners</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {displayEvent.partners.map((partner: string, i: number) => (
+                      <span key={i} className="px-3 py-2 bg-cream-elegant rounded-luxury text-black font-luxury-semibold border border-vibrant-orange/20">
+                        {partner}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Childcare */}
+              {displayEvent.childcareAvailable && (
+                <div className="luxury-card bg-vibrant-orange/10 p-8">
+                  <h3 className="text-2xl font-luxury-heading text-black mb-2">👶 Childcare Available</h3>
+                  <p className="text-black font-luxury-body">Childcare services will be provided at this event</p>
+                </div>
+              )}
+
               {/* Requirements */}
               {displayEvent.requirements && displayEvent.requirements.length > 0 && displayEvent.requirements[0] !== '' && (
               <div className="luxury-card bg-cream-white p-8">
