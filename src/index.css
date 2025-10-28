@@ -1041,7 +1041,7 @@ body {
   background: linear-gradient(135deg, #E6458C, #FF6B9D);
 }
 
-/* Light theme glassmorphism */
+/* Light theme glassmorphism elements */
 :not(.theme-dark) .glassmorphism {
   background: rgba(245, 230, 211, 0.7);
   backdrop-filter: blur(20px) saturate(180%);

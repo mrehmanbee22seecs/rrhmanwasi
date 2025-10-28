@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from './AuthContext';
 
@@ -109,6 +109,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Apply the default theme on first mount as well
   useEffect(() => {
     applyTheme(currentTheme);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const applyTheme = (theme: Theme) => {
