@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Mail, Phone, Eye, EyeOff, User, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import VerificationModal from './VerificationModal';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -12,6 +13,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [signupEmail, setSignupEmail] = useState('');
   
   const [formData, setFormData] = useState({
     email: '',
@@ -21,7 +24,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     confirmPassword: ''
   });
 
-  const { login, signup, loginWithGoogle, loginWithFacebook, continueAsGuest } = useAuth();
+  const { login, signup, loginWithGoogle, loginWithFacebook, continueAsGuest, resendEmailVerification, currentUser } = useAuth();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -36,17 +39,27 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     try {
       if (isLogin) {
         await login(formData.email, formData.password);
+        onClose();
       } else {
         if (formData.password !== formData.confirmPassword) {
           throw new Error('Passwords do not match');
         }
         await signup(formData.email, formData.password, formData.displayName, formData.phone);
+        // Show verification modal after successful signup
+        setSignupEmail(formData.email);
+        setShowVerificationModal(true);
+        onClose();
       }
-      onClose();
     } catch (error: any) {
       setError(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (currentUser) {
+      await resendEmailVerification();
     }
   };
 
@@ -286,6 +299,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
       </div>
+
+      {/* Verification Modal */}
+      <VerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        email={signupEmail}
+        onResend={handleResendVerification}
+      />
     </div>
   );
 };
