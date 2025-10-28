@@ -407,9 +407,12 @@ body {
   --cream-elegant: #F5E6D3;
   --cream-white: #FAF6F1;
   --cream-soft: #F0E6D6;
+  --cream-feature: #f8f1e6;
+  --deep-black: #0a0a0a;
   --gold-luxury: #D4AF37;
   --gold-light: #FFE44D;
   --text-dark: #1F2937;
+  --text-darker: #111111;
   --text-medium: #4B5563;
   --text-light: #6B7280;
   --pink-muted: #e66ba3;
@@ -1074,6 +1077,48 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   animation: gradient-shift 6s ease infinite;
+}
+
+/* ============================================
+   FEATURE CARD STYLES (What We Do, etc.)
+   ============================================ */
+
+/* Light theme feature cards */
+:not(.theme-dark) .feature-card {
+  background: #f8f1e6 !important;
+  color: #111111 !important;
+  border: 2px solid rgba(26, 26, 46, 0.1);
+}
+
+:not(.theme-dark) .feature-card h3,
+:not(.theme-dark) .feature-card h2,
+:not(.theme-dark) .feature-card p {
+  color: #111111 !important;
+}
+
+:not(.theme-dark) .feature-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(26, 26, 46, 0.15);
+  border-color: rgba(230, 107, 163, 0.3);
+}
+
+/* Dark theme feature cards */
+.theme-dark .feature-card {
+  background: #0a0a0a !important;
+  color: #f8f1e6 !important;
+  border: 2px solid rgba(248, 241, 230, 0.1);
+}
+
+.theme-dark .feature-card h3,
+.theme-dark .feature-card h2,
+.theme-dark .feature-card p {
+  color: #f8f1e6 !important;
+}
+
+.theme-dark .feature-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(217, 79, 141, 0.3);
+  border-color: rgba(217, 79, 141, 0.3);
 }
 
 /* Premium link hover effects */

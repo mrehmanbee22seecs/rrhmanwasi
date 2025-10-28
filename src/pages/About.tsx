@@ -165,12 +165,12 @@ const About = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            <div className="luxury-card bg-cream-elegant p-10 luxury-hover-scale">
+            <div className="luxury-card feature-card p-10 luxury-hover-scale">
               <div className="service-icon-luxury w-20 h-20 flex items-center justify-center mb-8">
                 <Users className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-3xl font-luxury-heading text-text-dark mb-6">Volunteer Coordination</h3>
-              <p className="text-text-medium font-luxury-body text-lg leading-relaxed">
+              <h3 className="text-3xl font-luxury-heading mb-6">Volunteer Coordination</h3>
+              <p className="font-luxury-body text-lg leading-relaxed">
                 We match volunteers with suitable projects based on their skills, interests, 
                 and availability to maximize impact and personal fulfillment.
               </p>
@@ -187,12 +187,12 @@ const About = () => {
               </p>
             </div>
 
-            <div className="luxury-card bg-cream-elegant p-10 luxury-hover-scale">
+            <div className="luxury-card feature-card p-10 luxury-hover-scale">
               <div className="service-icon-luxury w-20 h-20 flex items-center justify-center mb-8">
                 <Award className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-3xl font-luxury-heading text-text-dark mb-6">Community Building</h3>
-              <p className="text-text-medium font-luxury-body text-lg leading-relaxed">
+              <h3 className="text-3xl font-luxury-heading mb-6">Community Building</h3>
+              <p className="font-luxury-body text-lg leading-relaxed">
                 We foster a sense of community through events, workshops, and ongoing 
                 engagement opportunities that strengthen social bonds and collective action.
               </p>

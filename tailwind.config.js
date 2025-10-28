@@ -22,11 +22,16 @@ export default {
         'cream-elegant': '#F5E6D3',  // Warm beige for surfaces
         'cream-white': '#FAF6F1',    // Soft cream background
         'cream-soft': '#F0E6D6',     // Slightly darker beige
+        'cream-feature': '#f8f1e6',  // Feature card beige
         'gold-luxury': '#D4AF37',    // Golden accent
         'gold-light': '#FFE44D',
         
+        // Dark Theme Colors
+        'deep-black': '#0a0a0a',     // Deep black for feature cards
+        
         // Text Colors
         'text-dark': '#1F2937',       // Dark text for light themes
+        'text-darker': '#111111',    // Darker text for feature cards
         'text-medium': '#4B5563',     // Medium gray
         'text-light': '#6B7280',      // Light gray
         'dark-readable': '#FFFFFF',   // White text for dark themes

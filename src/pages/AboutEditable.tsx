@@ -76,7 +76,7 @@ const AboutEditable = () => {
       icon: 'Users',
       title: 'Volunteer Coordination',
       description: 'We match volunteers with suitable projects based on their skills, interests, and availability to maximize impact and personal fulfillment.',
-      bgColor: 'bg-cream-elegant',
+      bgColor: 'feature-card',
       order: 1
     },
     {
@@ -91,7 +91,7 @@ const AboutEditable = () => {
       icon: 'Award',
       title: 'Community Building',
       description: 'We foster a sense of community through events, workshops, and ongoing engagement opportunities that strengthen social bonds and collective action.',
-      bgColor: 'bg-cream-elegant',
+      bgColor: 'feature-card',
       order: 3
     }
   ];
@@ -272,14 +272,15 @@ const AboutEditable = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {whatWeDo.map((item: any) => {
               const IconComponent = getIcon(item.icon);
+              const isFeatureCard = item.bgColor === 'feature-card';
               return (
-                <div key={item.id || item.title} className={`luxury-card ${item.bgColor || 'bg-cream-elegant'} p-10 luxury-hover-scale relative ${item.textColor || ''}`}>
+                <div key={item.id || item.title} className={`luxury-card ${item.bgColor || 'feature-card'} p-10 luxury-hover-scale relative ${item.textColor || ''}`}>
                   {isAdmin && <EditButton onClick={() => { setEditingSection('whatwedo'); setEditingItem(item); }} />}
                   <div className="service-icon-luxury w-20 h-20 flex items-center justify-center mb-8">
                     <IconComponent className="w-10 h-10 text-white" />
                   </div>
-                  <h3 className={`text-3xl font-luxury-heading mb-6 ${item.textColor || 'text-text-dark'}`}>{item.title}</h3>
-                  <p className={`font-luxury-body text-lg leading-relaxed ${item.textColor ? 'text-cream-soft/80' : 'text-text-medium'}`}>
+                  <h3 className={`text-3xl font-luxury-heading mb-6 ${isFeatureCard ? '' : item.textColor || ''}`}>{item.title}</h3>
+                  <p className={`font-luxury-body text-lg leading-relaxed ${isFeatureCard ? '' : (item.textColor ? 'text-cream-soft/80' : '')}`}>
                     {item.description}
                   </p>
                 </div>
