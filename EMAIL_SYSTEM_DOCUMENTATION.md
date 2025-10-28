@@ -236,6 +236,45 @@ Ensure these files exist in your project:
 - Required fields checked for all email types
 - Empty/missing fields return 400 Bad Request
 
+## Timezone Handling
+
+### Pakistan Standard Time (PKT) - UTC+5:00
+
+The email system is designed to work with **Pakistan Standard Time (PKT)** as the standard timezone:
+
+**How it works:**
+1. **User Input:** Users in Pakistan enter reminder times in their local time (PKT)
+2. **Frontend Conversion:** The frontend converts PKT to UTC using `timezoneUtils.ts`
+3. **Storage:** All times are stored in UTC in Google Sheets and Firestore
+4. **Apps Script:** The trigger runs every 5 minutes and compares against UTC time
+5. **Email Delivery:** Reminders are sent when current UTC time >= scheduled UTC time
+
+**Example:**
+- User in Pakistan schedules: December 25, 2024 at 2:00 PM PKT
+- System converts: 2024-12-25T09:00:00.000Z (9:00 AM UTC)
+- Stored in Sheet: `2024-12-25T09:00:00.000Z`
+- Trigger checks: When UTC time reaches 9:00 AM, email is sent
+- User receives email at: 2:00 PM PKT (as intended)
+
+**Key Benefits:**
+- ✅ Consistent across all users regardless of location
+- ✅ No daylight saving time issues
+- ✅ Works correctly even if user travels
+- ✅ Apps Script trigger operates on UTC (no timezone confusion)
+
+**For Developers:**
+```javascript
+import { convertLocalToUTC, formatPKTDateTime } from '../utils/timezoneUtils';
+
+// Creating a reminder (PKT to UTC)
+const utcIsoString = convertLocalToUTC("2024-12-25", "14:00"); // 2 PM PKT
+// Result: "2024-12-25T09:00:00.000Z"
+
+// Displaying a reminder (UTC to PKT)
+const formatted = formatPKTDateTime("2024-12-25T09:00:00.000Z");
+// Result: "December 25, 2024 at 2:00 PM PKT"
+```
+
 ## Email Quotas and Limits
 
 ### Gmail Free Account

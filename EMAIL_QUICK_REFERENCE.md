@@ -6,6 +6,38 @@
 - **Testing Guide:** [EMAIL_TESTING_GUIDE.md](./EMAIL_TESTING_GUIDE.md)
 - **Architecture:** [EMAIL_ARCHITECTURE.md](./EMAIL_ARCHITECTURE.md)
 
+## ⏰ Timezone Handling - Pakistan Standard Time (PKT)
+
+**System Standard:** Pakistan Standard Time (PKT = UTC+5:00)
+
+### How It Works:
+1. **User Input:** Enter times in Pakistan local time (PKT)
+2. **Automatic Conversion:** Frontend converts PKT → UTC for storage
+3. **Google Sheets:** All times stored in UTC format
+4. **Apps Script Trigger:** Runs every 5 minutes, checks UTC time
+5. **Email Delivery:** Sent when UTC time matches scheduled time
+6. **Result:** Users receive emails at correct PKT time
+
+### Example:
+```
+User schedules: Dec 25, 2024 at 2:00 PM PKT
+System converts: 2024-12-25T09:00:00.000Z (9:00 AM UTC)
+Stored in Sheet: 2024-12-25T09:00:00.000Z
+Email sent when: UTC reaches 9:00 AM (= 2:00 PM PKT)
+✅ User receives email at 2:00 PM PKT (correct!)
+```
+
+### For Developers:
+```javascript
+import { convertLocalToUTC } from './utils/timezoneUtils';
+
+// Convert PKT to UTC for storage
+const utc = convertLocalToUTC("2024-12-25", "14:00"); // 2 PM PKT
+// Returns: "2024-12-25T09:00:00.000Z"
+```
+
+**Documentation:** See `src/utils/timezoneUtils.ts` for full API
+
 ## 📧 Email Types Supported
 
 | Email Type | Trigger | Recipient | Purpose |

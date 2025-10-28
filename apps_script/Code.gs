@@ -2,6 +2,14 @@
  * Complete Email System for Wasillah Web App (Firebase Spark Plan)
  * Google Apps Script Web App
  * 
+ * TIMEZONE HANDLING:
+ * - All reminder times are stored in UTC format in Google Sheets
+ * - The system operates on UTC to ensure consistency across timezones
+ * - Pakistan Standard Time (PKT) is UTC+5:00
+ * - When creating reminders from Pakistan, the frontend converts PKT to UTC
+ * - The trigger runs every 5 minutes and checks against current UTC time
+ * - Example: 2:00 PM PKT = 9:00 AM UTC (stored as 2024-12-25T09:00:00.000Z)
+ * 
  * SETUP INSTRUCTIONS:
  * 1. Create a new Google Apps Script project
  * 2. Copy this code into Code.gs

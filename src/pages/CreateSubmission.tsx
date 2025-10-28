@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ProjectSubmission, EventSubmission, SubmissionType, ChecklistItem, Reminder, HeadInfo } from '../types/submissions';
 import { sendEmail, formatSubmissionReceivedEmail } from '../utils/emailService';
 import { sendSubmissionEmail, createReminder } from '../utils/appsScriptEmail';
+import { convertLocalToUTC } from '../utils/timezoneUtils';
 import InteractiveMap from '../components/InteractiveMap';
 import ChecklistBuilder from '../components/ChecklistBuilder';
 import ReminderManager from '../components/ReminderManager';
@@ -521,7 +522,10 @@ const CreateSubmission = () => {
         // Schedule reminders via Apps Script
         const reminders = submissionType === 'project' ? projectData.reminders : eventData.reminders;
         for (const rem of reminders) {
-          const sendAt = new Date(`${rem.reminderDate}T${rem.reminderTime}`);
+          // Convert Pakistan Standard Time (PKT) to UTC for storage
+          // PKT is UTC+5, so this ensures reminders are sent at the correct time
+          const scheduledUTC = convertLocalToUTC(rem.reminderDate, rem.reminderTime);
+          const sendAt = new Date(scheduledUTC);
           
           // Send to Apps Script for Google Sheet tracking
           for (const email of rem.notifyEmails) {
@@ -540,7 +544,7 @@ const CreateSubmission = () => {
             to: '',
             title: rem.title,
             description: rem.description,
-            when: sendAt.toLocaleString(),
+            when: sendAt.toLocaleString('en-PK', { timeZone: 'Asia/Karachi' }),
             submissionTitle: title,
             submissionType: submissionType,
           }).html;
