@@ -178,11 +178,17 @@ Before testing, ensure you have:
 3. Run this code 6 times rapidly:
 
 ```javascript
-// Paste in console
-fetch('YOUR_APPS_SCRIPT_URL', {
+// Paste in console - Replace with your actual values:
+// - Get APPS_SCRIPT_URL from Apps Script deployment (e.g., https://script.google.com/macros/s/AKfycbz.../exec)
+// - Get API_KEY from your .env file (VITE_APPS_SCRIPT_API_KEY)
+
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+const API_KEY = 'your-api-key-from-env';
+
+fetch(APPS_SCRIPT_URL, {
   method: 'POST',
   body: JSON.stringify({
-    apiKey: 'YOUR_API_KEY',
+    apiKey: API_KEY,
     type: 'welcome',
     name: 'Rate Test',
     email: 'ratetest@example.com',

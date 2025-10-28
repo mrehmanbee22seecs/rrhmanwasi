@@ -73,9 +73,9 @@ User Submits Project/Event
 ### 3. Approval Email
 
 ```
-Admin Reviews Submission
+admin Reviews Submission
    │
-   └─► Admin clicks "Approve"
+   └─► admin clicks "Approve"
          │
          ├─► Firestore: Update status to 'approved', isVisible=true
          │
