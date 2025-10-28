@@ -7,6 +7,8 @@ import { FirebaseError } from 'firebase/app';
 import { useAuth } from '../contexts/AuthContext';
 import { ProjectSubmission, EventSubmission, SubmissionType, ChecklistItem, Reminder, HeadInfo } from '../types/submissions';
 import { sendEmail, formatSubmissionReceivedEmail } from '../utils/emailService';
+import { sendSubmissionEmail, createReminder } from '../utils/appsScriptEmail';
+import { convertLocalToUTC } from '../utils/timezoneUtils';
 import InteractiveMap from '../components/InteractiveMap';
 import ChecklistBuilder from '../components/ChecklistBuilder';
 import ReminderManager from '../components/ReminderManager';
@@ -491,27 +493,59 @@ const CreateSubmission = () => {
 
       // Fire-and-forget: send confirmation email and schedule reminders
       try {
+        const title = submissionType === 'project' ? projectData.title : eventData.title;
+        const submitterName = userData.displayName || 'Friend';
+        const submitterEmail = userData.email || '';
+        const submissionUrl = `${window.location.origin}/dashboard`;
+        
+        // Send submission confirmation via Apps Script
+        sendSubmissionEmail(
+          submitterName,
+          submitterEmail,
+          title,
+          submissionUrl
+        ).catch((e) => console.warn('Apps Script submission email failed (non-blocking):', e));
+        
+        // Also send via existing webhook for backwards compatibility
         const when = submissionType === 'project'
           ? `${projectData.startDate || ''}${projectData.endDate ? ' - ' + projectData.endDate : ''}`
           : `${eventData.date || ''}${eventData.time ? ' @ ' + eventData.time : ''}`;
         sendEmail(formatSubmissionReceivedEmail({
           type: submissionType,
-          title: submissionType === 'project' ? projectData.title : eventData.title,
-          submitterName: userData.displayName || 'Friend',
-          submitterEmail: userData.email || '',
+          title: title,
+          submitterName: submitterName,
+          submitterEmail: submitterEmail,
           summary: submissionType === 'project' ? projectData.shortSummary : eventData.shortSummary,
           when
         })).catch((e) => console.warn('Email send failed (non-blocking):', e));
 
+        // Schedule reminders via Apps Script
         const reminders = submissionType === 'project' ? projectData.reminders : eventData.reminders;
         for (const rem of reminders) {
-          const sendAt = new Date(`${rem.reminderDate}T${rem.reminderTime}`);
+          // Convert Pakistan Standard Time (PKT) to UTC for storage
+          // PKT is UTC+5, so this ensures reminders are sent at the correct time
+          const scheduledUTC = convertLocalToUTC(rem.reminderDate, rem.reminderTime);
+          const sendAt = new Date(scheduledUTC);
+          
+          // Send to Apps Script for Google Sheet tracking
+          for (const email of rem.notifyEmails) {
+            createReminder(
+              currentUser?.uid || '',
+              submitterName,
+              email,
+              title,
+              `${rem.title}\n\n${rem.description || ''}`,
+              sendAt
+            ).catch((e) => console.warn('Apps Script reminder creation failed (non-blocking):', e));
+          }
+          
+          // Also use existing webhook for backwards compatibility
           const html = formatReminderEmail({
             to: '',
             title: rem.title,
             description: rem.description,
-            when: sendAt.toLocaleString(),
-            submissionTitle: submissionType === 'project' ? projectData.title : eventData.title,
+            when: sendAt.toLocaleString('en-PK', { timeZone: 'Asia/Karachi' }),
+            submissionTitle: title,
             submissionType: submissionType,
           }).html;
           scheduleReminderEmails({

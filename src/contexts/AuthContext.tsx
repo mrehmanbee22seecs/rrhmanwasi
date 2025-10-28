@@ -14,6 +14,7 @@ import {
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, facebookProvider, db } from '../config/firebase';
 import { initializeUserProfile, logActivity as logUserActivity } from '../utils/firebaseInit';
+import { sendWelcomeEmail, sendResendVerificationNote } from '../utils/appsScriptEmail';
 
 interface UserData {
   uid: string;
@@ -149,6 +150,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     await sendEmailVerification(user, actionCodeSettings);
 
     await createUserDocument(user, { phoneNumber: phone });
+    
+    // Send welcome email via Apps Script (non-blocking)
+    sendWelcomeEmail(displayName || user.email?.split('@')[0] || 'Friend', user.email || '')
+      .catch(err => console.warn('Welcome email failed (non-blocking):', err));
   };
 
   const login = async (email: string, password: string) => {
@@ -225,6 +230,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       handleCodeInApp: true
     } as const;
     await sendEmailVerification(currentUser, actionCodeSettings);
+    
+    // Send notification via Apps Script (non-blocking)
+    const displayName = currentUser.displayName || currentUser.email?.split('@')[0] || 'Friend';
+    sendResendVerificationNote(displayName, currentUser.email || '')
+      .catch(err => console.warn('Resend verification note failed (non-blocking):', err));
   };
 
   const refreshUserData = async () => {
