@@ -18,17 +18,18 @@ export default {
         'vibrant-purple': '#8B5CF6',
         'vibrant-cyan': '#00D9FF',
         
-        // Premium Light Colors for Dark Theme
-        'cream-elegant': '#FFFFFF',
-        'cream-white': '#F5F5FA',
-        'gold-luxury': '#FFD700',
+        // Premium Warm Colors for Light Theme
+        'cream-elegant': '#F5E6D3',  // Warm beige for surfaces
+        'cream-white': '#FAF6F1',    // Soft cream background
+        'cream-soft': '#F0E6D6',     // Slightly darker beige
+        'gold-luxury': '#D4AF37',    // Golden accent
         'gold-light': '#FFE44D',
         
-        // Text Colors for Dark Theme
-        'text-dark': '#FFFFFF',
-        'text-medium': '#E0E0F0',
-        'text-light': '#B4B4C8',
-        'dark-readable': '#FFFFFF',
+        // Text Colors
+        'text-dark': '#1F2937',       // Dark text for light themes
+        'text-medium': '#4B5563',     // Medium gray
+        'text-light': '#6B7280',      // Light gray
+        'dark-readable': '#FFFFFF',   // White text for dark themes
       },
       fontFamily: {
         'luxury-display': ['Playfair Display', 'serif'],

@@ -23,125 +23,50 @@ export interface Theme {
 
 export const themes: Theme[] = [
   {
-    id: 'jet-black',
-    name: 'Jet Black',
-    description: 'Sleek dark UI with navy accents',
+    id: 'wasillah-classic',
+    name: 'Wasillah Classic',
+    description: 'Premium light theme with warm beige and golden tones',
     colors: {
-      // Accent/link blue inspired by GitHub
-      primary: '#1f6feb',
-      // Deep navy/raised surface
-      secondary: '#161b22',
-      // Lighter blue for hovers/gradients
-      accent: '#388bfd',
-      // App background
-      background: '#0d1117',
-      // Cards/surfaces
-      surface: '#161b22',
-      // Primary text
-      text: '#c9d1d9',
-      // Muted text
-      textLight: '#8b949e'
+      // Vibrant brand primary (pink-red accent)
+      primary: '#FF6B9D',
+      // Warm golden beige for surfaces
+      secondary: '#D4AF37',
+      // Electric cyan accent
+      accent: '#00D9FF',
+      // Soft cream background for readability
+      background: '#FAF6F1',
+      // Warm beige for cards/surfaces
+      surface: '#F5E6D3',
+      // Dark text for light backgrounds
+      text: '#1F2937',
+      // Medium gray text
+      textLight: '#6B7280'
     },
-    preview: 'linear-gradient(135deg, #0d1117, #161b22)',
-    isDark: true
+    preview: 'linear-gradient(135deg, #FAF6F1, #F5E6D3, #D4AF37)',
+    isDark: false
   },
   {
-    id: 'wasilah-classic',
-    name: 'Wasilah Classic',
-    description: 'Premium Firebase-inspired dark theme with vibrant gradients',
+    id: 'wasillah-jet-black',
+    name: 'Wasillah Jet Black',
+    description: 'Premium dark theme with deep black and vibrant accents',
     colors: {
-      // Vibrant gradient primary (purple-pink-orange blend)
+      // Vibrant gradient primary (pink accent)
       primary: '#FF6B9D',
-      // Deep charcoal/black background
-      secondary: '#0F0F23',
-      // Bright accent (electric blue/cyan)
+      // Deep jet black background
+      secondary: '#000000',
+      // Bright accent (electric cyan)
       accent: '#00D9FF',
-      // Rich dark background
-      background: '#050517',
-      // Card/surface dark navy
-      surface: '#1A1A2E',
-      // Light text for dark BG
+      // Rich pure black background
+      background: '#000000',
+      // Dark charcoal surface for subtle contrast
+      surface: '#1A1A1A',
+      // White text for dark backgrounds
       text: '#FFFFFF',
       // Muted light text
       textLight: '#B4B4C8'
     },
-    preview: 'linear-gradient(135deg, #FF6B9D, #00D9FF, #8B5CF6)',
+    preview: 'linear-gradient(135deg, #000000, #FF6B9D, #00D9FF)',
     isDark: true
-  },
-  {
-    id: 'emerald-forest',
-    name: 'Emerald Forest',
-    description: 'Fresh green theme for environmental projects',
-    colors: {
-      primary: '#10B981',
-      secondary: '#064E3B',
-      accent: '#34D399',
-      background: '#F0FDF4',
-      surface: '#FFFFFF',
-      text: '#1F2937',
-      textLight: '#6B7280'
-    },
-    preview: 'linear-gradient(135deg, #10B981, #064E3B)'
-  },
-  {
-    id: 'ocean-blue',
-    name: 'Ocean Blue',
-    description: 'Calming blue theme for health and wellness',
-    colors: {
-      primary: '#3B82F6',
-      secondary: '#1E3A8A',
-      accent: '#60A5FA',
-      background: '#F0F9FF',
-      surface: '#FFFFFF',
-      text: '#1F2937',
-      textLight: '#6B7280'
-    },
-    preview: 'linear-gradient(135deg, #3B82F6, #1E3A8A)'
-  },
-  {
-    id: 'sunset-warmth',
-    name: 'Sunset Warmth',
-    description: 'Warm sunset colors for community connection',
-    colors: {
-      primary: '#F59E0B',
-      secondary: '#92400E',
-      accent: '#FBBF24',
-      background: '#FFFBEB',
-      surface: '#FFFFFF',
-      text: '#1F2937',
-      textLight: '#6B7280'
-    },
-    preview: 'linear-gradient(135deg, #F59E0B, #92400E)'
-  },
-  {
-    id: 'royal-purple',
-    name: 'Royal Purple',
-    description: 'Elegant purple theme for education and growth',
-    colors: {
-      primary: '#8B5CF6',
-      secondary: '#5B21B6',
-      accent: '#A78BFA',
-      background: '#FAF5FF',
-      surface: '#FFFFFF',
-      text: '#1F2937',
-      textLight: '#6B7280'
-    },
-    preview: 'linear-gradient(135deg, #8B5CF6, #5B21B6)'
-  },
-  {
-    id: 'rose-garden',
-    name: 'Rose Garden',
-    description: 'Soft rose theme for compassionate service',
-    colors: {
-      primary: '#F43F5E',
-      secondary: '#BE185D',
-      accent: '#FB7185',
-      background: '#FFF1F2',
-      surface: '#FFFFFF',
-      text: '#1F2937',
-      textLight: '#6B7280'
-    },
-    preview: 'linear-gradient(135deg, #F43F5E, #BE185D)'
   }
 ];
 
@@ -166,7 +91,7 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const defaultTheme = themes.find(t => t.id === 'wasilah-classic') || themes[0];
+  const defaultTheme = themes.find(t => t.id === 'wasillah-classic') || themes[0];
   const [currentTheme, setCurrentTheme] = useState<Theme>(defaultTheme);
   const { currentUser, userData } = useAuth();
 

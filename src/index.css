@@ -401,21 +401,23 @@ body {
   --logo-teal-light: #4DFFFF;
   --vibrant-orange: #FF6B9D;
   --vibrant-orange-light: #FFA3C7;
-  --cream-elegant: #FFFFFF;
-  --cream-white: #F5F5FA;
-  --gold-luxury: #FFD700;
+  --cream-elegant: #F5E6D3;
+  --cream-white: #FAF6F1;
+  --cream-soft: #F0E6D6;
+  --gold-luxury: #D4AF37;
   --gold-light: #FFE44D;
-  --text-dark: #FFFFFF;
-  --text-medium: #E0E0F0;
-  --text-light: #B4B4C8;
+  --text-dark: #1F2937;
+  --text-medium: #4B5563;
+  --text-light: #6B7280;
 
+  /* Default theme variables for Wasillah Classic (Light) */
   --color-primary: #FF6B9D;      /* vibrant pink-red */
-  --color-secondary: #0F0F23;    /* deep dark */
+  --color-secondary: #D4AF37;    /* golden beige */
   --color-accent: #00D9FF;       /* electric cyan */
-  --color-background: #050517;   /* rich black background */
-  --color-surface: #1A1A2E;      /* dark navy cards */
-  --color-text: #FFFFFF;         /* white text */
-  --color-text-light: #B4B4C8;   /* muted light text */
+  --color-background: #FAF6F1;   /* soft cream background */
+  --color-surface: #F5E6D3;      /* warm beige cards */
+  --color-text: #1F2937;         /* dark text */
+  --color-text-light: #6B7280;   /* medium gray text */
 }
 
 /* Apply theme tokens to the root app container */
@@ -925,6 +927,149 @@ body {
 .theme-dark input::placeholder,
 .theme-dark textarea::placeholder {
   color: rgba(255, 255, 255, 0.5);
+}
+
+/* ============================================
+   LIGHT THEME STYLES (Wasillah Classic)
+   ============================================ */
+
+/* Light theme luxury cards */
+:not(.theme-dark) .luxury-card {
+  background: linear-gradient(145deg, #F5E6D3, #FAF6F1);
+  color: #1F2937;
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1), 0 0 20px rgba(212, 175, 55, 0.1);
+}
+
+:not(.theme-dark) .luxury-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(255, 107, 157, 0.2), 0 0 40px rgba(212, 175, 55, 0.2);
+  border-color: rgba(255, 107, 157, 0.4);
+  background: linear-gradient(145deg, #FAF6F1, #F5E6D3);
+}
+
+/* Light theme navigation pills */
+:not(.theme-dark) .nav-pill {
+  background: rgba(245, 230, 211, 0.9);
+  border: 2px solid rgba(255, 107, 157, 0.3);
+  color: #1F2937;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+:not(.theme-dark) .nav-pill:hover {
+  background: linear-gradient(135deg, rgba(255, 107, 157, 0.15), rgba(212, 175, 55, 0.2));
+  border-color: rgba(255, 107, 157, 0.5);
+  color: #1F2937;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 107, 157, 0.2);
+}
+
+:not(.theme-dark) .nav-pill.active {
+  background: linear-gradient(135deg, rgba(255, 107, 157, 0.25), rgba(212, 175, 55, 0.3));
+  border-color: rgba(255, 107, 157, 0.6);
+  color: #1F2937;
+  box-shadow: 0 8px 25px rgba(255, 107, 157, 0.3), 0 0 30px rgba(212, 175, 55, 0.2);
+  font-weight: 700;
+}
+
+/* Light theme hero backgrounds */
+:not(.theme-dark) .hero-luxury-bg {
+  background: linear-gradient(180deg, #FAF6F1 0%, #F5E6D3 50%, #F0E6D6 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+:not(.theme-dark) .hero-luxury-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(255, 107, 157, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(212, 175, 55, 0.08) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Light theme glassmorphism */
+:not(.theme-dark) .luxury-glass-dark {
+  backdrop-filter: blur(25px) saturate(180%);
+  background: rgba(245, 230, 211, 0.75);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Light theme inputs */
+:not(.theme-dark) input,
+:not(.theme-dark) textarea,
+:not(.theme-dark) select {
+  background: rgba(250, 246, 241, 0.9);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: #1F2937;
+}
+
+:not(.theme-dark) input::placeholder,
+:not(.theme-dark) textarea::placeholder {
+  color: rgba(31, 41, 55, 0.5);
+}
+
+/* Light theme buttons */
+:not(.theme-dark) .liquid-button {
+  background: linear-gradient(135deg, #FF6B9D, #FFA3C7);
+  color: #FFFFFF;
+  font-weight: 700;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 10px 35px rgba(255, 107, 157, 0.3), 0 4px 15px rgba(212, 175, 55, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+:not(.theme-dark) .liquid-button:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 15px 45px rgba(255, 107, 157, 0.4), 0 8px 25px rgba(212, 175, 55, 0.25);
+  border-color: rgba(255, 107, 157, 0.5);
+  background: linear-gradient(135deg, #E6458C, #FF6B9D);
+}
+
+/* Light theme glassmorphism */
+:not(.theme-dark) .glassmorphism {
+  background: rgba(245, 230, 211, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Light theme text on backgrounds */
+:not(.theme-dark) .bg-cream-white,
+:not(.theme-dark) .bg-cream-elegant,
+:not(.theme-dark) .bg-cream-soft {
+  color: #1F2937 !important;
+}
+
+:not(.theme-dark) .text-black,
+:not(.theme-dark) .text-gray-700,
+:not(.theme-dark) .text-gray-600 {
+  color: #1F2937 !important;
+}
+
+/* Ensure proper contrast for light theme gradients */
+:not(.theme-dark) .text-gradient-animated {
+  background: linear-gradient(90deg, #FF6B9D, #00D9FF, #8B5CF6, #FF6B9D);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 6s ease infinite;
 }
 
 /* Premium link hover effects */
