@@ -25,47 +25,47 @@ export const themes: Theme[] = [
   {
     id: 'wasillah-classic',
     name: 'Wasillah Classic',
-    description: 'Premium light theme with warm beige and golden tones',
+    description: 'Warm and approachable light theme with navy brand identity',
     colors: {
-      // Vibrant brand primary (pink-red accent)
-      primary: '#FF6B9D',
-      // Warm golden beige for surfaces
-      secondary: '#D4AF37',
-      // Electric cyan accent
-      accent: '#00D9FF',
-      // Soft cream background for readability
+      // Navy as primary brand color (from logo)
+      primary: '#1A1A2E',
+      // Beige/cream for secondary backgrounds
+      secondary: '#F5E6D3',
+      // Muted pink for accents
+      accent: '#e66ba3',
+      // Soft cream background
       background: '#FAF6F1',
-      // Warm beige for cards/surfaces
+      // Warm beige for card surfaces
       surface: '#F5E6D3',
-      // Dark text for light backgrounds
+      // Dark text for beige backgrounds
       text: '#1F2937',
-      // Medium gray text
+      // Medium gray for secondary text
       textLight: '#6B7280'
     },
-    preview: 'linear-gradient(135deg, #FAF6F1, #F5E6D3, #D4AF37)',
+    preview: 'linear-gradient(135deg, #1A1A2E, #FAF6F1, #e66ba3)',
     isDark: false
   },
   {
     id: 'wasillah-jet-black',
     name: 'Wasillah Jet Black',
-    description: 'Premium dark theme with deep black and vibrant accents',
+    description: 'Bold and modern dark theme with navy brand identity',
     colors: {
-      // Vibrant gradient primary (pink accent)
-      primary: '#FF6B9D',
-      // Deep jet black background
-      secondary: '#000000',
-      // Bright accent (electric cyan)
-      accent: '#00D9FF',
-      // Rich pure black background
-      background: '#000000',
-      // Dark charcoal surface for subtle contrast
-      surface: '#1A1A1A',
-      // White text for dark backgrounds
-      text: '#FFFFFF',
-      // Muted light text
+      // Navy as brand secondary (for alternating sections)
+      primary: '#1A1A2E',
+      // Deep black for base sections
+      secondary: '#0F0F23',
+      // Darker pink for accents and highlights
+      accent: '#d94f8d',
+      // Deep black background
+      background: '#0F0F23',
+      // Navy for card surfaces and alternating sections
+      surface: '#1A1A2E',
+      // Off-white for text (not pure white)
+      text: '#f2f2f2',
+      // Muted gray for secondary text
       textLight: '#B4B4C8'
     },
-    preview: 'linear-gradient(135deg, #000000, #FF6B9D, #00D9FF)',
+    preview: 'linear-gradient(135deg, #0F0F23, #1A1A2E, #d94f8d)',
     isDark: true
   }
 ];
