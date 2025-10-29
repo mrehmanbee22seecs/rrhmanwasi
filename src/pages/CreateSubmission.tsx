@@ -378,6 +378,7 @@ const CreateSubmission = () => {
           sponsors: projectData.sponsors.filter(s => s.trim() !== ''),
           donationLink: projectData.donationLink,
           faq: projectData.faq,
+          reminders: projectData.reminders || [], // Store reminders in submission
           submittedBy: currentUser.uid,
           submitterName: userData.displayName || 'Unknown User',
           submitterEmail: userData.email || '',
@@ -450,6 +451,7 @@ const CreateSubmission = () => {
           certifications: eventData.certifications.filter(c => c.trim() !== ''),
           partners: eventData.partners.filter(p => p.trim() !== ''),
           faq: eventData.faq,
+          reminders: eventData.reminders || [], // Store reminders in submission
           submittedBy: currentUser.uid,
           submitterName: userData.displayName || 'Unknown User',
           submitterEmail: userData.email || '',
@@ -488,7 +490,8 @@ const CreateSubmission = () => {
         navigate('/dashboard');
       }
 
-      // Fire-and-forget: send confirmation email and schedule reminders
+      // Fire-and-forget: send confirmation email
+      // Note: Reminders will be scheduled when admin APPROVES the submission (not on submission)
       try {
         // Send confirmation email if submission is pending or approved
         if (finalStatus === 'pending' || finalStatus === 'approved') {
@@ -498,26 +501,6 @@ const CreateSubmission = () => {
             projectName: submissionType === 'project' ? projectData.title : eventData.title,
             type: submissionType
           }).catch((e) => console.warn('Email send failed (non-blocking):', e));
-        }
-
-        // Schedule reminders using QStash (no Firebase Functions needed)
-        const reminders = submissionType === 'project' ? projectData.reminders : eventData.reminders;
-        if (reminders && reminders.length > 0) {
-          const { createReminder } = await import('../services/reminderService');
-          for (const rem of reminders) {
-            const sendAt = new Date(`${rem.reminderDate}T${rem.reminderTime}`);
-            // Schedule reminder for each email recipient
-            for (const email of rem.notifyEmails) {
-              createReminder({
-                email,
-                name: userData.displayName || 'Friend',
-                projectName: submissionType === 'project' ? projectData.title : eventData.title,
-                message: `${rem.title}: ${rem.description}`,
-                scheduledAt: sendAt.toISOString(),
-                userId: currentUser?.uid
-              }).catch((e) => console.warn('Reminder schedule failed (non-blocking):', e));
-            }
-          }
         }
       } catch (e) {
         console.warn('Background tasks failed (non-blocking):', e);

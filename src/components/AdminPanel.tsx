@@ -390,6 +390,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
           projectName: submission.title,
           type: submissionType
         }).catch(err => console.error('Failed to send approval email:', err));
+
+        // Schedule reminders when project/event is approved
+        if (submission.reminders && submission.reminders.length > 0) {
+          const { createReminder } = await import('../services/reminderService');
+          console.log(`Scheduling ${submission.reminders.length} reminders for approved ${submissionType}`);
+          
+          for (const rem of submission.reminders) {
+            const sendAt = new Date(`${rem.reminderDate}T${rem.reminderTime}`);
+            // Schedule reminder for each email recipient
+            for (const email of rem.notifyEmails) {
+              createReminder({
+                email,
+                name: submission.submitterName,
+                projectName: submission.title,
+                message: `${rem.title}: ${rem.description}`,
+                scheduledAt: sendAt.toISOString(),
+                userId: submission.submittedBy
+              }).catch((e) => console.warn('Reminder schedule failed:', e));
+            }
+          }
+          console.log('All reminders scheduled successfully');
+        }
       }
 
       // Update local state
