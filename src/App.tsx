@@ -16,6 +16,7 @@ import Volunteer from './pages/Volunteer';
 import Contact from './pages/Contact';
 import Dashboard from './pages/Dashboard';
 import CreateSubmission from './pages/CreateSubmission';
+import Reminders from './pages/Reminders';
 import AdminSetup from './pages/AdminSetup';
 import AdminKbManager from './pages/AdminKbManager';
 import ChatWidget from './components/ChatWidget';
@@ -48,6 +49,7 @@ const AppContent = () => {
           <Route path="/contact" element={<Contact />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create-submission" element={<CreateSubmission />} />
+          <Route path="/reminders" element={<Reminders />} />
           <Route path="/admin-setup" element={<AdminSetup />} />
           <Route path="/admin/kb-manager" element={<AdminKbManager />} />
         </Routes>
