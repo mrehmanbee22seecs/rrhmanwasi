@@ -8,10 +8,10 @@ const Reminders = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect to login if not authenticated
+  // Redirect to home if not authenticated
   React.useEffect(() => {
     if (!currentUser) {
-      navigate('/dashboard');
+      navigate('/');
     }
   }, [currentUser, navigate]);
 
