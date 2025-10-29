@@ -472,3 +472,7 @@ exports.sendPasswordResetEmailCustom = functions.https.onCall(async (data) => {
     throw new functions.https.HttpsError('internal', 'Failed to send password reset email');
   }
 });
+
+// Import and export email functions from emailFunctions.js
+const emailFunctions = require('./emailFunctions');
+Object.assign(exports, emailFunctions);
