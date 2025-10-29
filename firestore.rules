@@ -138,6 +138,18 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // === REMINDERS COLLECTION ===
+    match /reminders/{reminderId} {
+      // Users can read their own reminders, admins can read all
+      allow read: if isAuthenticated() && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+      // Authenticated users can create reminders
+      allow create: if isAuthenticated();
+      // Users can update/delete their own reminders, admins can update/delete any
+      allow update, delete: if isAuthenticated() && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+    }
+
     // === APPLICATIONS, REGISTRATIONS, NEWSLETTER, EVENTS ===
     match /project_applications/{id} {
       allow create: if true;
