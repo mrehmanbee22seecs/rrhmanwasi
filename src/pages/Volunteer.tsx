@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Heart, Users, Star, CheckCircle, ArrowRight, Award, Globe, Lightbulb } from 'lucide-react';
 import { sendEmail, formatVolunteerApplicationEmail } from '../utils/emailService';
+import { sendVolunteerConfirmation } from '../services/resendEmailService';
 import { useAuth } from '../contexts/AuthContext';
 import { useActivityLogger } from '../hooks/useActivityLogger';
 import { useScrollReveal } from '../hooks/useScrollReveal';
@@ -95,6 +96,12 @@ const Volunteer = () => {
     
     sendEmail(emailData).then((success) => {
       if (success) {
+        // Also send confirmation via Resend
+        sendVolunteerConfirmation({
+          email: formData.email,
+          name: `${formData.firstName} ${formData.lastName}`
+        }).catch(err => console.error('Resend confirmation failed:', err));
+        
         alert('Thank you for your interest in volunteering! We will get back to you soon.');
       } else {
         alert('There was an error submitting your application. Please try again or contact us directly.');
