@@ -17,7 +17,7 @@ const mailerSend = mailerSendApiKey ? new MailerSend({ apiKey: mailerSendApiKey 
 
 // Use MailerSend's free trial domain for testing
 // Replace with your own verified domain in production
-const SENDER_EMAIL = 'MS_qJLYQi@trial-0r83ql3jjz8lgwpz.mlsender.net'; // MailerSend trial domain
+const SENDER_EMAIL = 'test-ywj2lpn1kvpg7oqz.mlsender.net/'; // MailerSend trial domain
 const SENDER_NAME = 'Wasillah Team';
 
 // Brand styling
