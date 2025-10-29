@@ -5,34 +5,41 @@ Quick deployment guide for the Wasillah Email Automation System.
 ## Prerequisites
 
 - Firebase project (Spark or Blaze plan)
-- Resend account (free tier available)
+- MailerSend account (free tier available)
 - (Optional) Upstash QStash account for scheduling
 
 ## Step-by-Step Deployment
 
-### 1. Set Up Resend
+### 1. Set Up MailerSend
 
-1. Go to [https://resend.com](https://resend.com) and sign up
-2. Verify your email domain:
+1. Go to [https://www.mailersend.com](https://www.mailersend.com) and sign up
+2. **FREE TRIAL DOMAIN** - MailerSend provides a trial domain for immediate testing:
+   - No need to verify your own domain for testing
+   - Look for your trial domain in the dashboard (e.g., `MS_qJLYQi@trial-0r83ql3jjz8lgwpz.mlsender.net`)
+   - Use this trial domain to send test emails without owning a custom domain
+3. (Optional) Verify your own domain for production:
    - Add your domain (e.g., `wasillah.org`)
    - Add DNS records as instructed
    - Wait for verification (usually instant)
-3. Get your API key:
+4. Get your API key:
    - Go to API Keys section
    - Create a new API key
-   - Copy the key (starts with `re_`)
+   - Copy the key
 
 ### 2. Update Email Sender
 
-In the following files, update `SENDER_EMAIL` to your verified domain:
+The code is pre-configured with a trial domain. For production, update `SENDER_EMAIL` in the following files:
 
 ```javascript
-// src/services/resendEmailService.ts
-const SENDER_EMAIL = 'noreply@wasillah.org'; // Change to YOUR domain
+// src/services/mailerSendEmailService.ts
+const SENDER_EMAIL = 'MS_qJLYQi@trial-0r83ql3jjz8lgwpz.mlsender.net'; // Replace with YOUR domain
 
 // functions/emailFunctions.js
-const SENDER_EMAIL = 'noreply@wasillah.org'; // Change to YOUR domain
+const SENDER_EMAIL = 'MS_qJLYQi@trial-0r83ql3jjz8lgwpz.mlsender.net'; // Replace with YOUR domain
 ```
+
+**For Testing:** Use the trial domain as-is
+**For Production:** Replace with `noreply@yourdomain.com` after verifying your domain
 
 ### 3. Configure Environment Variables
 
@@ -41,7 +48,7 @@ const SENDER_EMAIL = 'noreply@wasillah.org'; // Change to YOUR domain
 Create `.env.local` in project root:
 
 ```bash
-VITE_RESEND_API_KEY=re_your_key_here
+VITE_MAILERSEND_API_KEY=re_your_key_here
 VITE_QSTASH_TOKEN=qstash_your_token_here  # Optional
 ```
 
@@ -51,10 +58,10 @@ Set environment variables for Firebase Functions:
 
 ```bash
 # Using Firebase CLI
-firebase functions:config:set resend.api_key="re_your_key_here"
+firebase functions:config:set mailersend.api_key="your_key_here"
 
 # Or create functions/.env file (local development)
-echo "RESEND_API_KEY=re_your_key_here" > functions/.env
+echo "MAILERSEND_API_KEY=your_key_here" > functions/.env
 ```
 
 ### 4. Deploy Firebase Functions (Optional - Requires Blaze Plan)
@@ -84,7 +91,7 @@ npm run dev
 # 2. Sign up with a new account
 # 3. Check email for:
 #    - Firebase verification email
-#    - Welcome email from Resend
+#    - Welcome email from MailerSend
 ```
 
 #### Test Volunteer Confirmation
@@ -147,7 +154,7 @@ firebase deploy --only functions
 
 After deployment:
 
-1. **Check Resend Dashboard:**
+1. **Check MailerSend Dashboard:**
    - View sent emails
    - Check delivery status
    - Monitor usage
@@ -169,17 +176,17 @@ After deployment:
 **Problem:** Welcome email not arriving
 
 **Solutions:**
-1. Check Resend API key is correct in `.env.local`
-2. Verify sender domain is verified in Resend
+1. Check MailerSend API key is correct in `.env.local`
+2. Verify sender domain is verified in MailerSend
 3. Check browser console for errors
-4. Check Resend dashboard for failed emails
+4. Check MailerSend dashboard for failed emails
 
 **Problem:** Submission emails not sending
 
 **Solutions:**
 1. Ensure Firebase Functions are deployed
 2. Check Functions logs: `firebase functions:log`
-3. Verify `RESEND_API_KEY` is set in Functions config
+3. Verify `MAILERSEND_API_KEY` is set in Functions config
 4. Confirm Firestore triggers are working
 
 ### Reminders Not Sending
@@ -195,15 +202,15 @@ After deployment:
 
 ### Common Errors
 
-**Error:** "Resend not configured"
+**Error:** "MailerSend not configured"
 ```bash
-# Solution: Add VITE_RESEND_API_KEY to .env.local
-echo "VITE_RESEND_API_KEY=re_your_key_here" > .env.local
+# Solution: Add VITE_MAILERSEND_API_KEY to .env.local
+echo "VITE_MAILERSEND_API_KEY=re_your_key_here" > .env.local
 ```
 
 **Error:** "Domain not verified"
 ```bash
-# Solution: Verify your domain in Resend dashboard
+# Solution: Verify your domain in MailerSend dashboard
 # Add DNS records and wait for verification
 ```
 
@@ -219,7 +226,7 @@ firebase open billing
 
 | Service | Free Tier | Notes |
 |---------|-----------|-------|
-| Resend | 100 emails/day | 3,000/month total |
+| MailerSend | 100 emails/day | 3,000/month total |
 | Upstash QStash | 500 messages/day | Optional |
 | Firebase Spark | Limited functions | Good for testing |
 | Firebase Blaze | Pay as you go | ~$0 for light usage |
@@ -238,7 +245,7 @@ For a small organization:
 ## Next Steps
 
 1. ✅ Deploy and test email system
-2. ✅ Monitor Resend dashboard for delivery
+2. ✅ Monitor MailerSend dashboard for delivery
 3. ✅ Set up alerts for failed emails
 4. Consider adding:
    - Email preferences for users
@@ -253,7 +260,7 @@ If you encounter issues:
 
 1. Check [EMAIL_SYSTEM_README.md](./EMAIL_SYSTEM_README.md) for detailed documentation
 2. Review Firebase Functions logs
-3. Check Resend dashboard for email status
+3. Check MailerSend dashboard for email status
 4. Verify Firestore data structure matches schema
 5. Test locally before deploying to production
 

@@ -10,12 +10,12 @@ A complete, production-ready email automation system for Wasillah that handles a
 **How it works:**
 - Triggered when user signs up via Firebase Auth
 - Sent immediately after account creation
-- Uses Resend API for delivery
+- Uses MailerSend API for delivery
 - Includes personalized greeting with user's name
 
 **Files modified:**
 - `src/contexts/AuthContext.tsx` - Added `sendWelcomeEmail()` call in signup function
-- `src/services/resendEmailService.ts` - Contains welcome email template
+- `src/services/mailersendEmailService.ts` - Contains welcome email template
 
 **Test it:**
 1. Go to signup page
@@ -26,7 +26,7 @@ A complete, production-ready email automation system for Wasillah that handles a
 **How it works:**
 - Triggered when user submits a project or event
 - Firebase Function monitors Firestore for new submissions
-- Automatically sends confirmation email via Resend
+- Automatically sends confirmation email via MailerSend
 - Notifies user their submission is under review
 
 **Files created:**
@@ -43,7 +43,7 @@ A complete, production-ready email automation system for Wasillah that handles a
 **How it works:**
 - Triggered when admin changes submission status to "approved"
 - Firebase Function monitors Firestore for status updates
-- Sends congratulatory approval email via Resend
+- Sends congratulatory approval email via MailerSend
 - Includes link back to user dashboard
 
 **Files created:**
@@ -62,7 +62,7 @@ A complete, production-ready email automation system for Wasillah that handles a
 - User creates reminder with custom message and date/time
 - Stored in Firestore `reminders` collection
 - Firebase scheduled function checks every 5 minutes for due reminders
-- Email sent at scheduled time via Resend
+- Email sent at scheduled time via MailerSend
 - Optional: Upstash QStash for more precise scheduling
 
 **Files created:**
@@ -84,13 +84,13 @@ A complete, production-ready email automation system for Wasillah that handles a
 ### 5. Volunteer Form Confirmation ✅
 **How it works:**
 - Triggered when user submits volunteer application form
-- Sends confirmation email via Resend immediately
+- Sends confirmation email via MailerSend immediately
 - Stores application in Firestore
 - Thanks user and sets expectations
 
 **Files modified:**
 - `src/pages/Volunteer.tsx` - Added `sendVolunteerConfirmation()` call
-- `src/services/resendEmailService.ts` - Contains volunteer confirmation template
+- `src/services/mailersendEmailService.ts` - Contains volunteer confirmation template
 
 **Test it:**
 1. Go to `/volunteer` page
@@ -117,9 +117,9 @@ A complete, production-ready email automation system for Wasillah that handles a
 ## 📁 New Files Created
 
 ### Services
-1. **src/services/resendEmailService.ts**
+1. **src/services/mailersendEmailService.ts**
    - Email templates for all workflows
-   - Resend API integration
+   - MailerSend API integration
    - Professional HTML email design
    - TypeScript types for email data
 
@@ -184,7 +184,7 @@ A complete, production-ready email automation system for Wasillah that handles a
 
 ```json
 {
-  "resend": "^6.3.0",           // Email delivery
+  "mailersend": "^6.3.0",           // Email delivery
   "@upstash/qstash": "^2.8.4"   // Optional scheduling
 }
 ```
@@ -193,13 +193,13 @@ A complete, production-ready email automation system for Wasillah that handles a
 
 ### For Development (.env.local)
 ```bash
-VITE_RESEND_API_KEY=re_xxxxxxxxxxxxx
+VITE_MAILERSEND_API_KEY=re_xxxxxxxxxxxxx
 VITE_QSTASH_TOKEN=qstash_xxxxxxxxxxxxx  # Optional
 ```
 
 ### For Firebase Functions (functions/.env or Firebase config)
 ```bash
-RESEND_API_KEY=re_xxxxxxxxxxxxx
+MAILERSEND_API_KEY=re_xxxxxxxxxxxxx
 ```
 
 ## 🎨 Email Design
@@ -215,7 +215,7 @@ All emails feature:
 ## 💰 Cost Breakdown
 
 ### Free Tier (Recommended to Start)
-- **Resend**: 100 emails/day (3,000/month) - FREE
+- **MailerSend**: 100 emails/day (3,000/month) - FREE
 - **Upstash QStash**: 500 messages/day - FREE (optional)
 - **Firebase Spark**: Basic functions - FREE
   - Limited to client-side emails only
@@ -230,17 +230,17 @@ All emails feature:
   - Recommended for production
 
 **Estimated Monthly Cost for Small Org:**
-- 500-1000 emails/month: FREE (within Resend free tier)
+- 500-1000 emails/month: FREE (within MailerSend free tier)
 - Firebase Functions: $0-5/month (typical usage)
 - **Total: $0-5/month**
 
 ## 🚀 Deployment Steps
 
 ### Quick Start (5 minutes)
-1. Sign up for Resend at https://resend.com
+1. Sign up for MailerSend at https://mailersend.com
 2. Verify your domain or use test domain
-3. Get API key from Resend dashboard
-4. Add to `.env.local`: `VITE_RESEND_API_KEY=re_xxxxx`
+3. Get API key from MailerSend dashboard
+4. Add to `.env.local`: `VITE_MAILERSEND_API_KEY=re_xxxxx`
 5. Run `npm run dev` to test locally
 6. Try signing up with new account to test welcome email
 
@@ -287,7 +287,7 @@ Before going live, test each workflow:
    - Client-side emails work fine but less reliable
    - No scheduled functions for reminders
 
-2. **Resend Free Tier:**
+2. **MailerSend Free Tier:**
    - 100 emails/day limit
    - 3,000 emails/month limit
    - Consider upgrade for larger orgs
@@ -318,11 +318,11 @@ If you encounter issues:
 2. **Check Logs:**
    - Browser console for client-side errors
    - `firebase functions:log` for server-side errors
-   - Resend dashboard for email delivery status
+   - MailerSend dashboard for email delivery status
 
 3. **Verify Configuration:**
    - Environment variables are set correctly
-   - Sender domain is verified in Resend
+   - Sender domain is verified in MailerSend
    - Firebase Functions are deployed (if using Blaze)
 
 ## ✨ Success Criteria
@@ -345,14 +345,14 @@ The complete email automation system is now implemented and ready for production
 **What you get:**
 - Professional email automation
 - Beautiful branded emails
-- Reliable delivery via Resend
+- Reliable delivery via MailerSend
 - Flexible scheduling options
 - Comprehensive documentation
 - Production-ready code
 - Free tier friendly
 
 **Next steps:**
-1. Set up Resend account (5 minutes)
+1. Set up MailerSend account (5 minutes)
 2. Configure environment variables (2 minutes)
 3. Test locally (10 minutes)
 4. Deploy to production (10 minutes)

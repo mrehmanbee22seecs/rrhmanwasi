@@ -17,7 +17,7 @@
     "axios": "^1.6.7",
     "firebase-admin": "^11.8.0",
     "firebase-functions": "^4.3.1",
-    "resend": "^6.3.0"
+    "mailersend": "^2.6.0"
   },
   "devDependencies": {
     "firebase-functions-test": "^3.1.0"

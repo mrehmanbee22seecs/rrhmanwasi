@@ -19,7 +19,7 @@ Wasillah is a Firebase + Firestore web application that manages users, project/e
 - Automatically sent when a user signs up via Firebase Auth
 - Personalized with user's display name
 - Includes verification email from Firebase Auth
-- Delivered via Resend API
+- Delivered via MailerSend API
 
 ### 2. Submission Confirmation (Projects/Events)
 - Sent immediately when user submits a project or event
@@ -52,7 +52,7 @@ Wasillah is a Firebase + Firestore web application that manages users, project/e
 |----------|---------|------|
 | Database | Firestore (Firebase) | Spark (Free) |
 | Authentication | Firebase Auth | Spark (Free) |
-| Email Sending | Resend API | Free tier (100 emails/day) |
+| Email Sending | MailerSend API | Free tier (100 emails/day) |
 | Scheduling | Upstash QStash (optional) | Free tier (500 messages/day) |
 | Backend | Firebase Functions | Spark (Free for basic usage) |
 | Hosting | Firebase Hosting | Spark (Free) |
@@ -66,13 +66,13 @@ Wasillah is a Firebase + Firestore web application that manages users, project/e
 │  - AuthContext (signup → welcome email)                     │
 │  - Volunteer Page (form → confirmation email)               │
 │  - ReminderForm (create reminder)                           │
-│  - Dashboard (resend verification)                          │
+│  - Dashboard (mailersend verification)                          │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                    Services Layer                           │
 ├─────────────────────────────────────────────────────────────┤
-│  - resendEmailService.ts (email templates)                  │
+│  - mailersendEmailService.ts (email templates)                  │
 │  - reminderService.ts (scheduling logic)                    │
 └─────────────────────────────────────────────────────────────┘
                               ↓
@@ -89,7 +89,7 @@ Wasillah is a Firebase + Firestore web application that manages users, project/e
 ┌─────────────────────────────────────────────────────────────┐
 │                 External Services                            │
 ├─────────────────────────────────────────────────────────────┤
-│  - Resend API (email delivery)                              │
+│  - MailerSend API (email delivery)                              │
 │  - Upstash QStash (optional scheduling)                     │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -122,9 +122,9 @@ cd ..
 3. Create Firestore database
 4. Update `src/config/firebase.ts` with your Firebase config
 
-### 4. Set Up Resend
+### 4. Set Up MailerSend
 
-1. Sign up at [https://resend.com](https://resend.com)
+1. Sign up at [https://www.mailersend.com](https://www.mailersend.com)
 2. Verify your domain (or use their test domain for development)
 3. Get your API key from the dashboard
 4. Update `SENDER_EMAIL` in code files to match your verified domain
@@ -141,14 +141,14 @@ cd ..
 Create `.env.local` in the project root:
 
 ```bash
-VITE_RESEND_API_KEY=re_xxxxxxxxxxxxx
+VITE_MAILERSEND_API_KEY=re_xxxxxxxxxxxxx
 VITE_QSTASH_TOKEN=qstash_xxxxxxxxxxxxx
 ```
 
 Create `.env` in the `functions` directory:
 
 ```bash
-RESEND_API_KEY=re_xxxxxxxxxxxxx
+MAILERSEND_API_KEY=re_xxxxxxxxxxxxx
 ```
 
 ### 7. Deploy Firebase Functions (Optional for Spark Plan)
@@ -191,14 +191,14 @@ firebase deploy --only hosting
 ### Frontend (.env.local)
 
 ```bash
-VITE_RESEND_API_KEY=re_xxxxxxxxxxxxx     # Your Resend API key
+VITE_MAILERSEND_API_KEY=re_xxxxxxxxxxxxx     # Your MailerSend API key
 VITE_QSTASH_TOKEN=qstash_xxxxxxxxxxxxx   # Your QStash token (optional)
 ```
 
 ### Firebase Functions (functions/.env)
 
 ```bash
-RESEND_API_KEY=re_xxxxxxxxxxxxx          # Your Resend API key
+MAILERSEND_API_KEY=re_xxxxxxxxxxxxx          # Your MailerSend API key
 ```
 
 ## Firestore Schema
@@ -273,7 +273,7 @@ RESEND_API_KEY=re_xxxxxxxxxxxxx          # Your Resend API key
 2. Create a new account with email and password
 3. Check email inbox for:
    - Firebase verification email
-   - Welcome email from Resend
+   - Welcome email from MailerSend
 
 ### Test Submission Confirmation
 
@@ -326,7 +326,7 @@ RESEND_API_KEY=re_xxxxxxxxxxxxx          # Your Resend API key
 │   │   ├── Volunteer.tsx              # Volunteer form with confirmation
 │   │   └── Dashboard.tsx              # User dashboard
 │   ├── services/
-│   │   ├── resendEmailService.ts      # Resend email templates
+│   │   ├── mailersendEmailService.ts      # MailerSend email templates
 │   │   └── reminderService.ts         # Reminder scheduling
 │   └── config/
 │       └── firebase.ts                # Firebase configuration
@@ -345,10 +345,10 @@ RESEND_API_KEY=re_xxxxxxxxxxxxx          # Your Resend API key
 
 ### Emails not sending
 
-1. **Check Resend API key**: Verify `VITE_RESEND_API_KEY` is set correctly
-2. **Check sender email**: Ensure sender email domain is verified in Resend
+1. **Check MailerSend API key**: Verify `VITE_MAILERSEND_API_KEY` is set correctly
+2. **Check sender email**: Ensure sender email domain is verified in MailerSend
 3. **Check console logs**: Look for error messages in browser console
-4. **Check Resend dashboard**: View email logs and status
+4. **Check MailerSend dashboard**: View email logs and status
 
 ### Reminders not sending
 
@@ -361,13 +361,13 @@ RESEND_API_KEY=re_xxxxxxxxxxxxx          # Your Resend API key
 
 1. **Check signup flow**: Ensure `sendWelcomeEmail` is called in AuthContext
 2. **Check user data**: Verify email and displayName are set
-3. **Check Resend logs**: Look for email in Resend dashboard
+3. **Check MailerSend logs**: Look for email in MailerSend dashboard
 
 ### Firebase Functions not working
 
 1. **Check Blaze plan**: Functions require pay-as-you-go plan
 2. **Check deployment**: Ensure functions are deployed with `firebase deploy --only functions`
-3. **Check environment variables**: Set `RESEND_API_KEY` in functions environment
+3. **Check environment variables**: Set `MAILERSEND_API_KEY` in functions environment
 4. **Check logs**: View function logs with `firebase functions:log`
 
 ## Security Notes
@@ -377,13 +377,13 @@ RESEND_API_KEY=re_xxxxxxxxxxxxx          # Your Resend API key
 - Validate all user input before creating reminders
 - Rate limit reminder creation to prevent abuse
 - Use HTTPS only for all API requests
-- Verify sender email domain in Resend to prevent spoofing
+- Verify sender email domain in MailerSend to prevent spoofing
 
 ## Cost Considerations
 
 ### Free Tier Limits
 
-- **Resend**: 100 emails/day, 3,000 emails/month
+- **MailerSend**: 100 emails/day, 3,000 emails/month
 - **Upstash QStash**: 500 messages/day
 - **Firebase Spark**: Limited function invocations, 10 GB storage
 - **Firestore**: 50K reads, 20K writes, 20K deletes per day
@@ -400,7 +400,7 @@ RESEND_API_KEY=re_xxxxxxxxxxxxx          # Your Resend API key
 
 For issues or questions:
 - Check Firebase Console for errors
-- Review Resend dashboard for email status
+- Review MailerSend dashboard for email status
 - Check browser console for client-side errors
 - Review Firebase Functions logs for server-side errors
 

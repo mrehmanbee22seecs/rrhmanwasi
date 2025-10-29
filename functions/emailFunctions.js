@@ -1,7 +1,7 @@
 /**
  * Enhanced Firebase Functions for Wasillah Email Automation
  * 
- * These functions integrate with Resend for email delivery and handle:
+ * These functions integrate with MailerSend for email delivery and handle:
  * 1. Submission confirmations (projects/events)
  * 2. Admin approval notifications
  * 3. Reminder scheduling and sending
@@ -10,7 +10,7 @@
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const { Resend } = require('resend');
+const { MailerSend, EmailParams, Sender, Recipient } = require('mailersend');
 
 // Initialize if not already initialized
 if (!admin.apps.length) {
@@ -20,13 +20,14 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 const { Timestamp } = admin.firestore;
 
-// Initialize Resend
-const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
-const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+// Initialize MailerSend
+const MAILERSEND_API_KEY = process.env.MAILERSEND_API_KEY || '';
+const mailerSend = MAILERSEND_API_KEY ? new MailerSend({ apiKey: MAILERSEND_API_KEY }) : null;
 
-const SENDER_EMAIL = 'noreply@wasillah.org';
+// Use MailerSend's free trial domain for testing
+// Replace with your own verified domain in production
+const SENDER_EMAIL = 'MS_qJLYQi@trial-0r83ql3jjz8lgwpz.mlsender.net';
 const SENDER_NAME = 'Wasillah Team';
-const FROM = `${SENDER_NAME} <${SENDER_EMAIL}>`;
 
 // Brand styling constants
 const brand = {
@@ -38,25 +39,29 @@ const brand = {
 };
 
 /**
- * Helper function to send email via Resend
+ * Helper function to send email via MailerSend
  */
-async function sendEmailViaResend(emailData) {
-  if (!resend) {
-    console.log('Resend not configured; skipping email send');
+async function sendEmailViaMailerSend(emailData) {
+  if (!mailerSend) {
+    console.log('MailerSend not configured; skipping email send');
     return false;
   }
 
   try {
-    const result = await resend.emails.send({
-      from: FROM,
-      to: emailData.to,
-      subject: emailData.subject,
-      html: emailData.html
-    });
-    console.log('Email sent via Resend:', result);
+    const sentFrom = new Sender(SENDER_EMAIL, SENDER_NAME);
+    const recipients = [new Recipient(emailData.to)];
+
+    const emailParams = new EmailParams()
+      .setFrom(sentFrom)
+      .setTo(recipients)
+      .setSubject(emailData.subject)
+      .setHtml(emailData.html);
+
+    const result = await mailerSend.email.send(emailParams);
+    console.log('Email sent via MailerSend:', result);
     return true;
   } catch (error) {
-    console.error('Failed to send email via Resend:', error);
+    console.error('Failed to send email via MailerSend:', error);
     return false;
   }
 }
@@ -109,7 +114,7 @@ exports.onProjectSubmissionCreate = functions.firestore
       </div>
     `;
 
-    await sendEmailViaResend({
+    await sendEmailViaMailerSend({
       to: submitterEmail,
       subject: `Project Submission Received: ${title}`,
       html: emailHtml
@@ -166,7 +171,7 @@ exports.onEventSubmissionCreate = functions.firestore
       </div>
     `;
 
-    await sendEmailViaResend({
+    await sendEmailViaMailerSend({
       to: submitterEmail,
       subject: `Event Submission Received: ${title}`,
       html: emailHtml
@@ -227,7 +232,7 @@ exports.onProjectStatusChange = functions.firestore
         </div>
       `;
 
-      await sendEmailViaResend({
+      await sendEmailViaMailerSend({
         to: submitterEmail,
         subject: `Great News! Your project "${title}" has been approved`,
         html: emailHtml
@@ -289,7 +294,7 @@ exports.onEventStatusChange = functions.firestore
         </div>
       `;
 
-      await sendEmailViaResend({
+      await sendEmailViaMailerSend({
         to: submitterEmail,
         subject: `Great News! Your event "${title}" has been approved`,
         html: emailHtml
@@ -363,7 +368,7 @@ exports.sendDueReminders = functions.pubsub.schedule('every 5 minutes').onRun(as
           </div>
         `;
 
-        const success = await sendEmailViaResend({
+        const success = await sendEmailViaMailerSend({
           to: reminder.email,
           subject: `Reminder: ${reminder.projectName}`,
           html: emailHtml
@@ -448,7 +453,7 @@ exports.sendReminderNow = functions.https.onCall(async (data, context) => {
       </div>
     `;
 
-    const success = await sendEmailViaResend({
+    const success = await sendEmailViaMailerSend({
       to: reminder.email,
       subject: `Reminder: ${reminder.projectName}`,
       html: emailHtml
