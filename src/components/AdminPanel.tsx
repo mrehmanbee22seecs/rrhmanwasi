@@ -7,7 +7,6 @@ import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { ProjectSubmission, EventSubmission, SubmissionStatus, ProjectApplicationEntry, EventRegistrationEntry, VolunteerApplicationEntry, NewsletterSubscriberEntry } from '../types/submissions';
 import { sendEmail, formatSubmissionStatusUpdateEmail } from '../utils/emailService';
-import { sendApprovalEmail } from '../utils/appsScriptEmail';
 import { migrateApprovedSubmissions } from '../utils/migrateVisibility';
 import ChatsPanel from './Admin/ChatsPanel';
 import { seedKnowledgeBase } from '../utils/kbSeed';
@@ -383,7 +382,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
 
       await updateDoc(doc(db, collectionName, submissionId), updateData);
 
-      // Send email notification to user via existing system
+      // Send email notification to user
       await sendEmail(formatSubmissionStatusUpdateEmail({
         type: submissionType,
         title: submission.title,
@@ -394,17 +393,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
         rejectionReason: reason,
         timestamp: new Date().toISOString()
       }));
-      
-      // If approved, also send via Apps Script with celebratory email
-      if (status === 'approved') {
-        const projectUrl = `${window.location.origin}/${submissionType === 'project' ? 'projects' : 'events'}/${submissionId}`;
-        sendApprovalEmail(
-          submission.submitterName,
-          submission.submitterEmail,
-          submission.title,
-          projectUrl
-        ).catch((e) => console.warn('Apps Script approval email failed (non-blocking):', e));
-      }
 
       // Update local state
       setSubmissions(prev =>
