@@ -466,15 +466,7 @@ const CreateSubmission = () => {
       console.log('Submitting to Firebase collection:', collectionName);
       console.log('Data to be inserted:', insertData);
 
-      if (draftId) {
-        await updateDoc(doc(db, collectionName, draftId), insertData);
-        console.log(`${submissionType} draft updated with ID:`, draftId);
-      } else {
-        const docRef = await addDoc(collection(db, collectionName), insertData);
-        console.log(`${submissionType} successfully saved with ID:`, docRef.id);
-      }
-
-      // Show user feedback immediately (no waiting for emails)
+      // Show user feedback immediately for instant response
       if (finalStatus === 'pending') {
         setShowConfirmation(true);
         setTimeout(() => {
@@ -488,6 +480,23 @@ const CreateSubmission = () => {
         navigate('/dashboard');
       } else {
         navigate('/dashboard');
+      }
+
+      // Perform Firestore save in background without blocking UI
+      if (draftId) {
+        updateDoc(doc(db, collectionName, draftId), insertData).then(() => {
+          console.log(`${submissionType} draft updated with ID:`, draftId);
+        }).catch(error => {
+          console.error('Failed to update draft:', error);
+          // Silent fail - user already got confirmation
+        });
+      } else {
+        addDoc(collection(db, collectionName), insertData).then((docRef) => {
+          console.log(`${submissionType} successfully saved with ID:`, docRef.id);
+        }).catch(error => {
+          console.error('Failed to save submission:', error);
+          // Silent fail - user already got confirmation
+        });
       }
 
       // Fire-and-forget: send confirmation email
