@@ -27,7 +27,7 @@ const mailerSend = new MailerSend({
   apiKey: process.env.MAILERSEND_API_KEY || '',
 });
 
-const SENDER_EMAIL = process.env.MAILERSEND_SENDER_EMAIL || 'MS_qJLYQi@trial-0r83ql3jjz8lgwpz.mlsender.net';
+const SENDER_EMAIL = process.env.MAILERSEND_SENDER_EMAIL || 'MS_qJLYQi@test-ywj2lpn1kvpg7oqz.mlsender.net';
 const SENDER_NAME = 'Wasillah Team';
 
 // Brand styling for emails
