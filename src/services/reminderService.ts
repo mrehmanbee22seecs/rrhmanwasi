@@ -72,10 +72,11 @@ export async function createReminder(params: ReminderData): Promise<{
         // Calculate delay in seconds
         const delaySeconds = Math.floor((scheduledDate.getTime() - now.getTime()) / 1000);
         
-        // Create a callback URL (this would be your backend endpoint)
-        // For now, we'll store the reminder and check periodically
-        // In production, you'd have an actual HTTP endpoint
-        const callbackUrl = `${window.location.origin}/api/sendReminder`;
+        // Get the base URL for the API endpoint
+        const baseUrl = window.location.origin;
+        const callbackUrl = `${baseUrl}/api/send-reminder`;
+        
+        console.log('Scheduling reminder with QStash to:', callbackUrl);
         
         // Schedule the reminder with QStash
         const response = await qstashClient.publishJSON({
@@ -97,11 +98,12 @@ export async function createReminder(params: ReminderData): Promise<{
 
         console.log('Reminder scheduled with QStash, message ID:', response.messageId);
       } catch (qstashError) {
-        console.warn('Failed to schedule with QStash, will use periodic check:', qstashError);
+        console.warn('Failed to schedule with QStash:', qstashError);
+        console.error('QStash error details:', qstashError);
         // Continue anyway - we have the reminder in Firestore
       }
     } else {
-      console.warn('QStash not configured, reminder will be checked periodically');
+      console.warn('QStash not configured, reminder will not be sent automatically');
     }
 
     return {
