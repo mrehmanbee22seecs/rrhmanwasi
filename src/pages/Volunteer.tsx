@@ -84,30 +84,26 @@ const Volunteer = () => {
         motivation: formData.motivation || '',
         submittedAt: serverTimestamp(),
       });
+      
+      // Show success message immediately
+      alert('Thank you for your interest in volunteering! We will get back to you soon.');
+      
+      // Send emails in background without blocking
+      const emailData = formatVolunteerApplicationEmail({
+        ...formData,
+        timestamp: new Date().toISOString()
+      });
+      
+      sendEmail(emailData).catch(err => console.error('Email notification failed:', err));
+      sendVolunteerConfirmation({
+        email: formData.email,
+        name: `${formData.firstName} ${formData.lastName}`
+      }).catch(err => console.error('Confirmation email failed:', err));
+      
     } catch (error) {
       console.error('Failed to save volunteer application:', error);
+      alert('There was an error submitting your application. Please try again or contact us directly.');
     }
-
-    // Send email notification (and store generic response)
-    const emailData = formatVolunteerApplicationEmail({
-      ...formData,
-      timestamp: new Date().toISOString()
-    });
-    
-    sendEmail(emailData).then((success) => {
-      if (success) {
-        // Also send confirmation via Resend
-        sendVolunteerConfirmation({
-          email: formData.email,
-          name: `${formData.firstName} ${formData.lastName}`
-        }).catch(err => console.error('Resend confirmation failed:', err));
-        
-        alert('Thank you for your interest in volunteering! We will get back to you soon.');
-      } else {
-        alert('There was an error submitting your application. Please try again or contact us directly.');
-      }
-    });
-    
   };
 
   const benefits = [
