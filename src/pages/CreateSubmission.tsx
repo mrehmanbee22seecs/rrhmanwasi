@@ -475,12 +475,21 @@ const CreateSubmission = () => {
         console.log(`${submissionType} successfully saved with ID:`, docRef.id);
       }
 
-      // Fire-and-forget: send confirmation email (non-blocking)
+      // Show user feedback (after save completes)
+      if (finalStatus === 'pending') {
+        setShowConfirmation(true);
+      } else if (isAdmin && finalStatus === 'approved') {
+        alert(`${submissionType === 'project' ? 'Project' : 'Event'} has been created and automatically approved!`);
+      } else if (status === 'draft') {
+        alert('Draft saved successfully!');
+      }
+
+      // Send confirmation email (non-blocking but ensure request is sent before navigation)
       // Note: Reminders will be scheduled when admin APPROVES the submission (not on submission)
       try {
         // Send confirmation email if submission is pending or approved
         if (finalStatus === 'pending' || finalStatus === 'approved') {
-          sendSubmissionConfirmation({
+          await sendSubmissionConfirmation({
             email: userData.email || '',
             name: userData.displayName || 'Friend',
             projectName: submissionType === 'project' ? projectData.title : eventData.title,
@@ -491,17 +500,14 @@ const CreateSubmission = () => {
         console.warn('Background tasks failed (non-blocking):', e);
       }
 
-      // Show user feedback and navigate (after save completes)
+      // Navigate after email is sent to prevent request cancellation
       if (finalStatus === 'pending') {
-        setShowConfirmation(true);
         setTimeout(() => {
           navigate('/dashboard');
         }, 1500);
       } else if (isAdmin && finalStatus === 'approved') {
-        alert(`${submissionType === 'project' ? 'Project' : 'Event'} has been created and automatically approved!`);
         navigate(submissionType === 'project' ? '/projects' : '/events');
       } else if (status === 'draft') {
-        alert('Draft saved successfully!');
         navigate('/dashboard');
       } else {
         navigate('/dashboard');
