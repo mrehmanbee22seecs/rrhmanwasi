@@ -14,7 +14,6 @@ import {
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, facebookProvider, db } from '../config/firebase';
 import { initializeUserProfile, logActivity as logUserActivity } from '../utils/firebaseInit';
-import { sendWelcomeEmail } from '../services/mailerSendEmailService';
 
 interface UserData {
   uid: string;
@@ -150,17 +149,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     await sendEmailVerification(user, actionCodeSettings);
 
     await createUserDocument(user, { phoneNumber: phone });
-    
-    // Send welcome email via Resend
-    try {
-      await sendWelcomeEmail({
-        email: email,
-        name: displayName
-      });
-    } catch (error) {
-      console.error('Failed to send welcome email:', error);
-      // Don't fail the signup if email fails
-    }
   };
 
   const login = async (email: string, password: string) => {
