@@ -466,40 +466,16 @@ const CreateSubmission = () => {
       console.log('Submitting to Firebase collection:', collectionName);
       console.log('Data to be inserted:', insertData);
 
-      // Show user feedback immediately for instant response
-      if (finalStatus === 'pending') {
-        setShowConfirmation(true);
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1500);
-      } else if (isAdmin && finalStatus === 'approved') {
-        alert(`${submissionType === 'project' ? 'Project' : 'Event'} has been created and automatically approved!`);
-        navigate(submissionType === 'project' ? '/projects' : '/events');
-      } else if (status === 'draft') {
-        alert('Draft saved successfully!');
-        navigate('/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
-
-      // Perform Firestore save in background without blocking UI
+      // Perform Firestore save - keep it synchronous to ensure data is saved before navigation
       if (draftId) {
-        updateDoc(doc(db, collectionName, draftId), insertData).then(() => {
-          console.log(`${submissionType} draft updated with ID:`, draftId);
-        }).catch(error => {
-          console.error('Failed to update draft:', error);
-          // Silent fail - user already got confirmation
-        });
+        await updateDoc(doc(db, collectionName, draftId), insertData);
+        console.log(`${submissionType} draft updated with ID:`, draftId);
       } else {
-        addDoc(collection(db, collectionName), insertData).then((docRef) => {
-          console.log(`${submissionType} successfully saved with ID:`, docRef.id);
-        }).catch(error => {
-          console.error('Failed to save submission:', error);
-          // Silent fail - user already got confirmation
-        });
+        const docRef = await addDoc(collection(db, collectionName), insertData);
+        console.log(`${submissionType} successfully saved with ID:`, docRef.id);
       }
 
-      // Fire-and-forget: send confirmation email
+      // Fire-and-forget: send confirmation email (non-blocking)
       // Note: Reminders will be scheduled when admin APPROVES the submission (not on submission)
       try {
         // Send confirmation email if submission is pending or approved
@@ -513,6 +489,22 @@ const CreateSubmission = () => {
         }
       } catch (e) {
         console.warn('Background tasks failed (non-blocking):', e);
+      }
+
+      // Show user feedback and navigate (after save completes)
+      if (finalStatus === 'pending') {
+        setShowConfirmation(true);
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1500);
+      } else if (isAdmin && finalStatus === 'approved') {
+        alert(`${submissionType === 'project' ? 'Project' : 'Event'} has been created and automatically approved!`);
+        navigate(submissionType === 'project' ? '/projects' : '/events');
+      } else if (status === 'draft') {
+        alert('Draft saved successfully!');
+        navigate('/dashboard');
+      } else {
+        navigate('/dashboard');
       }
     } catch (error: any) {
       console.error('Error submitting:', error);
