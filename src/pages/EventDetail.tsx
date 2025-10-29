@@ -389,38 +389,34 @@ const EventDetail = () => {
       if (id) {
         await addDoc(collection(db, `event_submissions/${id}/registrations`), payload);
       }
+      
+      // Show success message immediately
+      alert(`Thank you for registering for ${displayEvent.title}! You will receive a confirmation email shortly.`);
+      
+      // Send emails in background without blocking
+      const emailData = formatEventRegistrationEmail({
+        ...registrationData,
+        eventTitle: displayEvent.title,
+        eventDate: formatDate(displayEvent.date),
+        timestamp: new Date().toISOString()
+      });
+      
+      sendEmail(emailData).catch(err => console.error('Event registration email failed:', err));
+      sendEmail(
+        formatEventRegistrationConfirmationEmail({
+          name: registrationData.name,
+          email: registrationData.email,
+          eventTitle: displayEvent.title,
+          eventDate: formatDate(displayEvent.date),
+          time: displayEvent.time,
+          location: displayEvent.location,
+        })
+      ).catch(err => console.error('Confirmation email failed:', err));
+      
     } catch (error) {
       console.error('Failed to save event registration:', error);
+      alert('There was an error with your registration. Please try again or contact us directly.');
     }
-
-    // Send email notification
-    const emailData = formatEventRegistrationEmail({
-      ...registrationData,
-      eventTitle: displayEvent.title,
-      eventDate: formatDate(displayEvent.date),
-      timestamp: new Date().toISOString()
-    });
-    
-    sendEmail(emailData).then(async (success) => {
-      if (success) {
-        // Also send a confirmation to the registrant
-        try {
-          await sendEmail(
-            formatEventRegistrationConfirmationEmail({
-              name: registrationData.name,
-              email: registrationData.email,
-              eventTitle: displayEvent.title,
-              eventDate: formatDate(displayEvent.date),
-              time: displayEvent.time,
-              location: displayEvent.location,
-            })
-          );
-        } catch {}
-        alert(`Thank you for registering for ${displayEvent.title}! You will receive a confirmation email shortly.`);
-      } else {
-        alert('There was an error with your registration. Please try again or contact us directly.');
-      }
-    });
     
     setRegistrationData({
       name: '',

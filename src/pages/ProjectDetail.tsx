@@ -419,33 +419,30 @@ const ProjectDetail = () => {
       if (id) {
         await addDoc(collection(db, `project_submissions/${id}/applications`), payload);
       }
+      
+      // Show success message immediately
+      alert(`Thank you for applying to ${displayProject.title}! We will contact you within 2-3 business days.`);
+      
+      // Send emails in background without blocking
+      const emailData = formatProjectApplicationEmail({
+        ...applicationData,
+        projectTitle: displayProject.title,
+        timestamp: new Date().toISOString()
+      });
+      
+      sendEmail(emailData).catch(err => console.error('Project application email failed:', err));
+      sendEmail(
+        formatProjectApplicationConfirmationEmail({
+          name: applicationData.name,
+          email: applicationData.email,
+          projectTitle: displayProject.title,
+        })
+      ).catch(err => console.error('Confirmation email failed:', err));
+      
     } catch (error) {
       console.error('Failed to save project application:', error);
+      alert('There was an error with your application. Please try again or contact us directly.');
     }
-
-    // Send email notification
-    const emailData = formatProjectApplicationEmail({
-      ...applicationData,
-      projectTitle: displayProject.title,
-      timestamp: new Date().toISOString()
-    });
-    
-    sendEmail(emailData).then(async (success) => {
-      if (success) {
-        try {
-          await sendEmail(
-            formatProjectApplicationConfirmationEmail({
-              name: applicationData.name,
-              email: applicationData.email,
-              projectTitle: displayProject.title,
-            })
-          );
-        } catch {}
-        alert(`Thank you for applying to ${displayProject.title}! We will contact you within 2-3 business days.`);
-      } else {
-        alert('There was an error with your application. Please try again or contact us directly.');
-      }
-    });
     
     setApplicationData({
       name: '',

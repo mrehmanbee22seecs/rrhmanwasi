@@ -73,25 +73,22 @@ const Contact = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Log activity
     logCustomActivity('contact_form_submitted', formData);
     
-    // Send email notification
+    // Show success message immediately
+    alert('Thank you for your message! We will get back to you soon.');
+    
+    // Send email notification in background without blocking
     const emailData = formatContactMessageEmail({
       ...formData,
       timestamp: new Date().toISOString()
     });
     
-    sendEmail(emailData).then((success) => {
-      if (success) {
-        alert('Thank you for your message! We will get back to you soon.');
-      } else {
-        alert('There was an error sending your message. Please try again or contact us directly.');
-      }
-    });
+    sendEmail(emailData).catch(err => console.error('Contact email failed:', err));
     
     setFormData({ name: '', email: '', subject: '', message: '' });
   };
