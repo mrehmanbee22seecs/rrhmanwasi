@@ -14,6 +14,8 @@
  */
 async function callEmailAPI(endpoint: string, data: any): Promise<boolean> {
   try {
+    console.log(`📧 Calling email API: /api/${endpoint}`, data);
+    
     const response = await fetch(`/api/${endpoint}`, {
       method: 'POST',
       headers: {
@@ -23,15 +25,17 @@ async function callEmailAPI(endpoint: string, data: any): Promise<boolean> {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      console.error(`Failed to send email via ${endpoint}:`, error);
+      const error = await response.json().catch(() => ({ message: 'Unknown error' }));
+      console.error(`❌ Failed to send email via ${endpoint}:`, error);
+      console.error(`   Status: ${response.status} ${response.statusText}`);
       return false;
     }
 
-    console.log(`Email sent successfully via ${endpoint}`);
+    const result = await response.json();
+    console.log(`✅ Email sent successfully via ${endpoint}`, result);
     return true;
   } catch (error) {
-    console.error(`Error calling ${endpoint}:`, error);
+    console.error(`❌ Error calling ${endpoint}:`, error);
     return false;
   }
 }
