@@ -6,7 +6,7 @@ import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, query, orderBy,
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { ProjectSubmission, EventSubmission, SubmissionStatus, ProjectApplicationEntry, EventRegistrationEntry, VolunteerApplicationEntry, NewsletterSubscriberEntry } from '../types/submissions';
-import { sendEmail, formatSubmissionStatusUpdateEmail } from '../utils/emailService';
+import { sendApprovalEmail, sendSubmissionConfirmation } from '../services/mailerSendEmailService';
 import { migrateApprovedSubmissions } from '../utils/migrateVisibility';
 import ChatsPanel from './Admin/ChatsPanel';
 import { seedKnowledgeBase } from '../utils/kbSeed';
@@ -382,17 +382,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
 
       await updateDoc(doc(db, collectionName, submissionId), updateData);
 
-      // Send email notification to user
-      await sendEmail(formatSubmissionStatusUpdateEmail({
-        type: submissionType,
-        title: submission.title,
-        submitterName: submission.submitterName,
-        submitterEmail: submission.submitterEmail,
-        status: status as 'approved' | 'rejected',
-        adminComments: comments,
-        rejectionReason: reason,
-        timestamp: new Date().toISOString()
-      }));
+      // Send email notification to user for approval (skip for rejected)
+      if (status === 'approved') {
+        await sendApprovalEmail({
+          email: submission.submitterEmail,
+          name: submission.submitterName,
+          projectName: submission.title,
+          type: submissionType
+        }).catch(err => console.error('Failed to send approval email:', err));
+      }
 
       // Update local state
       setSubmissions(prev =>

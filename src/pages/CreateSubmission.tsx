@@ -6,11 +6,10 @@ import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'fir
 import { FirebaseError } from 'firebase/app';
 import { useAuth } from '../contexts/AuthContext';
 import { ProjectSubmission, EventSubmission, SubmissionType, ChecklistItem, Reminder, HeadInfo } from '../types/submissions';
-import { sendEmail, formatSubmissionReceivedEmail } from '../utils/emailService';
+import { sendSubmissionConfirmation } from '../services/mailerSendEmailService';
 import InteractiveMap from '../components/InteractiveMap';
 import ChecklistBuilder from '../components/ChecklistBuilder';
 import ReminderManager from '../components/ReminderManager';
-import { scheduleReminderEmails, formatReminderEmail } from '../utils/emailService';
 import ImageUploadField from '../components/ImageUploadField';
 import HeadsManager from '../components/HeadsManager';
 
@@ -491,35 +490,34 @@ const CreateSubmission = () => {
 
       // Fire-and-forget: send confirmation email and schedule reminders
       try {
-        const when = submissionType === 'project'
-          ? `${projectData.startDate || ''}${projectData.endDate ? ' - ' + projectData.endDate : ''}`
-          : `${eventData.date || ''}${eventData.time ? ' @ ' + eventData.time : ''}`;
-        sendEmail(formatSubmissionReceivedEmail({
-          type: submissionType,
-          title: submissionType === 'project' ? projectData.title : eventData.title,
-          submitterName: userData.displayName || 'Friend',
-          submitterEmail: userData.email || '',
-          summary: submissionType === 'project' ? projectData.shortSummary : eventData.shortSummary,
-          when
-        })).catch((e) => console.warn('Email send failed (non-blocking):', e));
+        // Send confirmation email if submission is pending or approved
+        if (finalStatus === 'pending' || finalStatus === 'approved') {
+          sendSubmissionConfirmation({
+            email: userData.email || '',
+            name: userData.displayName || 'Friend',
+            projectName: submissionType === 'project' ? projectData.title : eventData.title,
+            type: submissionType
+          }).catch((e) => console.warn('Email send failed (non-blocking):', e));
+        }
 
+        // Schedule reminders using QStash (no Firebase Functions needed)
         const reminders = submissionType === 'project' ? projectData.reminders : eventData.reminders;
-        for (const rem of reminders) {
-          const sendAt = new Date(`${rem.reminderDate}T${rem.reminderTime}`);
-          const html = formatReminderEmail({
-            to: '',
-            title: rem.title,
-            description: rem.description,
-            when: sendAt.toLocaleString(),
-            submissionTitle: submissionType === 'project' ? projectData.title : eventData.title,
-            submissionType: submissionType,
-          }).html;
-          scheduleReminderEmails({
-            recipients: rem.notifyEmails,
-            subject: `Reminder: ${rem.title}`,
-            html,
-            sendAtISO: sendAt.toISOString(),
-          }).catch((e) => console.warn('Reminder schedule failed (non-blocking):', e));
+        if (reminders && reminders.length > 0) {
+          const { createReminder } = await import('../services/reminderService');
+          for (const rem of reminders) {
+            const sendAt = new Date(`${rem.reminderDate}T${rem.reminderTime}`);
+            // Schedule reminder for each email recipient
+            for (const email of rem.notifyEmails) {
+              createReminder({
+                email,
+                name: userData.displayName || 'Friend',
+                projectName: submissionType === 'project' ? projectData.title : eventData.title,
+                message: `${rem.title}: ${rem.description}`,
+                scheduledAt: sendAt.toISOString(),
+                userId: currentUser?.uid
+              }).catch((e) => console.warn('Reminder schedule failed (non-blocking):', e));
+            }
+          }
         }
       } catch (e) {
         console.warn('Background tasks failed (non-blocking):', e);
