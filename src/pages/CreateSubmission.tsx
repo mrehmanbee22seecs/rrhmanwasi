@@ -475,36 +475,45 @@ const CreateSubmission = () => {
         console.log(`${submissionType} successfully saved with ID:`, docRef.id);
       }
 
-      // Show user feedback immediately (no waiting for emails)
+      // Show user feedback immediately
       if (finalStatus === 'pending') {
         setShowConfirmation(true);
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1500);
       } else if (isAdmin && finalStatus === 'approved') {
         alert(`${submissionType === 'project' ? 'Project' : 'Event'} has been created and automatically approved!`);
-        navigate(submissionType === 'project' ? '/projects' : '/events');
       } else if (status === 'draft') {
         alert('Draft saved successfully!');
-        navigate('/dashboard');
-      } else {
-        navigate('/dashboard');
       }
 
-      // Fire-and-forget: send confirmation email (truly non-blocking, after navigation starts)
+      // PRIORITY: Send confirmation email BEFORE navigation to guarantee delivery
       // Note: Reminders will be scheduled when admin APPROVES the submission (not on submission)
       try {
         // Send confirmation email if submission is pending or approved
         if (finalStatus === 'pending' || finalStatus === 'approved') {
-          sendSubmissionConfirmation({
+          // AWAIT email to ensure it completes before navigation
+          await sendSubmissionConfirmation({
             email: userData.email || '',
             name: userData.displayName || 'Friend',
             projectName: submissionType === 'project' ? projectData.title : eventData.title,
             type: submissionType
-          }).catch((e) => console.warn('Email send failed (non-blocking):', e));
+          });
+          console.log('✅ Submission confirmation email sent successfully');
         }
       } catch (e) {
-        console.warn('Background tasks failed (non-blocking):', e);
+        console.error('❌ Failed to send submission email:', e);
+        // Continue with navigation even if email fails
+      }
+
+      // Navigate AFTER email is sent to ensure email delivery
+      if (finalStatus === 'pending') {
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1500);
+      } else if (isAdmin && finalStatus === 'approved') {
+        navigate(submissionType === 'project' ? '/projects' : '/events');
+      } else if (status === 'draft') {
+        navigate('/dashboard');
+      } else {
+        navigate('/dashboard');
       }
     } catch (error: any) {
       console.error('Error submitting:', error);
