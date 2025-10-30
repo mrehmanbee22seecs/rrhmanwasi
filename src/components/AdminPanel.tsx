@@ -6,7 +6,7 @@ import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, query, orderBy,
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { ProjectSubmission, EventSubmission, SubmissionStatus, ProjectApplicationEntry, EventRegistrationEntry, VolunteerApplicationEntry, NewsletterSubscriberEntry } from '../types/submissions';
-import { sendEmail, formatSubmissionStatusUpdateEmail } from '../utils/emailService';
+import { sendApprovalEmail, sendSubmissionConfirmation } from '../services/mailerSendEmailService';
 import { migrateApprovedSubmissions } from '../utils/migrateVisibility';
 import ChatsPanel from './Admin/ChatsPanel';
 import { seedKnowledgeBase } from '../utils/kbSeed';
@@ -382,17 +382,63 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
 
       await updateDoc(doc(db, collectionName, submissionId), updateData);
 
-      // Send email notification to user
-      await sendEmail(formatSubmissionStatusUpdateEmail({
-        type: submissionType,
-        title: submission.title,
-        submitterName: submission.submitterName,
-        submitterEmail: submission.submitterEmail,
-        status: status as 'approved' | 'rejected',
-        adminComments: comments,
-        rejectionReason: reason,
-        timestamp: new Date().toISOString()
-      }));
+      // Send email notification to user for approval (skip for rejected)
+      if (status === 'approved') {
+        // Send approval email
+        const approvalEmailSent = await sendApprovalEmail({
+          email: submission.submitterEmail,
+          name: submission.submitterName,
+          projectName: submission.title,
+          type: submissionType
+        }).catch(err => {
+          console.error('Failed to send approval email:', err);
+          alert('Warning: Approval email could not be sent. Please check email configuration.');
+          return false;
+        });
+        
+        if (approvalEmailSent) {
+          console.log('Approval email sent successfully to:', submission.submitterEmail);
+        }
+
+        // Schedule reminders when project/event is approved
+        if (submission.reminders && submission.reminders.length > 0) {
+          const { createReminder } = await import('../services/reminderService');
+          console.log(`Scheduling ${submission.reminders.length} reminders for approved ${submissionType}`);
+          
+          let successCount = 0;
+          let failCount = 0;
+          
+          for (const rem of submission.reminders) {
+            const sendAt = new Date(`${rem.reminderDate}T${rem.reminderTime}`);
+            // Schedule reminder for each email recipient
+            for (const email of rem.notifyEmails) {
+              const result = await createReminder({
+                email,
+                name: submission.submitterName,
+                projectName: submission.title,
+                message: `${rem.title}: ${rem.description}`,
+                scheduledAt: sendAt.toISOString(),
+                userId: submission.submittedBy
+              }).catch((e) => {
+                console.error('Reminder schedule failed:', e);
+                return { success: false, error: e.message };
+              });
+              
+              if (result && result.success) {
+                successCount++;
+              } else {
+                failCount++;
+                console.error('Failed to schedule reminder:', result?.error);
+              }
+            }
+          }
+          
+          console.log(`Reminders scheduled: ${successCount} succeeded, ${failCount} failed`);
+          if (failCount > 0) {
+            alert(`Warning: ${failCount} reminder(s) could not be scheduled. Check console for details.`);
+          }
+        }
+      }
 
       // Update local state
       setSubmissions(prev =>

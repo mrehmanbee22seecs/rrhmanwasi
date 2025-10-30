@@ -67,43 +67,56 @@ const Volunteer = () => {
     // Log activity
     logCustomActivity('volunteer_application_submitted', formData);
     
-    // Persist structured volunteer application
-    try {
-      await addDoc(collection(db, 'volunteer_applications'), {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        age: formData.age || null,
-        city: formData.city,
-        occupation: formData.occupation || null,
-        experience: formData.experience || '',
-        skills: formData.skills || [],
-        interests: formData.interests || [],
-        availability: formData.availability,
-        motivation: formData.motivation || '',
-        submittedAt: serverTimestamp(),
-      });
-      
-      // Show success message immediately
-      alert('Thank you for your interest in volunteering! We will get back to you soon.');
-      
-      // Send emails in background without blocking
-      const emailData = formatVolunteerApplicationEmail({
-        ...formData,
-        timestamp: new Date().toISOString()
-      });
-      
-      sendEmail(emailData).catch(err => console.error('Email notification failed:', err));
-      sendVolunteerConfirmation({
-        email: formData.email,
-        name: `${formData.firstName} ${formData.lastName}`
-      }).catch(err => console.error('Confirmation email failed:', err));
-      
-    } catch (error) {
+    // Show success message immediately for instant feedback
+    alert('Thank you for your interest in volunteering! We will get back to you soon.');
+    
+    // Reset form immediately
+    setFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      age: '',
+      city: '',
+      occupation: '',
+      experience: '',
+      skills: [],
+      interests: [],
+      availability: '',
+      motivation: ''
+    });
+    
+    // Persist structured volunteer application in background
+    addDoc(collection(db, 'volunteer_applications'), {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      phone: formData.phone,
+      age: formData.age || null,
+      city: formData.city,
+      occupation: formData.occupation || null,
+      experience: formData.experience || '',
+      skills: formData.skills || [],
+      interests: formData.interests || [],
+      availability: formData.availability,
+      motivation: formData.motivation || '',
+      submittedAt: serverTimestamp(),
+    }).catch(error => {
       console.error('Failed to save volunteer application:', error);
-      alert('There was an error submitting your application. Please try again or contact us directly.');
-    }
+      // Silent fail - user already got confirmation
+    });
+    
+    // Send emails in background without blocking
+    const emailData = formatVolunteerApplicationEmail({
+      ...formData,
+      timestamp: new Date().toISOString()
+    });
+    
+    sendEmail(emailData).catch(err => console.error('Email notification failed:', err));
+    sendVolunteerConfirmation({
+      email: formData.email,
+      name: `${formData.firstName} ${formData.lastName}`
+    }).catch(err => console.error('Confirmation email failed:', err));
   };
 
   const benefits = [

@@ -73,10 +73,16 @@ export async function createReminder(params: ReminderData): Promise<{
         const delaySeconds = Math.floor((scheduledDate.getTime() - now.getTime()) / 1000);
         
         // Get the base URL for the API endpoint
-        const baseUrl = window.location.origin;
+        // Use window.location.origin if available, otherwise use environment variable or default
+        const baseUrl = typeof window !== 'undefined' && window.location?.origin 
+          ? window.location.origin 
+          : (import.meta as any)?.env?.VITE_APP_URL || 'https://your-domain.vercel.app';
         const callbackUrl = `${baseUrl}/api/send-reminder`;
         
-        console.log('Scheduling reminder with QStash to:', callbackUrl);
+        console.log('Scheduling reminder with QStash:');
+        console.log('  - Callback URL:', callbackUrl);
+        console.log('  - Delay:', delaySeconds, 'seconds');
+        console.log('  - Scheduled time:', scheduledDate.toISOString());
         
         // Schedule the reminder with QStash
         const response = await qstashClient.publishJSON({
@@ -96,14 +102,28 @@ export async function createReminder(params: ReminderData): Promise<{
           qstashMessageId: response.messageId
         });
 
-        console.log('Reminder scheduled with QStash, message ID:', response.messageId);
-      } catch (qstashError) {
-        console.warn('Failed to schedule with QStash:', qstashError);
-        console.error('QStash error details:', qstashError);
-        // Continue anyway - we have the reminder in Firestore
+        console.log('✅ Reminder scheduled with QStash successfully!');
+        console.log('  - Message ID:', response.messageId);
+        console.log('  - Reminder ID:', docRef.id);
+      } catch (qstashError: any) {
+        console.error('❌ Failed to schedule with QStash:', qstashError);
+        console.error('QStash error details:', {
+          message: qstashError.message,
+          status: qstashError.status,
+          error: qstashError
+        });
+        return {
+          success: false,
+          error: `QStash scheduling failed: ${qstashError.message || 'Unknown error'}`
+        };
       }
     } else {
-      console.warn('QStash not configured, reminder will not be sent automatically');
+      console.error('❌ QStash not configured! VITE_QSTASH_TOKEN environment variable is missing.');
+      console.error('Reminder stored in Firestore but will NOT be sent automatically.');
+      return {
+        success: false,
+        error: 'QStash not configured. Set VITE_QSTASH_TOKEN environment variable.'
+      };
     }
 
     return {

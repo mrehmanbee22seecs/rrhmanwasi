@@ -11,7 +11,7 @@ const mailerSend = new MailerSend({
   apiKey: process.env.MAILERSEND_API_KEY || '',
 });
 
-const SENDER_EMAIL = process.env.MAILERSEND_SENDER_EMAIL || 'MS_qJLYQi@trial-0r83ql3jjz8lgwpz.mlsender.net';
+const SENDER_EMAIL = process.env.MAILERSEND_SENDER_EMAIL || 'noreply@test-ywj2lpn1kvpg7oqz.mlsender.net';
 const SENDER_NAME = 'Wasillah Team';
 
 // Brand styling for emails
@@ -29,6 +29,15 @@ export default async function handler(req, res) {
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Check if MailerSend API key is configured
+  if (!process.env.MAILERSEND_API_KEY) {
+    console.error('MAILERSEND_API_KEY environment variable is not set');
+    return res.status(500).json({
+      error: 'Email service not configured',
+      message: 'MAILERSEND_API_KEY environment variable is missing'
+    });
   }
 
   try {

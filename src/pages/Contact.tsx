@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Clock, Facebook, Twitter, Instagram, Send, Heart, Star } from 'lucide-react';
-import { sendEmail, formatContactMessageEmail } from '../utils/emailService';
+import { sendContactEmail } from '../services/mailerSendEmailService';
 import { useAuth } from '../contexts/AuthContext';
 import { useActivityLogger } from '../hooks/useActivityLogger';
 import { useScrollReveal } from '../hooks/useScrollReveal';
@@ -82,13 +82,20 @@ const Contact = () => {
     // Show success message immediately
     alert('Thank you for your message! We will get back to you soon.');
     
-    // Send email notification in background without blocking
-    const emailData = formatContactMessageEmail({
-      ...formData,
-      timestamp: new Date().toISOString()
-    });
+    // Send email notification via MailerSend API (non-blocking)
+    sendContactEmail({
+      name: formData.name,
+      email: formData.email,
+      subject: formData.subject,
+      message: formData.message
+    }).catch(err => console.error('Contact email failed:', err));
     
-    sendEmail(emailData).catch(err => console.error('Contact email failed:', err));
+    // Also store in Firebase for backup
+    addDoc(collection(db, 'contacts'), {
+      ...formData,
+      timestamp: serverTimestamp(),
+      status: 'new'
+    }).catch(err => console.error('Failed to store contact in Firebase:', err));
     
     setFormData({ name: '', email: '', subject: '', message: '' });
   };

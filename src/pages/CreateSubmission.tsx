@@ -6,11 +6,10 @@ import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'fir
 import { FirebaseError } from 'firebase/app';
 import { useAuth } from '../contexts/AuthContext';
 import { ProjectSubmission, EventSubmission, SubmissionType, ChecklistItem, Reminder, HeadInfo } from '../types/submissions';
-import { sendEmail, formatSubmissionReceivedEmail } from '../utils/emailService';
+import { sendSubmissionConfirmation } from '../services/mailerSendEmailService';
 import InteractiveMap from '../components/InteractiveMap';
 import ChecklistBuilder from '../components/ChecklistBuilder';
 import ReminderManager from '../components/ReminderManager';
-import { scheduleReminderEmails, formatReminderEmail } from '../utils/emailService';
 import ImageUploadField from '../components/ImageUploadField';
 import HeadsManager from '../components/HeadsManager';
 
@@ -379,6 +378,7 @@ const CreateSubmission = () => {
           sponsors: projectData.sponsors.filter(s => s.trim() !== ''),
           donationLink: projectData.donationLink,
           faq: projectData.faq,
+          reminders: projectData.reminders || [], // Store reminders in submission
           submittedBy: currentUser.uid,
           submitterName: userData.displayName || 'Unknown User',
           submitterEmail: userData.email || '',
@@ -451,6 +451,7 @@ const CreateSubmission = () => {
           certifications: eventData.certifications.filter(c => c.trim() !== ''),
           partners: eventData.partners.filter(p => p.trim() !== ''),
           faq: eventData.faq,
+          reminders: eventData.reminders || [], // Store reminders in submission
           submittedBy: currentUser.uid,
           submitterName: userData.displayName || 'Unknown User',
           submitterEmail: userData.email || '',
@@ -465,6 +466,7 @@ const CreateSubmission = () => {
       console.log('Submitting to Firebase collection:', collectionName);
       console.log('Data to be inserted:', insertData);
 
+      // Perform Firestore save - keep it synchronous to ensure data is saved before navigation
       if (draftId) {
         await updateDoc(doc(db, collectionName, draftId), insertData);
         console.log(`${submissionType} draft updated with ID:`, draftId);
@@ -473,56 +475,45 @@ const CreateSubmission = () => {
         console.log(`${submissionType} successfully saved with ID:`, docRef.id);
       }
 
-      // Show user feedback immediately (no waiting for emails)
+      // Show user feedback immediately
       if (finalStatus === 'pending') {
         setShowConfirmation(true);
+      } else if (isAdmin && finalStatus === 'approved') {
+        alert(`${submissionType === 'project' ? 'Project' : 'Event'} has been created and automatically approved!`);
+      } else if (status === 'draft') {
+        alert('Draft saved successfully!');
+      }
+
+      // PRIORITY: Send confirmation email BEFORE navigation to guarantee delivery
+      // Note: Reminders will be scheduled when admin APPROVES the submission (not on submission)
+      try {
+        // Send confirmation email if submission is pending or approved
+        if (finalStatus === 'pending' || finalStatus === 'approved') {
+          // AWAIT email to ensure it completes before navigation
+          await sendSubmissionConfirmation({
+            email: userData.email || '',
+            name: userData.displayName || 'Friend',
+            projectName: submissionType === 'project' ? projectData.title : eventData.title,
+            type: submissionType
+          });
+          console.log('✅ Submission confirmation email sent successfully');
+        }
+      } catch (e) {
+        console.error('❌ Failed to send submission email:', e);
+        // Continue with navigation even if email fails
+      }
+
+      // Navigate AFTER email is sent to ensure email delivery
+      if (finalStatus === 'pending') {
         setTimeout(() => {
           navigate('/dashboard');
         }, 1500);
       } else if (isAdmin && finalStatus === 'approved') {
-        alert(`${submissionType === 'project' ? 'Project' : 'Event'} has been created and automatically approved!`);
         navigate(submissionType === 'project' ? '/projects' : '/events');
       } else if (status === 'draft') {
-        alert('Draft saved successfully!');
         navigate('/dashboard');
       } else {
         navigate('/dashboard');
-      }
-
-      // Fire-and-forget: send confirmation email and schedule reminders
-      try {
-        const when = submissionType === 'project'
-          ? `${projectData.startDate || ''}${projectData.endDate ? ' - ' + projectData.endDate : ''}`
-          : `${eventData.date || ''}${eventData.time ? ' @ ' + eventData.time : ''}`;
-        sendEmail(formatSubmissionReceivedEmail({
-          type: submissionType,
-          title: submissionType === 'project' ? projectData.title : eventData.title,
-          submitterName: userData.displayName || 'Friend',
-          submitterEmail: userData.email || '',
-          summary: submissionType === 'project' ? projectData.shortSummary : eventData.shortSummary,
-          when
-        })).catch((e) => console.warn('Email send failed (non-blocking):', e));
-
-        const reminders = submissionType === 'project' ? projectData.reminders : eventData.reminders;
-        for (const rem of reminders) {
-          const sendAt = new Date(`${rem.reminderDate}T${rem.reminderTime}`);
-          const html = formatReminderEmail({
-            to: '',
-            title: rem.title,
-            description: rem.description,
-            when: sendAt.toLocaleString(),
-            submissionTitle: submissionType === 'project' ? projectData.title : eventData.title,
-            submissionType: submissionType,
-          }).html;
-          scheduleReminderEmails({
-            recipients: rem.notifyEmails,
-            subject: `Reminder: ${rem.title}`,
-            html,
-            sendAtISO: sendAt.toISOString(),
-          }).catch((e) => console.warn('Reminder schedule failed (non-blocking):', e));
-        }
-      } catch (e) {
-        console.warn('Background tasks failed (non-blocking):', e);
       }
     } catch (error: any) {
       console.error('Error submitting:', error);
