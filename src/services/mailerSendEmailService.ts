@@ -119,6 +119,23 @@ export async function sendVolunteerConfirmation(params: {
 }
 
 /**
+ * 6. Contact Form Email to Admin
+ */
+export async function sendContactEmail(params: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}): Promise<boolean> {
+  return callEmailAPI('send-contact', {
+    name: params.name,
+    email: params.email,
+    subject: params.subject,
+    message: params.message,
+  });
+}
+
+/**
  * Check if MailerSend is properly configured
  */
 export function isMailerSendConfigured(): boolean {
@@ -132,5 +149,6 @@ export default {
   sendApprovalEmail,
   sendReminderEmail,
   sendVolunteerConfirmation,
+  sendContactEmail,
   isMailerSendConfigured
 };
