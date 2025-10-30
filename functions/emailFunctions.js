@@ -24,9 +24,9 @@ const { Timestamp } = admin.firestore;
 const MAILERSEND_API_KEY = process.env.MAILERSEND_API_KEY || '';
 const mailerSend = MAILERSEND_API_KEY ? new MailerSend({ apiKey: MAILERSEND_API_KEY }) : null;
 
-// Use MailerSend's free trial domain for testing
+// Use MailerSend's free trial domain for testing or configured sender email
 // Replace with your own verified domain in production
-const SENDER_EMAIL = 'test-ywj2lpn1kvpg7oqz.mlsender.net/';
+const SENDER_EMAIL = process.env.MAILERSEND_SENDER_EMAIL || 'MS_qJLYQi@trial-0r83ql3jjz8lgwpz.mlsender.net';
 const SENDER_NAME = 'Wasillah Team';
 
 // Brand styling constants

@@ -1,17 +1,30 @@
 /**
  * MailerSend Email Service for Wasillah Email Automation
  * 
+ * ⚠️ SECURITY WARNING: This file attempts to send emails from the browser (client-side).
+ * This is NOT recommended for production as it exposes your API key to users.
+ * 
+ * RECOMMENDED: Move email sending to serverless functions:
+ * - Use /api/send-welcome-email (Vercel serverless)
+ * - Use /api/send-volunteer-confirmation (Vercel serverless)
+ * - Use Firebase Functions for submission/approval emails
+ * 
+ * Current implementation will NOT work unless VITE_MAILERSEND_API_KEY is set,
+ * which is intentionally removed for security reasons.
+ * 
  * This service handles all transactional emails using MailerSend API:
- * 1. Welcome emails on user signup
- * 2. Submission confirmations (projects/events)
- * 3. Admin approval notifications
- * 4. Volunteer form confirmations
- * 5. Custom reminders
+ * 1. Welcome emails on user signup - ⚠️ Currently client-side (insecure)
+ * 2. Submission confirmations (projects/events) - ✅ Server-side (Firebase Functions)
+ * 3. Admin approval notifications - ✅ Server-side (Firebase Functions)
+ * 4. Volunteer form confirmations - ⚠️ Currently client-side (insecure)
+ * 5. Custom reminders - ✅ Server-side (Vercel API + QStash)
  */
 
 import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
 
 // Initialize MailerSend client
+// NOTE: VITE_MAILERSEND_API_KEY should NOT be set for security reasons
+// This will always be null, making all client-side emails fail (which is correct behavior)
 const mailerSendApiKey = (import.meta as any)?.env?.VITE_MAILERSEND_API_KEY;
 const mailerSend = mailerSendApiKey ? new MailerSend({ apiKey: mailerSendApiKey }) : null;
 
@@ -31,10 +44,12 @@ const brand = {
 
 /**
  * Helper function to send email via MailerSend
+ * ⚠️ WARNING: This sends emails from the browser, which is insecure!
  */
 async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
   if (!mailerSend) {
-    console.warn('MailerSend not configured, skipping email');
+    console.warn('MailerSend not configured for client-side emails (this is correct for security)');
+    console.info('Email sending should be done server-side via Vercel Functions or Firebase Functions');
     return false;
   }
 
