@@ -8,7 +8,7 @@
 ### Primary Issue: Invalid Email Sender Format
 **File:** `functions/emailFunctions.js` line 29
 
-**Before (BROKEN):**
+**Before (BROKEN - commit 8b325ce):**
 ```javascript
 const SENDER_EMAIL = 'test-ywj2lpn1kvpg7oqz.mlsender.net/';
 ```
@@ -18,9 +18,15 @@ const SENDER_EMAIL = 'test-ywj2lpn1kvpg7oqz.mlsender.net/';
 2. ❌ Trailing slash `/` - Invalid character in email address
 3. ❌ Hardcoded value - Ignoring `MAILERSEND_SENDER_EMAIL` environment variable
 
-**After (FIXED):**
+**After (FIXED - commit a18f676):**
 ```javascript
 const SENDER_EMAIL = process.env.MAILERSEND_SENDER_EMAIL || 'MS_qJLYQi@trial-0r83ql3jjz8lgwpz.mlsender.net';
+```
+
+**Git Diff:**
+```diff
+-const SENDER_EMAIL = 'test-ywj2lpn1kvpg7oqz.mlsender.net/';
++const SENDER_EMAIL = process.env.MAILERSEND_SENDER_EMAIL || 'MS_qJLYQi@trial-0r83ql3jjz8lgwpz.mlsender.net';
 ```
 
 **Impact:** MailerSend API rejected ALL email requests due to invalid sender format.
