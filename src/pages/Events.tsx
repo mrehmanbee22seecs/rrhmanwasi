@@ -7,6 +7,8 @@ import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { EventSubmission } from '../types/submissions';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { useMagneticEffect } from '../hooks/useMagneticEffect';
+import HeroVideoBackground from '../components/HeroVideoBackground';
+import { getHeroVideo } from '../utils/communityServiceAssets';
 
 const Events = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -297,10 +299,16 @@ Or create the index in Firebase Console.
     });
   };
 
+  const eventsVideo = getHeroVideo('events');
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section - Enhanced */}
-      <div className="hero-luxury-bg hero-events text-cream-elegant py-20 relative overflow-hidden">
+      {/* Hero Section - Enhanced with Video */}
+      <HeroVideoBackground
+        videoSrc={eventsVideo.video}
+        fallbackImage={eventsVideo.poster}
+        className="hero-luxury-bg hero-events text-cream-elegant py-20 relative overflow-hidden"
+      >
         <div className="floating-3d-luxury magnetic-element"></div>
         <div className="floating-3d-luxury magnetic-element"></div>
         <div className="floating-3d-luxury magnetic-element"></div>
@@ -325,7 +333,7 @@ Or create the index in Firebase Console.
             </p>
           </div>
         </div>
-      </div>
+      </HeroVideoBackground>
 
       {/* Filters Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

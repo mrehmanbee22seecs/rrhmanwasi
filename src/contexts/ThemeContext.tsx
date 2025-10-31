@@ -69,6 +69,29 @@ export const themes: Theme[] = [
     isDark: true
   },
   {
+    id: 'wasillah-special',
+    name: 'Wasillah Special',
+    description: 'Emotional community service theme with heartfelt imagery',
+    colors: {
+      // Warm community gold
+      primary: '#D97706',
+      // Deep earth brown
+      secondary: '#78350F',
+      // Compassionate orange
+      accent: '#F59E0B',
+      // Soft cream background
+      background: '#FFFBF0',
+      // Warm white surface
+      surface: '#FFF9E6',
+      // Dark readable text
+      text: '#1F2937',
+      // Warm gray text
+      textLight: '#78716C'
+    },
+    preview: 'linear-gradient(135deg, #D97706, #F59E0B, #FCD34D)',
+    isDark: false
+  },
+  {
     id: 'emerald-forest',
     name: 'Emerald Forest',
     description: 'Fresh green theme for environmental projects',

@@ -2,6 +2,9 @@ import React from 'react';
 import { Users, Target, Heart, Award, CheckCircle, Globe, Lightbulb, Shield, Handshake, Star, Quote } from 'lucide-react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { useMagneticEffect } from '../hooks/useMagneticEffect';
+import HeroVideoBackground from '../components/HeroVideoBackground';
+import SectionBackground from '../components/SectionBackground';
+import { getHeroVideo, getSectionImage } from '../utils/communityServiceAssets';
 
 const About = () => {
   const values = [
@@ -54,10 +57,16 @@ const About = () => {
     },
   ];
 
+  const aboutVideo = getHeroVideo('about');
+
   return (
     <div className="py-12">
-      {/* Header - Enhanced */}
-      <section className="hero-luxury-bg hero-about text-cream-elegant py-24 relative overflow-hidden">
+      {/* Header - Enhanced with Video */}
+      <HeroVideoBackground
+        videoSrc={aboutVideo.video}
+        fallbackImage={aboutVideo.poster}
+        className="hero-luxury-bg hero-about text-cream-elegant py-24 relative overflow-hidden"
+      >
         <div className="floating-3d-luxury magnetic-element"></div>
         <div className="floating-3d-luxury magnetic-element"></div>
         <div className="floating-3d-luxury magnetic-element"></div>
@@ -81,10 +90,11 @@ const About = () => {
             </p>
           </div>
         </div>
-      </section>
+      </HeroVideoBackground>
 
-      {/* Mission & Vision - Enhanced */}
-      <section className="py-24 bg-cream-white relative overflow-hidden">
+      {/* Mission & Vision - Enhanced with Background */}
+      <SectionBackground imageSrc={getSectionImage('about', 'mission')}>
+        <section className="py-24 bg-cream-white relative overflow-hidden">
         <div className="particle-container absolute inset-0 opacity-30"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
@@ -120,14 +130,16 @@ const About = () => {
                 lasting solutions for social challenges.
               </p>
             </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </SectionBackground>
 
-      {/* Our Values - Enhanced */}
-      <section className="py-24 bg-cream-elegant relative overflow-hidden">
-        <div className="absolute inset-0 morphing-background opacity-10"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      {/* Our Values - Enhanced with Background */}
+      <SectionBackground imageSrc={getSectionImage('about', 'values')}>
+        <section className="py-24 bg-cream-elegant relative overflow-hidden">
+          <div className="absolute inset-0 morphing-background opacity-10"></div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-20 scroll-reveal">
             <h2 className="text-5xl md:text-6xl font-modern-display text-black mb-8">
               Our Core Values
@@ -148,11 +160,12 @@ const About = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-vibrant-orange/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-luxury"></div>
               </div>
             ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </SectionBackground>
 
-      {/* What We Do */}
+      {/* What We Do - skipping background for variety */}
       <section className="py-24 bg-cream-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
@@ -201,9 +214,10 @@ const About = () => {
         </div>
       </section>
 
-      {/* Our Team */}
-      <section className="py-24 bg-cream-soft">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Our Team - Enhanced with Background */}
+      <SectionBackground imageSrc={getSectionImage('about', 'team')}>
+        <section className="py-24 bg-cream-soft">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
             <h2 className="text-5xl md:text-6xl font-luxury-display text-logo-navy mb-8">
               Meet Our Team
@@ -230,12 +244,13 @@ const About = () => {
                   <p className="text-text-medium font-luxury-body leading-relaxed">{member.bio}</p>
                 </div>
               </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </SectionBackground>
 
-      {/* Impact Statistics */}
+      {/* Impact Statistics - skipping background for variety */}
       <section className="py-24 bg-logo-navy text-cream-elegant relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="floating-3d-luxury opacity-20"></div>

@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Users, Target, Award, Heart, CheckCircle, Star, Quote, Globe, Lightbulb, Shield, Handshake } from 'lucide-react';
+import HeroVideoBackground from '../components/HeroVideoBackground';
+import SectionBackground from '../components/SectionBackground';
+import { getHeroVideo, getSectionImage } from '../utils/communityServiceAssets';
 
 const Home = () => {
   const [counters, setCounters] = useState({
@@ -115,10 +118,16 @@ const Home = () => {
     return () => observer.disconnect();
   }, []);
 
+  const homeVideo = getHeroVideo('home');
+
   return (
     <div>
-      {/* Hero Section - Enhanced Emotional Design */}
-      <section className="hero-luxury-bg hero-home min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Hero Section - Enhanced Emotional Design with Video Background */}
+      <HeroVideoBackground 
+        videoSrc={homeVideo.video}
+        fallbackImage={homeVideo.poster}
+        className="hero-luxury-bg hero-home min-h-screen flex items-center justify-center relative overflow-hidden"
+      >
         {/* Enhanced 3D Floating Elements */}
         <div className="floating-3d-luxury magnetic-element"></div>
         <div className="floating-3d-luxury magnetic-element"></div>
@@ -189,44 +198,47 @@ const Home = () => {
             </div>
           </div>
         </div>
-      </section>
+      </HeroVideoBackground>
 
-      {/* Impact Highlights - Enhanced */}
-      <section id="impact-stats" className="section-story-impact py-24 relative overflow-hidden">
-        <div className="overlay-pattern"></div>
-        <div className="blend-overlay-vibrant"></div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-20 scroll-reveal">
-            <h2 className="text-5xl md:text-6xl font-modern-display text-cream-elegant mb-8">
-              Our Impact in Numbers
-            </h2>
-            <p className="text-2xl text-cream-elegant/90 font-elegant-body max-w-4xl mx-auto">
-              See the tangible difference we're making in communities across the region
-            </p>
-          </div>
+      {/* Impact Highlights - Enhanced with Background */}
+      <SectionBackground imageSrc={getSectionImage('home', 'impact')}>
+        <section id="impact-stats" className="section-story-impact py-24 relative overflow-hidden">
+          <div className="overlay-pattern"></div>
+          <div className="blend-overlay-vibrant"></div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 stagger-animation">
-            {impactStats.map((stat, index) => (
-              <div key={index} className="text-center floating-card luxury-card p-10 group magnetic-element bg-white/10 backdrop-blur-lg border-2 border-white/20">
-                <div className="service-icon-luxury w-20 h-20 flex items-center justify-center mx-auto mb-8 group-hover:animate-pulse-glow">
-                  <stat.icon className="w-10 h-10 text-white group-hover:animate-float-gentle" />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="text-center mb-20 scroll-reveal">
+              <h2 className="text-5xl md:text-6xl font-modern-display text-cream-elegant mb-8">
+                Our Impact in Numbers
+              </h2>
+              <p className="text-2xl text-cream-elegant/90 font-elegant-body max-w-4xl mx-auto">
+                See the tangible difference we're making in communities across the region
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 stagger-animation">
+              {impactStats.map((stat, index) => (
+                <div key={index} className="text-center floating-card luxury-card p-10 group magnetic-element bg-white/10 backdrop-blur-lg border-2 border-white/20">
+                  <div className="service-icon-luxury w-20 h-20 flex items-center justify-center mx-auto mb-8 group-hover:animate-pulse-glow">
+                    <stat.icon className="w-10 h-10 text-white group-hover:animate-float-gentle" />
+                  </div>
+                  <h3 className="text-5xl font-luxury-display impact-counter mb-4 animate-counter text-cream-elegant group-hover:text-vibrant-orange-light transition-colors">
+                    {stat.key === 'lives' ? `${Math.floor(counters[stat.key] / 1000)}K+` : `${counters[stat.key]}+`}
+                  </h3>
+                  <p className="text-cream-elegant/90 font-luxury-medium text-lg group-hover:text-cream-elegant transition-colors">{stat.label}</p>
+                  <div className="absolute inset-0 bg-gradient-to-br from-vibrant-orange/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-luxury"></div>
                 </div>
-                <h3 className="text-5xl font-luxury-display impact-counter mb-4 animate-counter text-cream-elegant group-hover:text-vibrant-orange-light transition-colors">
-                  {stat.key === 'lives' ? `${Math.floor(counters[stat.key] / 1000)}K+` : `${counters[stat.key]}+`}
-                </h3>
-                <p className="text-cream-elegant/90 font-luxury-medium text-lg group-hover:text-cream-elegant transition-colors">{stat.label}</p>
-                <div className="absolute inset-0 bg-gradient-to-br from-vibrant-orange/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-luxury"></div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </SectionBackground>
 
-      {/* Who We Are Section - Enhanced */}
-      <section className="section-story-community py-24 relative overflow-hidden">
-        <div className="overlay-pattern"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Who We Are Section - Enhanced with Background */}
+      <SectionBackground imageSrc={getSectionImage('home', 'whoWeAre')}>
+        <section className="section-story-community py-24 relative overflow-hidden">
+          <div className="overlay-pattern"></div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div className="relative scroll-reveal">
               <div className="luxury-card bg-logo-navy p-12 text-center relative overflow-hidden interactive-3d group">
@@ -268,15 +280,17 @@ const Home = () => {
                 <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </SectionBackground>
 
-      {/* Programs & Services - Enhanced */}
-      <section className="py-24 bg-cream-white relative overflow-hidden">
-        <div className="blend-overlay-soft"></div>
-        <div className="particle-container absolute inset-0 opacity-30"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      {/* Programs & Services - Enhanced with Background */}
+      <SectionBackground imageSrc={getSectionImage('home', 'programs')}>
+        <section className="py-24 bg-cream-white relative overflow-hidden">
+          <div className="blend-overlay-soft"></div>
+          <div className="particle-container absolute inset-0 opacity-30"></div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-20 scroll-reveal">
             <h2 className="text-5xl md:text-6xl font-modern-display text-black mb-8">
               Our Programs
@@ -301,19 +315,21 @@ const Home = () => {
                 <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-vibrant-orange to-vibrant-orange-light transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
               </div>
             ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </SectionBackground>
 
-      {/* Testimonials Slider - Enhanced */}
-      <section className="section-story-volunteers py-24 relative overflow-hidden">
-        <div className="overlay-pattern"></div>
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-20 w-32 h-32 bg-white/10 rounded-full animate-float-gentle backdrop-blur-sm"></div>
-          <div className="absolute bottom-20 right-20 w-24 h-24 bg-white/10 rounded-full animate-float-gentle backdrop-blur-sm" style={{animationDelay: '3s'}}></div>
-        </div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      {/* Testimonials Slider - Enhanced with Background */}
+      <SectionBackground imageSrc={getSectionImage('home', 'testimonials')}>
+        <section className="section-story-volunteers py-24 relative overflow-hidden">
+          <div className="overlay-pattern"></div>
+          <div className="absolute inset-0">
+            <div className="absolute top-20 left-20 w-32 h-32 bg-white/10 rounded-full animate-float-gentle backdrop-blur-sm"></div>
+            <div className="absolute bottom-20 right-20 w-24 h-24 bg-white/10 rounded-full animate-float-gentle backdrop-blur-sm" style={{animationDelay: '3s'}}></div>
+          </div>
+          
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-20 scroll-reveal">
             <h2 className="text-5xl md:text-6xl font-modern-display mb-8 text-cream-elegant">
               What Our Community Says
@@ -358,49 +374,52 @@ const Home = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-vibrant-orange/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-luxury"></div>
               </div>
             ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </SectionBackground>
 
-      {/* Call-to-Action Section - Enhanced */}
-      <section className="cta-parallax py-24 text-cream-elegant relative overflow-hidden">
-        {/* Enhanced 3D Floating Elements */}
-        <div className="absolute inset-0">
-          <div className="floating-3d-luxury opacity-30 magnetic-element"></div>
-          <div className="floating-3d-luxury opacity-20 magnetic-element"></div>
-          <div className="floating-3d-luxury opacity-25 magnetic-element"></div>
-          <div className="floating-3d-luxury opacity-15 magnetic-element"></div>
-        </div>
-        
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-1/4 left-1/4 w-40 h-40 bg-vibrant-orange/10 rounded-full animate-float-gentle"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-32 h-32 bg-logo-teal/10 rounded-full animate-float-gentle" style={{animationDelay: '2s'}}></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-vibrant-orange-light/15 rounded-full animate-float-gentle" style={{animationDelay: '4s'}}></div>
-        </div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <div className="scroll-reveal">
-            <h2 className="text-5xl md:text-7xl font-modern-display mb-8 leading-tight animate-text-reveal">
-              Together, We Can Build
-              <br />
-              <span className="text-gradient-animated animate-text-shimmer">Stronger Communities</span>
-            </h2>
-            <p className="text-2xl font-elegant-body mb-12 max-w-4xl mx-auto leading-relaxed text-cream-elegant/90 animate-text-reveal" style={{animationDelay: '0.3s'}}>
-              Be part of something bigger. Join our movement and help create the positive change 
-              our communities need and deserve.
-            </p>
-            <Link
-              to="/volunteer"
-              className="liquid-button text-xl px-16 py-6 inline-flex items-center group animate-text-reveal shadow-luxury-glow-lg hover:shadow-luxury-glow-lg"
-              style={{animationDelay: '0.6s'}}
-            >
-              Become a Volunteer
-              <ArrowRight className="ml-4 w-7 h-7 group-hover:translate-x-1 transition-transform" />
-            </Link>
+      {/* Call-to-Action Section - Enhanced with Background */}
+      <SectionBackground imageSrc={getSectionImage('home', 'cta')}>
+        <section className="cta-parallax py-24 text-cream-elegant relative overflow-hidden">
+          {/* Enhanced 3D Floating Elements */}
+          <div className="absolute inset-0">
+            <div className="floating-3d-luxury opacity-30 magnetic-element"></div>
+            <div className="floating-3d-luxury opacity-20 magnetic-element"></div>
+            <div className="floating-3d-luxury opacity-25 magnetic-element"></div>
+            <div className="floating-3d-luxury opacity-15 magnetic-element"></div>
           </div>
-        </div>
-      </section>
+          
+          {/* Animated Background Elements */}
+          <div className="absolute inset-0">
+            <div className="absolute top-1/4 left-1/4 w-40 h-40 bg-vibrant-orange/10 rounded-full animate-float-gentle"></div>
+            <div className="absolute bottom-1/4 right-1/4 w-32 h-32 bg-logo-teal/10 rounded-full animate-float-gentle" style={{animationDelay: '2s'}}></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-vibrant-orange-light/15 rounded-full animate-float-gentle" style={{animationDelay: '4s'}}></div>
+          </div>
+          
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <div className="scroll-reveal">
+              <h2 className="text-5xl md:text-7xl font-modern-display mb-8 leading-tight animate-text-reveal">
+                Together, We Can Build
+                <br />
+                <span className="text-gradient-animated animate-text-shimmer">Stronger Communities</span>
+              </h2>
+              <p className="text-2xl font-elegant-body mb-12 max-w-4xl mx-auto leading-relaxed text-cream-elegant/90 animate-text-reveal" style={{animationDelay: '0.3s'}}>
+                Be part of something bigger. Join our movement and help create the positive change 
+                our communities need and deserve.
+              </p>
+              <Link
+                to="/volunteer"
+                className="liquid-button text-xl px-16 py-6 inline-flex items-center group animate-text-reveal shadow-luxury-glow-lg hover:shadow-luxury-glow-lg"
+                style={{animationDelay: '0.6s'}}
+              >
+                Become a Volunteer
+                <ArrowRight className="ml-4 w-7 h-7 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
+        </section>
+      </SectionBackground>
     </div>
   );
 };
