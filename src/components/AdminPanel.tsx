@@ -35,6 +35,21 @@ type SubmissionWithType = (ProjectSubmission | EventSubmission) & {
   submissionType: 'project' | 'event';
 };
 
+// Column headers for application tables
+const PROJECT_APPLICATION_COLUMNS = [
+  'Project', 'Name', 'Email', 'Phone', 'Preferred Role', 'Availability',
+  'Skills', 'Languages', 'Transport', 'Equipment', 'Accessibility',
+  'Emergency Contact', 'Consents', 'Contact Method', 'Portfolio',
+  'Heard About Us', 'WhatsApp', 'Experience', 'Motivation', 'Submitted'
+];
+
+const EVENT_REGISTRATION_COLUMNS = [
+  'Event', 'Name', 'Email', 'Phone', 'Emergency Contact', 'Dietary',
+  'Medical', 'Shift', 'Sessions', 'Team', 'T‑shirt', 'Accessibility',
+  'Consents', 'Contact Method', 'Heard About Us', 'WhatsApp',
+  'Experience', 'Submitted'
+];
+
 const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState('responses');
   const [responses, setResponses] = useState<Response[]>([]);
@@ -635,6 +650,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  // Helper function to format emergency contact display
+  const formatEmergencyContact = (emergencyContact: any, relation?: string) => {
+    if (!emergencyContact) return '—';
+    const name = emergencyContact.name || '';
+    const phone = emergencyContact.phone || '';
+    const rel = relation ? `(${relation})` : '';
+    return `${name} ${rel} ${phone}`.trim() || '—';
+  };
+
   return (
     <>
       {/* Backdrop - Z-INDEX: 60 */}
@@ -928,7 +952,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 <h4 className="text-xl font-luxury-heading text-black mb-4">Project Users</h4>
                 {renderGroupedTable(
                   groupBy(projectApplications, (a) => a.projectTitle || 'Untitled Project'),
-                  ['Project', 'Name', 'Email', 'Phone', 'Preferred Role', 'Availability', 'Skills', 'Languages', 'Transport', 'Equipment', 'Accessibility', 'Emergency Contact', 'Consents', 'Contact Method', 'Portfolio', 'Heard About Us', 'WhatsApp', 'Experience', 'Motivation', 'Submitted'],
+                  PROJECT_APPLICATION_COLUMNS,
                   (row) => [
                     row.projectId ? (<a href={`/projects/${row.projectId}`} className="text-blue-600 hover:underline" target="_blank" rel="noreferrer">Open</a>) : '—',
                     row.name,
@@ -941,7 +965,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                     row.transportAvailable ? 'Yes' : 'No',
                     Array.isArray(row.equipment) ? row.equipment.join(', ') : '—',
                     row.accessibilityNeeds || '—',
-                    row.emergencyContact ? `${row.emergencyContact.name || ''} (${row.emergencyContactRelation || 'N/A'}) ${row.emergencyContact.phone || ''}`.trim() || '—' : '—',
+                    formatEmergencyContact(row.emergencyContact, row.emergencyContactRelation),
                     row.consents ? [row.consents.liability ? 'Liability' : null, row.consents.photo ? 'Photo' : null, row.consents.backgroundCheck ? 'Background' : null].filter(Boolean).join(', ') || '—' : '—',
                     row.preferredContactMethod || '—',
                     Array.isArray(row.portfolioUrls) ? row.portfolioUrls.join(', ') : '—',
@@ -962,7 +986,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 <h4 className="text-xl font-luxury-heading text-black mb-4">Event Users</h4>
                 {renderGroupedTable(
                   groupBy(eventRegistrations, (a) => a.eventTitle || 'Untitled Event'),
-                  ['Event', 'Name', 'Email', 'Phone', 'Emergency Contact', 'Dietary', 'Medical', 'Shift', 'Sessions', 'Team', 'T‑shirt', 'Accessibility', 'Consents', 'Contact Method', 'Heard About Us', 'WhatsApp', 'Experience', 'Submitted'],
+                  EVENT_REGISTRATION_COLUMNS,
                   (row) => [
                     row.eventId ? (<a href={`/events/${row.eventId}`} className="text-blue-600 hover:underline" target="_blank" rel="noreferrer">Open</a>) : '—',
                     row.name,
