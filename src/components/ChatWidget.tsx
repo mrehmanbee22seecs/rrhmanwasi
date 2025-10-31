@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Sparkles, Menu, Plus, Clock, Trash2, Bell, ExternalLink, Minimize2, X, Send } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import { useChat } from '../hooks/useChat';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { findBestMatch, formatResponse } from '../utils/kbMatcher';
 import { getEnhancedKB } from '../services/localKbService';
 import ChatWidgetModal from './ChatWidgetModal';
+import UpgradePrompt from './UpgradePrompt';
 
 interface Message {
   id: string;
@@ -22,6 +24,7 @@ interface Message {
 
 const ChatWidget = () => {
   const { currentUser } = useAuth();
+  const { canSendChatMessage, incrementChatUsage, userSubscription, features } = useSubscription();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -30,6 +33,7 @@ const ChatWidget = () => {
   const [kbPages, setKbPages] = useState<any[]>([]);
   const [suppressButton, setSuppressButton] = useState(false);
   const [rateInfo, setRateInfo] = useState<any>(null);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -147,12 +151,22 @@ const ChatWidget = () => {
 
   const handleSend = async () => {
     if (!inputText.trim()) return;
+
+    // Check subscription limits
+    const canSend = await canSendChatMessage();
+    if (!canSend) {
+      setShowUpgradePrompt(true);
+      return;
+    }
+
     const userMessage = inputText.trim();
     setInputText('');
     setIsTyping(true);
 
     try {
       await sendMessage(userMessage);
+      // Increment usage after successful send
+      await incrementChatUsage();
       // Bot response happens instantly via real-time listener - no artificial delay needed
     } catch (error: any) {
       console.error('Error sending message:', error);
@@ -396,6 +410,32 @@ const ChatWidget = () => {
                         Close Chat
                       </button>
                     )}
+                  </div>
+                )}
+                
+                {/* Subscription Usage Display */}
+                {userSubscription && (
+                  <div className="mb-2 px-2 py-1 bg-gradient-to-r from-blue-50 to-purple-50 rounded text-xs flex items-center justify-between">
+                    <span className="text-blue-700">
+                      {features.chatMessagesPerDay === 'unlimited' ? (
+                        <>✨ Unlimited messages</>
+                      ) : (
+                        <>📊 {userSubscription.usage.chatMessagesToday || 0}/{features.chatMessagesPerDay} messages today</>
+                      )}
+                    </span>
+                  </div>
+                )}
+
+                {/* Upgrade Prompt */}
+                {showUpgradePrompt && (
+                  <div className="mb-3">
+                    <UpgradePrompt
+                      feature="chat messages"
+                      requiredTier="supporter"
+                      currentUsage={userSubscription?.usage.chatMessagesToday || 0}
+                      limit={typeof features.chatMessagesPerDay === 'number' ? features.chatMessagesPerDay : undefined}
+                      inline={false}
+                    />
                   </div>
                 )}
                 
