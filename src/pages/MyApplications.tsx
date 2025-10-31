@@ -3,11 +3,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { db } from '../config/firebase';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { ProjectApplicationEntry, EventRegistrationEntry } from '../types/submissions';
-import { Edit, Calendar, MapPin, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Edit, Calendar, CheckCircle, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import EditApplicationModal from '../components/EditApplicationModal';
+import EditRegistrationModal from '../components/EditRegistrationModal';
 
 const MyApplications: React.FC = () => {
-  const { currentUser, userData } = useAuth();
+  const { currentUser } = useAuth();
   const [projectApplications, setProjectApplications] = useState<ProjectApplicationEntry[]>([]);
   const [eventRegistrations, setEventRegistrations] = useState<EventRegistrationEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,6 +20,7 @@ const MyApplications: React.FC = () => {
     if (currentUser?.email) {
       fetchMyApplications();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
   const fetchMyApplications = async () => {
@@ -57,7 +60,7 @@ const MyApplications: React.FC = () => {
     }
   };
 
-  const formatTimestamp = (ts: any) => {
+  const formatTimestamp = (ts: unknown) => {
     if (!ts) return 'N/A';
     try {
       if (typeof ts?.toDate === 'function') return ts.toDate().toLocaleString();
@@ -221,9 +224,5 @@ const MyApplications: React.FC = () => {
     </div>
   );
 };
-
-// Import these components (will be created next)
-import EditApplicationModal from '../components/EditApplicationModal';
-import EditRegistrationModal from '../components/EditRegistrationModal';
 
 export default MyApplications;

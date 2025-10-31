@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import { collection, getDocs, doc, getDoc, updateDoc, deleteDoc, addDoc, query, orderBy, where, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { ProjectSubmission, EventSubmission, SubmissionStatus, ProjectApplicationEntry, EventRegistrationEntry, VolunteerApplicationEntry, NewsletterSubscriberEntry } from '../types/submissions';
+import { ProjectSubmission, EventSubmission, SubmissionStatus, ProjectApplicationEntry, EventRegistrationEntry, VolunteerApplicationEntry, NewsletterSubscriberEntry, ProjectApplicationEditRequest, EventRegistrationEditRequest } from '../types/submissions';
 import { sendEmail, formatSubmissionStatusUpdateEmail } from '../utils/emailService';
 import { migrateApprovedSubmissions } from '../utils/migrateVisibility';
 import ChatsPanel from './Admin/ChatsPanel';
@@ -58,8 +58,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const [eventRegistrations, setEventRegistrations] = useState<EventRegistrationEntry[]>([]);
   const [volunteerApplications, setVolunteerApplications] = useState<VolunteerApplicationEntry[]>([]);
   const [newsletterSubscribers, setNewsletterSubscribers] = useState<NewsletterSubscriberEntry[]>([]);
-  const [projectEditRequests, setProjectEditRequests] = useState<any[]>([]);
-  const [eventEditRequests, setEventEditRequests] = useState<any[]>([]);
+  const [projectEditRequests, setProjectEditRequests] = useState<ProjectApplicationEditRequest[]>([]);
+  const [eventEditRequests, setEventEditRequests] = useState<EventRegistrationEditRequest[]>([]);
   const [editableContent, setEditableContent] = useState<EditableContent[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingContent, setEditingContent] = useState<string | null>(null);
@@ -251,18 +251,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
       // Fetch project edit requests
       const projEditQ = query(collection(db, 'project_application_edit_requests'), orderBy('submittedAt', 'desc'));
       const projEditSnap = await getDocs(projEditQ);
-      const projEditReqs: any[] = [];
+      const projEditReqs: ProjectApplicationEditRequest[] = [];
       projEditSnap.forEach((d) => {
-        projEditReqs.push({ id: d.id, ...d.data() });
+        projEditReqs.push({ id: d.id, ...d.data() } as ProjectApplicationEditRequest);
       });
       setProjectEditRequests(projEditReqs);
 
       // Fetch event edit requests
       const evtEditQ = query(collection(db, 'event_registration_edit_requests'), orderBy('submittedAt', 'desc'));
       const evtEditSnap = await getDocs(evtEditQ);
-      const evtEditReqs: any[] = [];
+      const evtEditReqs: EventRegistrationEditRequest[] = [];
       evtEditSnap.forEach((d) => {
-        evtEditReqs.push({ id: d.id, ...d.data() });
+        evtEditReqs.push({ id: d.id, ...d.data() } as EventRegistrationEditRequest);
       });
       setEventEditRequests(evtEditReqs);
     } catch (e) {
