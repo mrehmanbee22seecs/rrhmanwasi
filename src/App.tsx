@@ -19,6 +19,7 @@ import CreateSubmission from './pages/CreateSubmission';
 import Reminders from './pages/Reminders';
 import AdminSetup from './pages/AdminSetup';
 import AdminKbManager from './pages/AdminKbManager';
+import MyApplications from './pages/MyApplications';
 import ChatWidget from './components/ChatWidget';
 import DonationWidget from './components/DonationWidget';
 import AdminToggle from './components/AdminToggle';
@@ -50,6 +51,7 @@ const AppContent = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create-submission" element={<CreateSubmission />} />
           <Route path="/reminders" element={<Reminders />} />
+          <Route path="/my-applications" element={<MyApplications />} />
           <Route path="/admin-setup" element={<AdminSetup />} />
           <Route path="/admin/kb-manager" element={<AdminKbManager />} />
         </Routes>

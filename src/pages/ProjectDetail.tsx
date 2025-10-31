@@ -721,7 +721,11 @@ const ProjectDetail = () => {
             {/* Sidebar */}
             <div className="space-y-8">
               {/* Capacity & Skills */}
-              {(displayProject.capacity || displayProject.requiredSkills || displayProject.preferredSkills) && (
+              {(
+                (typeof displayProject.capacity === 'number') ||
+                (Array.isArray(displayProject.requiredSkills) && displayProject.requiredSkills.length > 0) ||
+                (Array.isArray(displayProject.preferredSkills) && displayProject.preferredSkills.length > 0)
+              ) && (
                 <div className="luxury-card bg-cream-white p-8">
                   <h3 className="text-2xl font-luxury-heading text-black mb-4">Participation & Skills</h3>
                   <div className="space-y-3 text-black">
@@ -782,7 +786,11 @@ const ProjectDetail = () => {
               )}
 
               {/* Logistics */}
-              {(displayProject.materialsList || displayProject.accessibilityInfo || displayProject.safetyNotes) && (
+              {(
+                (Array.isArray(displayProject.materialsList) && displayProject.materialsList.length > 0) ||
+                (displayProject.accessibilityInfo) ||
+                (displayProject.safetyNotes)
+              ) && (
                 <div className="luxury-card bg-cream-white p-8">
                   <h3 className="text-2xl font-luxury-heading text-black mb-4">Logistics</h3>
                   <div className="space-y-3 text-black">
