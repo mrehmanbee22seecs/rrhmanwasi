@@ -7,6 +7,12 @@
 
 import { tokenize } from '../utils/kbMatcher';
 
+// Configuration constants
+const MAX_CONTENT_LENGTH = 10000; // Maximum content length to store
+const MAX_TOKENS = 1000; // Maximum tokens to store
+const MAX_KEYWORDS = 50; // Maximum keywords to extract
+const MIN_CONTENT_LENGTH = 50; // Minimum content length to be valid
+
 interface PageContent {
   id: string;
   url: string;
@@ -107,8 +113,9 @@ function extractMetaKeywords(): string[] {
 
 /**
  * Generate page ID from URL
+ * Shared utility for consistent ID generation
  */
-function generatePageId(url: string): string {
+export function generatePageId(url: string): string {
   return url
     .replace(/^\//, '')
     .replace(/\/$/, '')
@@ -150,7 +157,7 @@ export function scrapeCurrentPage(): PageContent | null {
     const headings = extractHeadings(mainElement);
     const metaKeywords = extractMetaKeywords();
     
-    if (content.length < 50) {
+    if (content.length < MIN_CONTENT_LENGTH) {
       console.warn('Content too short, skipping page:', url);
       return null;
     }
@@ -166,10 +173,10 @@ export function scrapeCurrentPage(): PageContent | null {
       id: generatePageId(url),
       url,
       title,
-      content: content.substring(0, 10000), // Limit size
-      tokens: tokens.slice(0, 1000), // Limit tokens
+      content: content.substring(0, MAX_CONTENT_LENGTH),
+      tokens: tokens.slice(0, MAX_TOKENS),
       headings,
-      keywords: keywords.slice(0, 50), // Limit keywords
+      keywords: keywords.slice(0, MAX_KEYWORDS),
       lastScraped: new Date(),
       sourceType: 'auto-scraped'
     };

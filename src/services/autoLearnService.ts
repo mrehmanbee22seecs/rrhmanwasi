@@ -6,12 +6,20 @@
  */
 
 import { tokenize } from '../utils/kbMatcher';
+
+// Configuration constants
+const SCRAPING_DELAY_MS = 100; // Delay between page scrapes
+const IFRAME_TIMEOUT_MS = 5000; // Timeout for iframe loading
+const AUTO_LEARN_INIT_DELAY_MS = 5000; // Delay before starting auto-learning
+const KB_REFRESH_THRESHOLD_DAYS = 7; // Refresh KB if older than this
+const MS_PER_DAY = 1000 * 60 * 60 * 24; // Milliseconds in a day
 import { 
   scrapeCurrentPage, 
   discoverSitePages, 
   saveScrapedKB, 
   loadScrapedKB,
-  mergeWithKB 
+  mergeWithKB,
+  generatePageId
 } from './contentScraperService';
 import { getEnhancedKB } from './localKbService';
 
@@ -39,7 +47,7 @@ async function scrapePageViaIframe(url: string): Promise<AutoLearnPage | null> {
     iframe.style.height = '0';
     document.body.appendChild(iframe);
     
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: number;
     
     const cleanup = () => {
       clearTimeout(timeoutId);
@@ -48,12 +56,12 @@ async function scrapePageViaIframe(url: string): Promise<AutoLearnPage | null> {
       }
     };
     
-    // Timeout after 5 seconds
+    // Timeout after configured delay
     timeoutId = setTimeout(() => {
       cleanup();
       console.warn(`Timeout scraping ${url}`);
       resolve(null);
-    }, 5000);
+    }, IFRAME_TIMEOUT_MS);
     
     iframe.onload = () => {
       try {
@@ -111,7 +119,7 @@ async function scrapePageViaIframe(url: string): Promise<AutoLearnPage | null> {
         const keywords = headings.flatMap(h => tokenize(h));
         
         const page: AutoLearnPage = {
-          id: url.replace(/^\//, '').replace(/\/$/, '').replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'home',
+          id: generatePageId(url),
           url,
           title,
           content: content.substring(0, 10000),
@@ -192,7 +200,7 @@ export async function autoLearnFromWebsite(
       }
       
       // Small delay between requests to avoid overwhelming
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, SCRAPING_DELAY_MS));
     } catch (error) {
       console.error(`Error learning from ${url}:`, error);
     }
@@ -255,9 +263,9 @@ export function needsAutoLearning(): boolean {
     const parsed = JSON.parse(data);
     const lastUpdated = new Date(parsed.lastUpdated);
     const now = new Date();
-    const daysSince = (now.getTime() - lastUpdated.getTime()) / (1000 * 60 * 60 * 24);
+    const daysSince = (now.getTime() - lastUpdated.getTime()) / MS_PER_DAY;
     
-    return daysSince > 7;
+    return daysSince > KB_REFRESH_THRESHOLD_DAYS;
   } catch {
     return true;
   }
@@ -275,14 +283,14 @@ export function initAutoLearning(): void {
   
   console.log('🚀 Initializing background auto-learning...');
   
-  // Run in background after a delay
+  // Run in background after configured delay
   setTimeout(() => {
     autoLearnFromWebsite((current, total, url) => {
       console.log(`Learning progress: ${current}/${total} - ${url}`);
     }).catch(error => {
       console.error('Auto-learning failed:', error);
     });
-  }, 5000); // Wait 5 seconds before starting
+  }, AUTO_LEARN_INIT_DELAY_MS);
 }
 
 /**
