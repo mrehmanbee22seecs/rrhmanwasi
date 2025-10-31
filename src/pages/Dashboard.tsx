@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Calendar, Target, Heart, TrendingUp, Clock, MapPin, Users, Award, Settings, Bell, BookOpen, Activity, Star, ChevronRight, Filter, Search, Plus, FileText, Eye, CreditCard as Edit3, CheckCircle, Sparkles, Zap, Palette, Mail, RefreshCw, Lock, AlertCircle } from 'lucide-react';
+import { User, Calendar, Target, Heart, TrendingUp, Clock, MapPin, Users, Award, Settings, Bell, BookOpen, Activity, Star, ChevronRight, Filter, Search, Plus, FileText, Eye, CreditCard as Edit3, CheckCircle, Sparkles, Zap, Palette, Mail, RefreshCw, Lock, AlertCircle, Crown } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
+import SubscriptionBadge from '../components/SubscriptionBadge';
 import { collection, query, where, getDocs, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { ProjectSubmission, EventSubmission, SubmissionStatus } from '../types/submissions';
@@ -32,6 +34,7 @@ type SubmissionWithType = (ProjectSubmission | EventSubmission) & {
 const Dashboard = () => {
   const { userData, currentUser, updatePassword, resetPassword, resendEmailVerification } = useAuth();
   const { currentTheme, setTheme, themes } = useTheme();
+  const { currentTier, features, userSubscription } = useSubscription();
   const [activities, setActivities] = useState<DashboardActivity[]>([]);
   const [stats, setStats] = useState<UserStats>({
     projectsJoined: 0,
@@ -344,9 +347,23 @@ const Dashboard = () => {
             <div className="relative z-10">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex-1">
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-modern-display text-logo-navy font-bold mb-1 sm:mb-2">
-                    Welcome back, {userData?.displayName || currentUser?.email?.split('@')[0] || 'Friend'}! 👋
-                  </h1>
+                  <div className="flex items-center gap-3 flex-wrap mb-2">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-modern-display text-logo-navy font-bold">
+                      Welcome back, {userData?.displayName || currentUser?.email?.split('@')[0] || 'Friend'}! 👋
+                    </h1>
+                  </div>
+                  <div className="flex items-center gap-3 flex-wrap mb-2">
+                    <SubscriptionBadge size="md" showUpgrade={true} />
+                    {currentTier !== 'free' && (
+                      <Link
+                        to="/pricing"
+                        className="text-xs text-vibrant-orange hover:text-vibrant-orange-dark flex items-center gap-1 font-medium"
+                      >
+                        <Crown className="w-3 h-3" />
+                        Manage Subscription
+                      </Link>
+                    )}
+                  </div>
                   <p className="text-base sm:text-lg lg:text-xl text-logo-navy-light font-elegant-body">
                     Ready to make a difference today?
                   </p>

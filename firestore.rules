@@ -171,6 +171,17 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // === PAYMENT TRANSACTIONS ===
+    match /payment_transactions/{transactionId} {
+      // Users can read their own transactions, admins can read all
+      allow read: if isAuthenticated() && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+      // Authenticated users can create transactions
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      // Only admins can update/delete transactions
+      allow update, delete: if isAdmin();
+    }
+
     match /{document=**} { allow read, write: if false; }
   }
 }

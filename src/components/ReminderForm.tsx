@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Clock, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { createReminder } from '../services/reminderService';
 import { useAuth } from '../contexts/AuthContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
+import UpgradePrompt from './UpgradePrompt';
 
 interface ReminderFormProps {
   projectName?: string;
@@ -13,6 +15,7 @@ export const ReminderForm: React.FC<ReminderFormProps> = ({
   onSuccess 
 }) => {
   const { currentUser, userData } = useAuth();
+  const { canCreateReminder, incrementReminder, userSubscription, features } = useSubscription();
   const [formData, setFormData] = useState({
     email: userData?.email || '',
     name: userData?.displayName || '',
@@ -24,6 +27,7 @@ export const ReminderForm: React.FC<ReminderFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -40,6 +44,14 @@ export const ReminderForm: React.FC<ReminderFormProps> = ({
     setLoading(true);
     setError('');
     setSuccess(false);
+
+    // Check subscription limits
+    const canCreate = await canCreateReminder();
+    if (!canCreate) {
+      setShowUpgradePrompt(true);
+      setLoading(false);
+      return;
+    }
 
     try {
       // Validate form
@@ -64,6 +76,9 @@ export const ReminderForm: React.FC<ReminderFormProps> = ({
       });
 
       if (result.success) {
+        // Increment usage counter
+        await incrementReminder();
+        
         setSuccess(true);
         // Reset message and datetime fields
         setFormData(prev => ({
@@ -101,6 +116,34 @@ export const ReminderForm: React.FC<ReminderFormProps> = ({
           <p className="text-gray-600 text-sm">Get notified at the perfect time</p>
         </div>
       </div>
+
+      {/* Usage Info */}
+      {userSubscription && (
+        <div className="mb-4 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+          <p className="text-sm text-gray-700">
+            {features.remindersPerMonth === 'unlimited' ? (
+              <><span className="font-bold text-purple-700">✨ Unlimited</span> reminders</>
+            ) : (
+              <>
+                <span className="font-bold text-purple-700">{userSubscription.usage.remindersThisMonth || 0}/{features.remindersPerMonth}</span> reminders used this month
+              </>
+            )}
+          </p>
+        </div>
+      )}
+
+      {/* Upgrade Prompt */}
+      {showUpgradePrompt && (
+        <div className="mb-6">
+          <UpgradePrompt
+            feature="reminders"
+            requiredTier="supporter"
+            currentUsage={userSubscription?.usage.remindersThisMonth || 0}
+            limit={typeof features.remindersPerMonth === 'number' ? features.remindersPerMonth : undefined}
+            inline={false}
+          />
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

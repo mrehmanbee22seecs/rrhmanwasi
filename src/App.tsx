@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AdminProvider } from './contexts/AdminContext';
+import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import EditableHeader from './components/EditableHeader';
 import EditableFooter from './components/EditableFooter';
@@ -19,6 +20,7 @@ import CreateSubmission from './pages/CreateSubmission';
 import Reminders from './pages/Reminders';
 import AdminSetup from './pages/AdminSetup';
 import AdminKbManager from './pages/AdminKbManager';
+import Pricing from './pages/Pricing';
 import ChatWidget from './components/ChatWidget';
 import DonationWidget from './components/DonationWidget';
 import AdminToggle from './components/AdminToggle';
@@ -52,6 +54,7 @@ const AppContent = () => {
           <Route path="/reminders" element={<Reminders />} />
           <Route path="/admin-setup" element={<AdminSetup />} />
           <Route path="/admin/kb-manager" element={<AdminKbManager />} />
+          <Route path="/pricing" element={<Pricing />} />
         </Routes>
       </main>
       <EditableFooter />
@@ -65,15 +68,17 @@ const AppContent = () => {
 function App() {
   return (
     <AuthProvider>
-      <AdminProvider>
-        <ThemeProvider>
-          <Router>
-            <ProtectedRoute>
-              <AppContent />
-            </ProtectedRoute>
-          </Router>
-        </ThemeProvider>
-      </AdminProvider>
+      <SubscriptionProvider>
+        <AdminProvider>
+          <ThemeProvider>
+            <Router>
+              <ProtectedRoute>
+                <AppContent />
+              </ProtectedRoute>
+            </Router>
+          </ThemeProvider>
+        </AdminProvider>
+      </SubscriptionProvider>
     </AuthProvider>
   );
 }
