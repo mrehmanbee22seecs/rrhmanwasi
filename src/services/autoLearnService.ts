@@ -159,9 +159,16 @@ export async function autoLearnFromWebsite(
   const currentPage = scrapeCurrentPage();
   if (currentPage) {
     learned.push({
-      ...currentPage,
+      id: currentPage.id,
+      url: currentPage.url,
+      title: currentPage.title,
+      content: currentPage.content,
+      tokens: currentPage.tokens,
+      keywords: currentPage.keywords,
+      headings: currentPage.headings,
+      lastUpdated: new Date(),
       source: 'auto-learned'
-    } as AutoLearnPage);
+    });
   }
   
   // Scrape other pages via iframe
@@ -193,8 +200,19 @@ export async function autoLearnFromWebsite(
   
   console.log(`✅ Auto-learning complete! Learned from ${learned.length}/${pages.length} pages`);
   
-  // Save to localStorage
-  saveScrapedKB(learned);
+  // Save to localStorage (convert to PageContent format)
+  const pageContents = learned.map(page => ({
+    id: page.id,
+    url: page.url,
+    title: page.title,
+    content: page.content,
+    tokens: page.tokens,
+    keywords: page.keywords,
+    headings: page.headings,
+    lastScraped: page.lastUpdated,
+    sourceType: 'auto-scraped' as const
+  }));
+  saveScrapedKB(pageContents);
   
   return learned;
 }
@@ -297,6 +315,6 @@ export function getKBStatistics() {
     totalEntries: smartKB.length,
     totalTokens,
     averageTokensPerPage: Math.round(totalTokens / smartKB.length),
-    lastUpdated: autoLearnedKB.length > 0 ? new Date(autoLearnedKB[0].lastUpdated) : null
+    lastUpdated: autoLearnedKB.length > 0 ? autoLearnedKB[0].lastScraped : null
   };
 }
