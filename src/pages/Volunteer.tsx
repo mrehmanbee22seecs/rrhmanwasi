@@ -8,6 +8,8 @@ import { useScrollReveal } from '../hooks/useScrollReveal';
 import { useMagneticEffect } from '../hooks/useMagneticEffect';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import HeroVideoBackground from '../components/HeroVideoBackground';
+import { getHeroVideo } from '../utils/communityServiceAssets';
 
 const Volunteer = () => {
   const { logCustomActivity } = useActivityLogger();
@@ -133,10 +135,16 @@ const Volunteer = () => {
     }
   ];
 
+  const volunteerVideo = getHeroVideo('volunteer');
+
   return (
     <div className="py-12">
-      {/* Header - Enhanced */}
-      <section className="hero-luxury-bg hero-volunteer text-cream-soft py-24 relative overflow-hidden">
+      {/* Header - Enhanced with Video */}
+      <HeroVideoBackground
+        videoSrc={volunteerVideo.video}
+        fallbackImage={volunteerVideo.poster}
+        className="hero-luxury-bg hero-volunteer text-cream-soft py-24 relative overflow-hidden"
+      >
         <div className="floating-3d-luxury magnetic-element"></div>
         <div className="floating-3d-luxury magnetic-element"></div>
         <div className="floating-3d-luxury magnetic-element"></div>
@@ -159,7 +167,7 @@ const Volunteer = () => {
             </p>
           </div>
         </div>
-      </section>
+      </HeroVideoBackground>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Why Volunteer Section - Enhanced */}

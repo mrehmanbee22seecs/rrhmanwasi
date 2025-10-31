@@ -7,6 +7,8 @@ import { useScrollReveal } from '../hooks/useScrollReveal';
 import { useMagneticEffect } from '../hooks/useMagneticEffect';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import HeroVideoBackground from '../components/HeroVideoBackground';
+import { getHeroVideo } from '../utils/communityServiceAssets';
 
 const NewsletterSignup: React.FC<{ source?: 'contact' | 'footer' | 'other'; }> = ({ source = 'contact' }) => {
   const [email, setEmail] = useState('');
@@ -176,10 +178,16 @@ const Contact = () => {
     'Other'
   ];
 
+  const contactVideo = getHeroVideo('contact');
+
   return (
     <div className="py-12">
-      {/* Header - Enhanced */}
-      <section className="hero-luxury-bg hero-contact text-cream-soft py-24 relative overflow-hidden">
+      {/* Header - Enhanced with Video */}
+      <HeroVideoBackground
+        videoSrc={contactVideo.video}
+        fallbackImage={contactVideo.poster}
+        className="hero-luxury-bg hero-contact text-cream-soft py-24 relative overflow-hidden"
+      >
         <div className="floating-3d-luxury magnetic-element"></div>
         <div className="floating-3d-luxury magnetic-element"></div>
         <div className="floating-3d-luxury magnetic-element"></div>
@@ -202,7 +210,7 @@ const Contact = () => {
             </p>
           </div>
         </div>
-      </section>
+      </HeroVideoBackground>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Contact Information Cards - Enhanced */}

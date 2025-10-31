@@ -7,6 +7,9 @@ import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { ProjectSubmission } from '../types/submissions';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { useMagneticEffect } from '../hooks/useMagneticEffect';
+import HeroVideoBackground from '../components/HeroVideoBackground';
+import SectionBackground from '../components/SectionBackground';
+import { getHeroVideo, getSectionImage } from '../utils/communityServiceAssets';
 
 const Projects = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -256,10 +259,16 @@ Or create the index in Firebase Console.
     }
   };
 
+  const projectsVideo = getHeroVideo('projects');
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream-white via-white to-cream-white">
-      {/* Hero Section - Enhanced */}
-      <div className="hero-luxury-bg hero-projects text-cream-elegant py-20 relative overflow-hidden">
+      {/* Hero Section - Enhanced with Video */}
+      <HeroVideoBackground
+        videoSrc={projectsVideo.video}
+        fallbackImage={projectsVideo.poster}
+        className="hero-luxury-bg hero-projects text-cream-elegant py-20 relative overflow-hidden"
+      >
         <div className="floating-3d-luxury magnetic-element"></div>
         <div className="floating-3d-luxury magnetic-element"></div>
         <div className="floating-3d-luxury magnetic-element"></div>
@@ -283,7 +292,7 @@ Or create the index in Firebase Console.
             </p>
           </div>
         </div>
-      </div>
+      </HeroVideoBackground>
 
       {/* Filters Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
