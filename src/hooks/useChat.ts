@@ -22,6 +22,8 @@ const formatResponse: any = kbMatcher?.formatResponse;
 
 // Local KB Service (no Firestore needed - works on Spark plan)
 import { getEnhancedKB } from '../services/localKbService';
+// Smart KB with auto-learning
+import { getSmartKB } from '../services/autoLearnService';
 
 // Legacy imports
 let findBestMatch: any = null;
@@ -108,12 +110,17 @@ export function useChat(userId: string | null, chatId?: string) {
   useEffect(() => {
     const loadKb = () => {
       try {
-        // Load from local seed data - works on Spark plan, no Cloud Functions needed
-        const pages = getEnhancedKB();
+        // Load smart KB that combines manual + auto-learned content
+        // Auto-learns from website pages automatically like ChatGPT
+        const pages = getSmartKB();
         setKbPages(pages);
-        console.log(`✅ Loaded ${pages.length} KB pages for instant intelligent responses`);
+        console.log(`🤖 Loaded ${pages.length} KB pages (smart auto-learning enabled)`);
       } catch (error) {
         console.error('Error loading KB:', error);
+        // Fallback to manual KB
+        const fallbackPages = getEnhancedKB();
+        setKbPages(fallbackPages);
+        console.log(`⚠️ Using fallback KB with ${fallbackPages.length} pages`);
       }
     };
     loadKb();

@@ -25,6 +25,7 @@ import AdminToggle from './components/AdminToggle';
 import { useActivityLogger } from './hooks/useActivityLogger';
 import { setupMigrationTools } from './utils/runMigration';
 import { initScrollReveal } from './utils/scrollReveal';
+import { initAutoLearning } from './services/autoLearnService';
 
 const AppContent = () => {
   useActivityLogger();
@@ -32,6 +33,8 @@ const AppContent = () => {
   useEffect(() => {
     setupMigrationTools();
     initScrollReveal();
+    // Initialize smart KB auto-learning in background
+    initAutoLearning();
   }, []);
 
   return (
