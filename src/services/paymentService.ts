@@ -172,9 +172,30 @@ export const sendPaymentNotificationEmail = async (
   amount: number,
   transactionId: string
 ): Promise<void> => {
-  // This will integrate with the existing MailerSend service
-  console.log('Payment notification email:', { email, tier, amount, transactionId });
-  // TODO: Integrate with mailerSendEmailService
+  try {
+    // TODO: Integrate with mailerSendEmailService when email service is configured
+    // For now, log the email that would be sent
+    console.log('Payment confirmation email would be sent:', {
+      to: email,
+      subject: `Payment Confirmed - ${tier} Subscription`,
+      content: {
+        tier,
+        amount,
+        transactionId,
+        message: `Your payment of $${amount} for ${tier} tier has been confirmed!`
+      }
+    });
+    
+    // Uncomment when MailerSend is configured:
+    // await sendEmail({
+    //   to: email,
+    //   subject: `Payment Confirmed - ${tier} Subscription`,
+    //   html: formatPaymentConfirmationEmail({ tier, amount, transactionId })
+    // });
+  } catch (error) {
+    console.error('Failed to send payment notification email:', error);
+    // Don't throw - email failure shouldn't block payment
+  }
 };
 
 /**

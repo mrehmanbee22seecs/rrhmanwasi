@@ -46,8 +46,8 @@ const Pricing = () => {
   const handlePaymentSuccess = () => {
     setShowPaymentModal(false);
     setSelectedTier(null);
-    // Refresh the page to show updated tier
-    window.location.reload();
+    // Navigate to dashboard to show updated tier
+    navigate('/dashboard');
   };
 
   const getTierIcon = (tier: SubscriptionTier) => {

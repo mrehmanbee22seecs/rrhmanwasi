@@ -259,8 +259,12 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       const userRef = doc(db, 'users', currentUser.uid);
       const now = serverTimestamp();
       
-      // Calculate expiration date (30 days from now for paid tiers)
-      const expiresAt = newTier !== 'free' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null;
+      // Calculate expiration date (SUBSCRIPTION_DURATION_DAYS from now for paid tiers)
+      const SUBSCRIPTION_DURATION_DAYS = 30;
+      const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+      const expiresAt = newTier !== 'free' 
+        ? new Date(Date.now() + SUBSCRIPTION_DURATION_DAYS * MILLISECONDS_PER_DAY) 
+        : null;
 
       const updatedSubscription: Partial<UserSubscription> = {
         tier: newTier,

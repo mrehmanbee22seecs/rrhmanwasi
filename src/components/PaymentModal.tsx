@@ -292,7 +292,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ tier, onClose, onSuccess })
                           : PAYMENT_ACCOUNTS.easypaisa.name}
                       </p>
                       <p className="text-lg font-bold text-vibrant-orange mt-2">
-                        Amount: ${amount} (PKR {amount * 280})
+                        Amount: ${amount} (PKR {Math.round(amount * 280)})
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        *Exchange rate may vary
                       </p>
                     </div>
 
@@ -348,7 +351,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ tier, onClose, onSuccess })
                         <p><strong>IBAN:</strong> {PAYMENT_ACCOUNTS.bank.iban}</p>
                         <p><strong>Account Title:</strong> {PAYMENT_ACCOUNTS.bank.accountTitle}</p>
                         <p className="text-lg font-bold text-vibrant-orange mt-2">
-                          Amount: ${amount} (PKR {amount * 280})
+                          Amount: ${amount} (PKR {Math.round(amount * 280)})
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          *Exchange rate may vary
                         </p>
                       </div>
                     </div>

@@ -137,7 +137,7 @@ export const PAYMENT_GATEWAYS: Record<string, PaymentGatewayConfig> = {
 // Payment account details
 export const PAYMENT_ACCOUNTS = {
   jazzcash: {
-    number: '03001234567', // Replace with actual JazzCash number
+    number: '03001234567', // TODO: Replace with actual JazzCash number before production
     name: 'Wasilah Foundation',
   },
   easypaisa: {
