@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, X } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import AdminPanel from './AdminPanel';
 
