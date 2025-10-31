@@ -110,7 +110,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
 
   const fetchApplications = async () => {
     try {
-      // Project Applications
+      // Project Applications - Fetch ALL fields
       const projQ = query(collection(db, 'project_applications'), orderBy('submittedAt', 'desc'));
       const projSnap = await getDocs(projQ);
       const projRows: ProjectApplicationEntry[] = [];
@@ -125,12 +125,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
           phone: data.phone || '',
           experience: data.experience || '',
           motivation: data.motivation || '',
+          preferredRole: data.preferredRole || '',
+          availability: data.availability || '',
+          skills: data.skills || [],
+          languageProficiency: data.languageProficiency || [],
+          transportAvailable: data.transportAvailable || false,
+          equipment: data.equipment || [],
+          accessibilityNeeds: data.accessibilityNeeds || '',
+          emergencyContact: data.emergencyContact || undefined,
+          consents: data.consents || undefined,
+          startAvailabilityDate: data.startAvailabilityDate || '',
+          endAvailabilityDate: data.endAvailabilityDate || '',
+          preferredContactMethod: data.preferredContactMethod || '',
+          portfolioUrls: data.portfolioUrls || [],
+          heardAboutUs: data.heardAboutUs || '',
+          emergencyContactRelation: data.emergencyContactRelation || '',
+          whatsappConsent: data.whatsappConsent || false,
           submittedAt: data.submittedAt,
         });
       });
       setProjectApplications(projRows);
 
-      // Event Registrations
+      // Event Registrations - Fetch ALL fields
       const evtQ = query(collection(db, 'event_registrations'), orderBy('submittedAt', 'desc'));
       const evtSnap = await getDocs(evtQ);
       const evtRows: EventRegistrationEntry[] = [];
@@ -147,12 +163,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
           emergencyContact: data.emergencyContact || '',
           dietaryRestrictions: data.dietaryRestrictions || '',
           experience: data.experience || '',
+          shiftPreference: data.shiftPreference || '',
+          sessionSelections: data.sessionSelections || [],
+          teamPreference: data.teamPreference || '',
+          tShirtSize: data.tShirtSize || '',
+          accessibilityNeeds: data.accessibilityNeeds || '',
+          consents: data.consents || undefined,
+          preferredContactMethod: data.preferredContactMethod || '',
+          heardAboutUs: data.heardAboutUs || '',
+          medicalConditions: data.medicalConditions || '',
+          whatsappConsent: data.whatsappConsent || false,
           submittedAt: data.submittedAt,
         });
       });
       setEventRegistrations(evtRows);
 
-      // Volunteer Applications
+      // Volunteer Applications - Fetch ALL fields
       const volQ = query(collection(db, 'volunteer_applications'), orderBy('submittedAt', 'desc'));
       const volSnap = await getDocs(volQ);
       const volRows: VolunteerApplicationEntry[] = [];
@@ -172,6 +198,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
           interests: Array.isArray(data.interests) ? data.interests : [],
           availability: data.availability || '',
           motivation: data.motivation || '',
+          preferredRole: data.preferredRole || '',
+          languages: data.languages || [],
+          tShirtSize: data.tShirtSize || '',
+          emergencyContact: data.emergencyContact || undefined,
+          heardAboutUs: data.heardAboutUs || '',
+          whatsappConsent: data.whatsappConsent || false,
           submittedAt: data.submittedAt,
         });
       });
@@ -237,7 +269,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     try {
       const dateStr = new Date().toISOString().split('T')[0];
 
-      // Prepare rows
+      // Prepare rows with ALL fields
       const projectRows = projectApplications.map((p) => ({
         'Project Title': p.projectTitle,
         'Name': p.name,
@@ -245,7 +277,23 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
         'Phone': p.phone,
         'Preferred Role': p.preferredRole || '',
         'Availability': p.availability || '',
+        'Start Date': p.startAvailabilityDate || '',
+        'End Date': p.endAvailabilityDate || '',
         'Skills': Array.isArray(p.skills) ? p.skills.join('; ') : '',
+        'Languages': Array.isArray(p.languageProficiency) ? p.languageProficiency.join('; ') : '',
+        'Transport': p.transportAvailable ? 'Yes' : 'No',
+        'Equipment': Array.isArray(p.equipment) ? p.equipment.join('; ') : '',
+        'Accessibility': p.accessibilityNeeds || '',
+        'Emergency Contact Name': p.emergencyContact?.name || '',
+        'Emergency Contact Phone': p.emergencyContact?.phone || '',
+        'Emergency Contact Relation': p.emergencyContactRelation || '',
+        'Liability Consent': p.consents?.liability ? 'Yes' : 'No',
+        'Photo Consent': p.consents?.photo ? 'Yes' : 'No',
+        'Background Check Consent': p.consents?.backgroundCheck ? 'Yes' : 'No',
+        'Preferred Contact': p.preferredContactMethod || '',
+        'Portfolio URLs': Array.isArray(p.portfolioUrls) ? p.portfolioUrls.join('; ') : '',
+        'Heard About Us': p.heardAboutUs || '',
+        'WhatsApp Consent': p.whatsappConsent ? 'Yes' : 'No',
         'Experience': p.experience || '',
         'Motivation': p.motivation || '',
         'Submitted': formatTimestamp(p.submittedAt),
@@ -880,7 +928,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 <h4 className="text-xl font-luxury-heading text-black mb-4">Project Users</h4>
                 {renderGroupedTable(
                   groupBy(projectApplications, (a) => a.projectTitle || 'Untitled Project'),
-                  ['Project', 'Name', 'Email', 'Phone', 'Preferred Role', 'Availability', 'Skills', 'Languages', 'Transport', 'Equipment', 'Accessibility', 'Emergency Contact', 'Consents', 'Experience', 'Motivation', 'Submitted'],
+                  ['Project', 'Name', 'Email', 'Phone', 'Preferred Role', 'Availability', 'Skills', 'Languages', 'Transport', 'Equipment', 'Accessibility', 'Emergency Contact', 'Consents', 'Contact Method', 'Portfolio', 'Heard About Us', 'WhatsApp', 'Experience', 'Motivation', 'Submitted'],
                   (row) => [
                     row.projectId ? (<a href={`/projects/${row.projectId}`} className="text-blue-600 hover:underline" target="_blank" rel="noreferrer">Open</a>) : '—',
                     row.name,
@@ -893,8 +941,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                     row.transportAvailable ? 'Yes' : 'No',
                     Array.isArray(row.equipment) ? row.equipment.join(', ') : '—',
                     row.accessibilityNeeds || '—',
-                    row.emergencyContact ? `${row.emergencyContact.name || ''} ${row.emergencyContact.phone || ''}`.trim() || '—' : '—',
+                    row.emergencyContact ? `${row.emergencyContact.name || ''} (${row.emergencyContactRelation || 'N/A'}) ${row.emergencyContact.phone || ''}`.trim() || '—' : '—',
                     row.consents ? [row.consents.liability ? 'Liability' : null, row.consents.photo ? 'Photo' : null, row.consents.backgroundCheck ? 'Background' : null].filter(Boolean).join(', ') || '—' : '—',
+                    row.preferredContactMethod || '—',
+                    Array.isArray(row.portfolioUrls) ? row.portfolioUrls.join(', ') : '—',
+                    row.heardAboutUs || '—',
+                    row.whatsappConsent ? 'Yes' : 'No',
                     row.experience || '—',
                     row.motivation || '—',
                     formatTimestamp(row.submittedAt),
@@ -910,7 +962,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 <h4 className="text-xl font-luxury-heading text-black mb-4">Event Users</h4>
                 {renderGroupedTable(
                   groupBy(eventRegistrations, (a) => a.eventTitle || 'Untitled Event'),
-                  ['Event', 'Name', 'Email', 'Phone', 'Emergency Contact', 'Dietary', 'Shift', 'Sessions', 'Team', 'T‑shirt', 'Accessibility', 'Consents', 'Experience', 'Submitted'],
+                  ['Event', 'Name', 'Email', 'Phone', 'Emergency Contact', 'Dietary', 'Medical', 'Shift', 'Sessions', 'Team', 'T‑shirt', 'Accessibility', 'Consents', 'Contact Method', 'Heard About Us', 'WhatsApp', 'Experience', 'Submitted'],
                   (row) => [
                     row.eventId ? (<a href={`/events/${row.eventId}`} className="text-blue-600 hover:underline" target="_blank" rel="noreferrer">Open</a>) : '—',
                     row.name,
@@ -918,12 +970,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                     row.phone,
                     row.emergencyContact || '—',
                     row.dietaryRestrictions || '—',
+                    row.medicalConditions || '—',
                     row.shiftPreference || '—',
                     Array.isArray(row.sessionSelections) ? row.sessionSelections.join(', ') : '—',
                     row.teamPreference || '—',
                     row.tShirtSize || '—',
                     row.accessibilityNeeds || '—',
                     row.consents ? [row.consents.liability ? 'Liability' : null, row.consents.photo ? 'Photo' : null].filter(Boolean).join(', ') || '—' : '—',
+                    row.preferredContactMethod || '—',
+                    row.heardAboutUs || '—',
+                    row.whatsappConsent ? 'Yes' : 'No',
                     row.experience || '—',
                     formatTimestamp(row.submittedAt),
                   ]
