@@ -5,6 +5,8 @@ import { db } from '../config/firebase';
 import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { FirebaseError } from 'firebase/app';
 import { useAuth } from '../contexts/AuthContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
+import UpgradePrompt from '../components/UpgradePrompt';
 import { ProjectSubmission, EventSubmission, SubmissionType, ChecklistItem, Reminder, HeadInfo } from '../types/submissions';
 import { sendEmail, formatSubmissionReceivedEmail } from '../utils/emailService';
 import InteractiveMap from '../components/InteractiveMap';
@@ -18,9 +20,18 @@ const CreateSubmission = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { currentUser, userData, isAdmin } = useAuth();
+  const { 
+    canSubmitProject, 
+    canSubmitEvent, 
+    incrementProjectSubmission, 
+    incrementEventSubmission,
+    userSubscription,
+    features 
+  } = useSubscription();
   const [submissionType, setSubmissionType] = useState<SubmissionType>('project');
   const [draftId, setDraftId] = useState<string | null>(null);
   const [isLoadingDraft, setIsLoadingDraft] = useState(false);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   useEffect(() => {
     const typeParam = searchParams.get('type');
@@ -333,6 +344,23 @@ const CreateSubmission = () => {
   const handleSubmit = async (status: 'draft' | 'pending') => {
     if (!currentUser || !userData) return;
 
+    // Check subscription limits (skip check for drafts and admins)
+    if (status !== 'draft' && !isAdmin) {
+      if (submissionType === 'project') {
+        const canSubmit = await canSubmitProject();
+        if (!canSubmit) {
+          setShowUpgradePrompt(true);
+          return;
+        }
+      } else {
+        const canSubmit = await canSubmitEvent();
+        if (!canSubmit) {
+          setShowUpgradePrompt(true);
+          return;
+        }
+      }
+    }
+
     setLoading(true);
     try {
       const finalStatus = isAdmin && status === 'pending' ? 'approved' : status;
@@ -471,6 +499,15 @@ const CreateSubmission = () => {
       } else {
         const docRef = await addDoc(collection(db, collectionName), insertData);
         console.log(`${submissionType} successfully saved with ID:`, docRef.id);
+      }
+
+      // Increment subscription usage counter (only for non-draft submissions, not for admins)
+      if (status !== 'draft' && !isAdmin) {
+        if (submissionType === 'project') {
+          await incrementProjectSubmission();
+        } else {
+          await incrementEventSubmission();
+        }
       }
 
       // Show user feedback immediately (no waiting for emails)
@@ -615,6 +652,31 @@ const CreateSubmission = () => {
             {draftId ? 'Continue editing your draft and submit when ready.' : 'Submit your ' + submissionType + ' idea for review and approval by our team.'}
           </p>
         </div>
+
+        {/* Upgrade Prompt */}
+        {showUpgradePrompt && (
+          <div className="mb-8">
+            <UpgradePrompt
+              feature={`${submissionType} submissions`}
+              requiredTier="supporter"
+              currentUsage={
+                submissionType === 'project' 
+                  ? userSubscription?.usage.projectSubmissionsThisMonth || 0
+                  : userSubscription?.usage.eventSubmissionsThisMonth || 0
+              }
+              limit={
+                typeof (submissionType === 'project' 
+                  ? features.projectSubmissionsPerMonth 
+                  : features.eventSubmissionsPerMonth) === 'number'
+                  ? (submissionType === 'project' 
+                      ? features.projectSubmissionsPerMonth 
+                      : features.eventSubmissionsPerMonth) as number
+                  : undefined
+              }
+              inline={false}
+            />
+          </div>
+        )}
 
         <div className="luxury-card bg-cream-white p-6 mb-8">
           <h3 className="text-xl font-luxury-heading text-black mb-4">What would you like to create?</h3>
