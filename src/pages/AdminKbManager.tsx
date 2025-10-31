@@ -10,9 +10,11 @@ import {
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Database, RefreshCw, CheckCircle, AlertCircle, Upload } from 'lucide-react';
+import SmartKBPanel from '../components/Admin/SmartKBPanel';
 
 /**
  * Admin KB Manager
+ * - Smart KB with auto-learning (NEW!)
  * - One-click manual KB seeding
  * - View KB stats
  * - Refresh from live site
@@ -207,7 +209,20 @@ const AdminKbManager = () => {
             Knowledge Base Manager
           </h1>
           <p className="text-gray-600">
-            Manage the chatbot's knowledge base - seed content and view statistics
+            Manage the chatbot's knowledge base - auto-learning and manual seeding
+          </p>
+        </div>
+
+        {/* Smart KB Panel - NEW! */}
+        <div className="mb-8">
+          <SmartKBPanel />
+        </div>
+
+        {/* Divider */}
+        <div className="mb-8 border-t-2 border-gray-200 pt-8">
+          <h2 className="text-xl font-bold text-gray-700 mb-2">Legacy Manual Seeding</h2>
+          <p className="text-gray-500 text-sm">
+            (Optional) Manual KB seeding for Firestore. Smart KB above is recommended.
           </p>
         </div>
 
