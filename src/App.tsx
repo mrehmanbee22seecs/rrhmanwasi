@@ -22,6 +22,7 @@ import AdminKbManager from './pages/AdminKbManager';
 import ChatWidget from './components/ChatWidget';
 import DonationWidget from './components/DonationWidget';
 import AdminToggle from './components/AdminToggle';
+import ScrollToTop from './components/ScrollToTop';
 import { useActivityLogger } from './hooks/useActivityLogger';
 import { setupMigrationTools } from './utils/runMigration';
 import { initScrollReveal } from './utils/scrollReveal';
@@ -36,6 +37,7 @@ const AppContent = () => {
 
   return (
     <div className="min-h-screen app-bg">
+      <ScrollToTop />
       <EditableHeader />
       <main>
         <Routes>
