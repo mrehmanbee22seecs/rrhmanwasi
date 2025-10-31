@@ -15,6 +15,7 @@ import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firest
 import { auth, googleProvider, facebookProvider, db } from '../config/firebase';
 import { initializeUserProfile, logActivity as logUserActivity } from '../utils/firebaseInit';
 import { sendWelcomeEmail } from '../services/mailerSendEmailService';
+import { UserSubscription, SubscriptionTier } from '../types/subscription';
 
 interface UserData {
   uid: string;
@@ -34,6 +35,7 @@ interface UserData {
     completedAt?: any;
     lastUpdated?: any;
   };
+  subscription?: UserSubscription;
 }
 
 interface ActivityLog {
