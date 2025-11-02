@@ -171,9 +171,9 @@ const ChatWidget = () => {
     try {
       await sendMessage(userMessage);
       // Bot response happens instantly via real-time listener - no artificial delay needed
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending message:', error);
-      const msg: string = error?.message || 'Failed to send message';
+      const msg: string = error instanceof Error ? error.message : 'Failed to send message';
       // Parse rate limit message: "Try again in Ns"
       const match = msg.match(/Try again in (\d+)s/i);
       if (match) {

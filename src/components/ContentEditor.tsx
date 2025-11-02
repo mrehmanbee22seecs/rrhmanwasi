@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Upload, Trash2 } from 'lucide-react';
-import axios from 'axios';
 import { compressImage } from '../utils/cloudinaryHelpers';
 import { uploadWithSignature } from '../utils/cloudinarySignedUpload';
 
@@ -18,8 +17,8 @@ interface ContentEditorProps {
   onClose: () => void;
   title: string;
   fields: Field[];
-  initialData: Record<string, any>;
-  onSave: (data: Record<string, any>) => Promise<void>;
+  initialData: Record<string, unknown>;
+  onSave: (data: Record<string, unknown>) => Promise<void>;
   onDelete?: () => Promise<void>;
 }
 
@@ -32,7 +31,7 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
   onSave,
   onDelete,
 }) => {
-  const [formData, setFormData] = useState<Record<string, any>>(initialData);
+  const [formData, setFormData] = useState<Record<string, unknown>>(initialData);
   const [loading, setLoading] = useState(false);
   const [uploadingImages, setUploadingImages] = useState<Record<string, boolean>>({});
 
@@ -84,9 +83,9 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
 
       const url = res.secure_url;
       setFormData(prev => ({ ...prev, [fieldName]: url }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error uploading image:', error);
-      const errorMessage = error.response?.data?.error?.message || error.message || 'Failed to upload image. Please try again.';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload image. Please try again.';
       alert(errorMessage);
     } finally {
       setUploadingImages(prev => ({ ...prev, [fieldName]: false }));
