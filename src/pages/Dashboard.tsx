@@ -673,19 +673,55 @@ const Dashboard = () => {
                     <button
                       key={t.id}
                       onClick={() => setTheme(t.id)}
-                      className={`p-3 rounded-luxury border-2 transition-all text-left ${
+                      className={`p-3 rounded-luxury border-2 transition-all text-left relative ${
                         currentTheme.id === t.id
-                          ? 'border-vibrant-orange'
+                          ? 'border-vibrant-orange shadow-lg'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                       aria-label={`Select ${t.name}`}
                     >
+                      {/* Special Theme Badge */}
+                      {t.isSpecial && (
+                        <div className="absolute -top-2 -right-2 z-10">
+                          <span className="flex items-center gap-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs px-2 py-1 rounded-full shadow-lg">
+                            <Sparkles className="w-3 h-3" /> Special
+                          </span>
+                        </div>
+                      )}
                       <div
-                        className="h-10 w-full rounded-md mb-2"
+                        className="h-10 w-full rounded-md mb-2 relative overflow-hidden"
                         style={{ background: t.preview }}
-                      />
-                      <div className="text-sm font-medium text-black">{t.name}</div>
+                      >
+                        {/* Video indicator for Wasillah Special */}
+                        {t.hasHeroVideo && (
+                          <div className="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded flex items-center gap-1">
+                            <Zap className="w-3 h-3" />
+                            Video
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-sm font-medium text-black flex items-center gap-1">
+                        {t.name}
+                        {currentTheme.id === t.id && (
+                          <CheckCircle className="w-4 h-4 text-vibrant-orange" />
+                        )}
+                      </div>
                       <div className="text-xs text-black/60">{t.description}</div>
+                      {/* Feature indicators */}
+                      {(t.hasHeroVideo || t.hasSectionBackgrounds) && (
+                        <div className="flex gap-1 mt-2">
+                          {t.hasHeroVideo && (
+                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                              Hero Videos
+                            </span>
+                          )}
+                          {t.hasSectionBackgrounds && (
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                              Backgrounds
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </button>
                   ))}
                 </div>
