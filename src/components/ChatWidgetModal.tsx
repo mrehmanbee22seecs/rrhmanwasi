@@ -50,17 +50,20 @@ const ChatWidgetModal: React.FC<ChatWidgetModalProps> = ({ isOpen, onClose }) =>
         const pages: KBPage[] = [];
         pagesSnapshot.forEach((doc) => {
           const data = doc.data();
-          pages.push({
-            id: doc.id,
-            url: data.url || '',
-            title: data.title || '',
-            content: data.content || '',
-            tokens: data.tokens || [],
-            question: data.question,
-            answer: data.answer,
-            keywords: data.keywords,
-            tags: data.tags
-          });
+          // Validate that we have the required fields
+          if (data && typeof data.url === 'string' && typeof data.title === 'string') {
+            pages.push({
+              id: doc.id,
+              url: data.url || '',
+              title: data.title || '',
+              content: data.content || '',
+              tokens: Array.isArray(data.tokens) ? data.tokens : [],
+              question: data.question,
+              answer: data.answer,
+              keywords: Array.isArray(data.keywords) ? data.keywords : undefined,
+              tags: Array.isArray(data.tags) ? data.tags : undefined
+            });
+          }
         });
         
         setKbPages(pages);
