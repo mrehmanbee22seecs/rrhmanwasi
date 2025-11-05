@@ -40,13 +40,22 @@ export const functions = getFunctions(app);
 export default app;
 
 // Expose Firebase to window for browser console access (development only)
-if (typeof window !== 'undefined') {
-  (window as any).db = db;
-  (window as any).auth = auth;
-  (window as any).storage = storage;
+// Only enable in development mode to prevent exposure in production
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
+  interface WindowWithFirebase extends Window {
+    db?: typeof db;
+    auth?: typeof auth;
+    storage?: typeof storage;
+    firestoreExports?: typeof import('firebase/firestore');
+  }
+  
+  const windowWithFirebase = window as WindowWithFirebase;
+  windowWithFirebase.db = db;
+  windowWithFirebase.auth = auth;
+  windowWithFirebase.storage = storage;
   
   // Also expose Firestore functions for console scripts
   import('firebase/firestore').then((firestoreModule) => {
-    (window as any).firestoreExports = firestoreModule;
+    windowWithFirebase.firestoreExports = firestoreModule;
   });
 }

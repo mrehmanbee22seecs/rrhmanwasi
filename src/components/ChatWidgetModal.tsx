@@ -1,21 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Minimize2, Menu, Plus, Clock, Trash2, Bell, ExternalLink, Sparkles } from 'lucide-react';
+import { MessageCircle, X, Send, Menu, Plus, Clock, Bell, ExternalLink, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useChat } from '../hooks/useChat';
 import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { findBestMatch, formatResponse } from '../utils/kbMatcher';
 
-interface Message {
+interface KBPage {
   id: string;
-  sender: 'user' | 'bot' | 'admin';
-  text: string;
-  createdAt: Date;
-  meta?: Record<string, any>;
-  sourceUrl?: string;
-  sourcePage?: string;
-  needsAdmin?: boolean;
-  confidence?: number;
+  url: string;
+  title: string;
+  content: string;
+  tokens: string[];
+  question?: string;
+  answer?: string;
+  keywords?: string[];
+  tags?: string[];
 }
 
 interface ChatWidgetModalProps {
@@ -25,11 +24,10 @@ interface ChatWidgetModalProps {
 
 const ChatWidgetModal: React.FC<ChatWidgetModalProps> = ({ isOpen, onClose }) => {
   const { currentUser } = useAuth();
-  const [isMinimized, setIsMinimized] = useState(false);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [kbPages, setKbPages] = useState<any[]>([]);
+  const [kbPages, setKbPages] = useState<KBPage[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -49,12 +47,23 @@ const ChatWidgetModal: React.FC<ChatWidgetModalProps> = ({ isOpen, onClose }) =>
           collection(db, 'kb', 'pages', 'content')
         );
         
-        const pages: any[] = [];
+        const pages: KBPage[] = [];
         pagesSnapshot.forEach((doc) => {
-          pages.push({
-            id: doc.id,
-            ...doc.data()
-          });
+          const data = doc.data();
+          // Validate that we have the required fields
+          if (data && typeof data.url === 'string' && typeof data.title === 'string') {
+            pages.push({
+              id: doc.id,
+              url: data.url || '',
+              title: data.title || '',
+              content: data.content || '',
+              tokens: Array.isArray(data.tokens) ? data.tokens : [],
+              question: data.question,
+              answer: data.answer,
+              keywords: Array.isArray(data.keywords) ? data.keywords : undefined,
+              tags: Array.isArray(data.tags) ? data.tags : undefined
+            });
+          }
         });
         
         setKbPages(pages);
@@ -115,14 +124,6 @@ const ChatWidgetModal: React.FC<ChatWidgetModalProps> = ({ isOpen, onClose }) =>
   const handleSelectChat = (chatId: string) => {
     setCurrentChatId(chatId);
     setShowHistory(false);
-  };
-
-  const handleCloseChat = async () => {
-    const confirmClose = window.confirm('Are you sure you want to close this chat? This will end the current conversation.');
-    if (confirmClose) {
-      await closeChat();
-      setShowHistory(false);
-    }
   };
 
   const currentChat = chats.find((c) => c.id === currentChatId);

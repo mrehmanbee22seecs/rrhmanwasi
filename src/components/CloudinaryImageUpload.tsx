@@ -96,9 +96,9 @@ export default function CloudinaryImageUpload({
       setSuccess(true);
 
       setTimeout(() => setSuccess(false), 3000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Cloudinary upload error:', err);
-      const errorMessage = err?.message || 'Upload failed. Please try again.';
+      const errorMessage = err instanceof Error ? err.message : 'Upload failed. Please try again.';
       setError(errorMessage);
     } finally {
       setUploading(false);

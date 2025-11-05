@@ -26,17 +26,17 @@ const DonationWidget = () => {
   }, [isOpen]);
 
   useEffect(() => {
-    const onOpen = (e: any) => {
+    const onOpen = (e: CustomEvent<string>) => {
       if (e?.detail !== 'donation') setSuppressButton(true);
     };
-    const onClose = (e: any) => {
+    const onClose = (e: CustomEvent<string>) => {
       if (e?.detail !== 'donation') setSuppressButton(false);
     };
-    window.addEventListener('widget:open', onOpen as any);
-    window.addEventListener('widget:close', onClose as any);
+    window.addEventListener('widget:open', onOpen as EventListener);
+    window.addEventListener('widget:close', onClose as EventListener);
     return () => {
-      window.removeEventListener('widget:open', onOpen as any);
-      window.removeEventListener('widget:close', onClose as any);
+      window.removeEventListener('widget:open', onOpen as EventListener);
+      window.removeEventListener('widget:close', onClose as EventListener);
     };
   }, []);
 

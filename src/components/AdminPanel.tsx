@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, MessageSquare, Mail, Calendar, Target, Settings, CreditCard as Edit3, Save, X, Plus, Trash2, Eye, EyeOff, Download, CheckCircle, XCircle, Clock, FileText, Mail as MailIcon, RefreshCw, Database, ExternalLink } from 'lucide-react';
+import { Users, MessageSquare, Calendar, Settings, CreditCard as Edit3, Save, X, Plus, Trash2, Eye, EyeOff, Download, CheckCircle, XCircle, FileText, Mail as MailIcon, RefreshCw, Database, ExternalLink } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, query, orderBy, where } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, query, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { ProjectSubmission, EventSubmission, SubmissionStatus, ProjectApplicationEntry, EventRegistrationEntry, VolunteerApplicationEntry, NewsletterSubscriberEntry } from '../types/submissions';
@@ -10,6 +10,7 @@ import { sendEmail, formatSubmissionStatusUpdateEmail } from '../utils/emailServ
 import { migrateApprovedSubmissions } from '../utils/migrateVisibility';
 import ChatsPanel from './Admin/ChatsPanel';
 import { seedKnowledgeBase } from '../utils/kbSeed';
+import { Timestamp } from 'firebase/firestore';
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -19,8 +20,8 @@ interface AdminPanelProps {
 interface Response {
   id: string;
   type: 'volunteer' | 'contact' | 'chat' | 'event' | 'project';
-  data: any;
-  timestamp: any;
+  data: Record<string, unknown>;
+  timestamp: Timestamp | Date;
   status: 'new' | 'reviewed' | 'responded';
 }
 

@@ -4,16 +4,33 @@ import { useAuth } from '../contexts/AuthContext';
 import { useChat } from '../hooks/useChat';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { findBestMatch, formatResponse } from '../utils/kbMatcher';
 import { getEnhancedKB } from '../services/localKbService';
-import ChatWidgetModal from './ChatWidgetModal';
+
+interface KBPage {
+  id: string;
+  url: string;
+  title: string;
+  content: string;
+  tokens: string[];
+  question?: string;
+  answer?: string;
+  keywords?: string[];
+  tags?: string[];
+}
+
+interface RateInfo {
+  remaining: number;
+  limit: number;
+  windowSec: number;
+  blockedUntil?: number;
+}
 
 interface Message {
   id: string;
   sender: 'user' | 'bot' | 'admin';
   text: string;
   createdAt: Date;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
   sourceUrl?: string;
   sourcePage?: string;
   needsAdmin?: boolean;
@@ -27,9 +44,9 @@ const ChatWidget = () => {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [kbPages, setKbPages] = useState<any[]>([]);
+  const [kbPages, setKbPages] = useState<KBPage[]>([]);
   const [suppressButton, setSuppressButton] = useState(false);
-  const [rateInfo, setRateInfo] = useState<any>(null);
+  const [rateInfo, setRateInfo] = useState<RateInfo | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -90,7 +107,7 @@ const ChatWidget = () => {
       const remainingMs = rateInfo.blockedUntil - Date.now();
       if (remainingMs <= 0) {
         // Reset display to ready state when block expires
-        setRateInfo((prev: any) => ({
+        setRateInfo((prev: RateInfo | null) => ({
           remaining: prev?.limit || 10,
           limit: prev?.limit || 10,
           windowSec: prev?.windowSec || 60,
@@ -99,7 +116,7 @@ const ChatWidget = () => {
         clearInterval(interval);
       } else {
         // Force re-render to update seconds UI
-        setRateInfo((prev: any) => ({ ...prev }));
+        setRateInfo((prev: RateInfo | null) => ({ ...prev } as RateInfo));
       }
     }, 1000);
     return () => clearInterval(interval);
@@ -107,13 +124,13 @@ const ChatWidget = () => {
 
   // Cross-widget coordination (hide our button when donation widget open, and vice versa)
   useEffect(() => {
-    const onOpen = (e: any) => { if (e?.detail !== 'chat') setSuppressButton(true); };
-    const onClose = (e: any) => { if (e?.detail !== 'chat') setSuppressButton(false); };
-    window.addEventListener('widget:open', onOpen as any);
-    window.addEventListener('widget:close', onClose as any);
+    const onOpen = (e: CustomEvent<string>) => { if (e?.detail !== 'chat') setSuppressButton(true); };
+    const onClose = (e: CustomEvent<string>) => { if (e?.detail !== 'chat') setSuppressButton(false); };
+    window.addEventListener('widget:open', onOpen as EventListener);
+    window.addEventListener('widget:close', onClose as EventListener);
     return () => {
-      window.removeEventListener('widget:open', onOpen as any);
-      window.removeEventListener('widget:close', onClose as any);
+      window.removeEventListener('widget:open', onOpen as EventListener);
+      window.removeEventListener('widget:close', onClose as EventListener);
     };
   }, []);
 
@@ -154,9 +171,9 @@ const ChatWidget = () => {
     try {
       await sendMessage(userMessage);
       // Bot response happens instantly via real-time listener - no artificial delay needed
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending message:', error);
-      const msg: string = error?.message || 'Failed to send message';
+      const msg: string = error instanceof Error ? error.message : 'Failed to send message';
       // Parse rate limit message: "Try again in Ns"
       const match = msg.match(/Try again in (\d+)s/i);
       if (match) {
