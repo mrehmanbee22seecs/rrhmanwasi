@@ -43,7 +43,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose }) =>
     );
   };
 
-  const handleComplete = async () => {
+  const handleComplete = async (skipWithoutSaving: boolean = false) => {
     if (!currentUser || !userData) {
       console.error('Cannot complete onboarding: missing user data');
       return;
@@ -53,18 +53,29 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose }) =>
     try {
       const userRef = doc(db, 'users', currentUser.uid);
       
-      // Update user document with onboarding completion
-      await updateDoc(userRef, {
-        displayName: displayName || userData.displayName,
-        'preferences.theme': selectedTheme,
-        'preferences.interests': interests,
-        'preferences.onboardingCompleted': true,
-        'preferences.completedAt': new Date(),
-        'preferences.lastUpdated': new Date()
-      });
+      if (skipWithoutSaving) {
+        // User clicked "Skip for Now" - mark onboarding as completed but don't save preferences
+        await updateDoc(userRef, {
+          'preferences.onboardingCompleted': true,
+          'preferences.skipped': true,
+          'preferences.completedAt': new Date(),
+          'preferences.lastUpdated': new Date()
+        });
+      } else {
+        // User completed onboarding - save all preferences
+        await updateDoc(userRef, {
+          displayName: displayName || userData.displayName,
+          'preferences.theme': selectedTheme,
+          'preferences.interests': interests,
+          'preferences.onboardingCompleted': true,
+          'preferences.skipped': false,
+          'preferences.completedAt': new Date(),
+          'preferences.lastUpdated': new Date()
+        });
 
-      // Apply theme
-      setTheme(selectedTheme);
+        // Apply theme only if user completed with preferences
+        setTheme(selectedTheme);
+      }
 
       // CRITICAL: Refresh user data to ensure state is synchronized
       await refreshUserData();
@@ -248,14 +259,14 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose }) =>
                 </button>
                 <div className="flex gap-3">
                   <button
-                    onClick={handleComplete}
+                    onClick={() => handleComplete(true)}
                     disabled={loading}
                     className="px-6 py-3 border-2 border-gray-300 rounded-luxury text-black font-luxury-semibold hover:bg-gray-50 disabled:opacity-50"
                   >
                     {loading ? 'Setting up...' : 'Skip for Now'}
                   </button>
                   <button
-                    onClick={handleComplete}
+                    onClick={() => handleComplete(false)}
                     disabled={loading}
                     className="btn-luxury-primary px-8 py-3 flex items-center disabled:opacity-50"
                   >
