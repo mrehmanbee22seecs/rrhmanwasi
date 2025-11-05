@@ -21,8 +21,8 @@ export function detectLanguage(text: string): SupportedLanguage {
   // Roman Urdu detection - common words and patterns
   const romanUrduPatterns = [
     /\b(kya|kia|hai|kaise|kesay|kahan|kidhar|kab|madad|rabta|raabta|shamil|haan|han|nahi|shukriya|shukria|khuda|hafiz)\b/i,
-    /\b(wasilah|waseela|wasila|karachi|lahore|islamabad)\b/i,
-    /\b(volunteer|join|apply)\s+(kar|kare|karna|karna|ho|hoon)\b/i
+    /\b(volunteer|join|apply)\s+(kar|kare|karna|karna|ho|hoon)\b/i,
+    /\b(kaise|kesay|kahan|kidhar|kya|kia)\s+(wasilah|waseela|wasila)\b/i // Only detect wasilah with Roman Urdu context words
   ];
   
   if (romanUrduPatterns.some(pattern => pattern.test(cleanText))) {
