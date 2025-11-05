@@ -367,6 +367,26 @@ const ChatWidget = () => {
                         </button>
                       )}
 
+                      {/* Smart Suggestions - Show contextual follow-up questions */}
+                      {message.sender === 'bot' && message.meta?.suggestions && message.meta.suggestions.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <p className="text-xs text-gray-600 mb-2 flex items-center gap-1">
+                            💡 You might also want to know:
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {message.meta.suggestions.map((suggestion: string, idx: number) => (
+                              <button
+                                key={idx}
+                                onClick={() => setInputText(suggestion)}
+                                className="text-xs px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg border border-blue-200 transition-colors"
+                              >
+                                {suggestion}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <p className="text-xs opacity-60 mt-1">{message.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                     </div>
                   </div>
