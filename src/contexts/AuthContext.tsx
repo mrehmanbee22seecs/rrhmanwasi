@@ -168,13 +168,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
-    const { user } = await signInWithPopup(auth, googleProvider);
-    await createUserDocument(user);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      if (result.user) {
+        await createUserDocument(result.user);
+      }
+    } catch (error: any) {
+      // Handle popup closed by user gracefully
+      if (error.code === 'auth/popup-closed-by-user') {
+        console.log('User closed the popup before completing sign-in');
+        // Re-throw with a more user-friendly message
+        throw new Error('Sign-in cancelled. Please try again.');
+      }
+      // Re-throw other errors
+      throw error;
+    }
   };
 
   const loginWithFacebook = async () => {
-    const { user } = await signInWithPopup(auth, facebookProvider);
-    await createUserDocument(user);
+    try {
+      const result = await signInWithPopup(auth, facebookProvider);
+      if (result.user) {
+        await createUserDocument(result.user);
+      }
+    } catch (error: any) {
+      // Handle popup closed by user gracefully
+      if (error.code === 'auth/popup-closed-by-user') {
+        console.log('User closed the popup before completing sign-in');
+        // Re-throw with a more user-friendly message
+        throw new Error('Sign-in cancelled. Please try again.');
+      }
+      // Re-throw other errors
+      throw error;
+    }
   };
 
   const logout = async () => {

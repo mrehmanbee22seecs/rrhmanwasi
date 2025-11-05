@@ -13,6 +13,19 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:577353648201:web:322c63144b84db4d2c5798"
 };
 
+// Log configuration status in development
+if (import.meta.env.DEV) {
+  console.log('Firebase Config:', {
+    authDomain: firebaseConfig.authDomain,
+    projectId: firebaseConfig.projectId,
+    usingEnvVars: {
+      apiKey: !!import.meta.env.VITE_FIREBASE_API_KEY,
+      authDomain: !!import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+      projectId: !!import.meta.env.VITE_FIREBASE_PROJECT_ID
+    }
+  });
+}
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
