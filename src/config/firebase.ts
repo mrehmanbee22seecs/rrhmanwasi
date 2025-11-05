@@ -4,16 +4,13 @@ import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-// Firebase configuration from environment variables
-// These values are safe to expose in client-side code as they identify your Firebase project
-// Security is enforced through Firestore and Storage rules
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCAzJf4xhj8YHT6ArbmVdzkOpGKwFTHkCU",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "wasilah-new.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "wasilah-new",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "wasilah-new.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "577353648201",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:577353648201:web:322c63144b84db4d2c5798"
+  apiKey: "AIzaSyCAzJf4xhj8YHT6ArbmVdzkOpGKwFTHkCU",
+  authDomain: "wasilah-new.firebaseapp.com",
+  projectId: "wasilah-new",
+  storageBucket: "wasilah-new.firebasestorage.app",
+  messagingSenderId: "577353648201",
+  appId: "1:577353648201:web:322c63144b84db4d2c5798"
 };
 
 // Initialize Firebase
