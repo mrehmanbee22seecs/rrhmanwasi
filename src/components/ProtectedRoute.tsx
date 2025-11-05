@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import AuthModal from './AuthModal';
 import OnboardingModal from './OnboardingModal';
 
@@ -15,7 +15,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { currentUser, isGuest, loading, userData } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const navigate = useNavigate();
   const location = useLocation();
 
   // Manage onboarding modal visibility when user data is available
@@ -31,32 +30,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       return;
     }
 
-    // Check if this is a fresh OAuth redirect
-    const oauthRedirectCompleted = sessionStorage.getItem('oauthRedirectCompleted');
-    
-    if (oauthRedirectCompleted === 'true') {
-      // Clear the flag
-      sessionStorage.removeItem('oauthRedirectCompleted');
-      
-      // If user just completed OAuth login and is on home page, redirect to dashboard
-      if (location.pathname === '/') {
-        console.log('OAuth redirect completed - navigating to dashboard');
-        navigate('/dashboard', { replace: true });
-      }
-      
-      // Don't show onboarding modal for OAuth users immediately
-      // They can access it later from their profile
-      setShowOnboarding(false);
-      return;
-    }
-
     // Show onboarding for authenticated non-guest users who haven't completed it
     // But only if they're not on specific pages (dashboard, profile, etc.)
     const shouldShow = !userData.isGuest && 
                        !userData.preferences?.onboardingCompleted &&
                        !ONBOARDING_EXCLUDED_PATHS.includes(location.pathname);
     setShowOnboarding(shouldShow);
-  }, [currentUser, userData, navigate, location.pathname]);
+  }, [currentUser, userData, location.pathname]);
 
   if (loading) {
     return (

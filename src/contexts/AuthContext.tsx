@@ -293,6 +293,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Handle redirect result and set up auth listener
     const initAuth = async () => {
+      let isOAuthLogin = false;
+      
       try {
         // Check for redirect result first (from Google/Facebook login)
         console.log('Checking for redirect result...');
@@ -300,6 +302,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (result && result.user) {
           // User signed in via redirect - create/update their document
           console.log('✅ User authenticated via redirect:', result.user.email);
+          isOAuthLogin = true;
           
           // Set a flag in sessionStorage to indicate OAuth redirect just completed
           // This will help us skip onboarding and go directly to dashboard
@@ -325,7 +328,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (user) {
             // User is authenticated, fetch/create their data
             console.log('Creating/updating user document...');
-            const userData = await createUserDocument(user);
+            
+            // For OAuth users, skip onboarding by default
+            const additionalData = isOAuthLogin ? {
+              preferences: {
+                onboardingCompleted: true
+              }
+            } : {};
+            
+            const userData = await createUserDocument(user, additionalData);
             console.log('✅ User data loaded:', userData.email);
             
             // Only update state if still mounted
