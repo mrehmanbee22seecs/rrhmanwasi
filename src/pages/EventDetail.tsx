@@ -415,9 +415,7 @@ const EventDetail = () => {
               location: displayEvent.location,
             })
           );
-        } catch (error) {
-          console.error('Failed to log event registration activity:', error);
-        }
+        } catch {}
         alert(`Thank you for registering for ${displayEvent.title}! You will receive a confirmation email shortly.`);
       } else {
         alert('There was an error with your registration. Please try again or contact us directly.');

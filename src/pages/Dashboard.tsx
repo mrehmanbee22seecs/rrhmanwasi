@@ -724,13 +724,7 @@ const Dashboard = () => {
                       Resend verification
                     </button>
                     <button
-                      onClick={async () => { 
-                        try { 
-                          await currentUser?.reload(); 
-                        } catch (error) {
-                          console.error('Failed to reload user:', error);
-                        }
-                      }}
+                      onClick={async () => { try { await currentUser?.reload(); } catch {} }}
                       className="px-3 py-2 rounded-luxury border-2 border-gray-200 text-sm hover:bg-gray-50 flex items-center gap-1"
                     >
                       <RefreshCw className="w-4 h-4" /> Refresh status

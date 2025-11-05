@@ -3,12 +3,9 @@
  * 
  * This endpoint is called by Upstash QStash when it's time to send a reminder.
  * It receives the reminder data, sends an email via MailerSend, and updates Firestore.
- * 
- * NOTE: Email features are currently disabled for deployment.
  */
 
-// DISABLED: Email features temporarily disabled
-// import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
+import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
@@ -25,10 +22,10 @@ if (!getApps().length) {
 
 const db = getFirestore();
 
-// DISABLED: MailerSend temporarily disabled
-// const mailerSend = new MailerSend({
-//   apiKey: process.env.MAILERSEND_API_KEY || '',
-// });
+// Initialize MailerSend
+const mailerSend = new MailerSend({
+  apiKey: process.env.MAILERSEND_API_KEY || '',
+});
 
 const SENDER_EMAIL = process.env.MAILERSEND_SENDER_EMAIL || 'MS_qJLYQi@trial-0r83ql3jjz8lgwpz.mlsender.net';
 const SENDER_NAME = 'Wasillah Team';
@@ -43,13 +40,8 @@ const brand = {
 
 /**
  * Send email via MailerSend
- * DISABLED: Email features temporarily disabled
  */
 async function sendEmail(to, subject, html) {
-  console.log('Email features disabled. Would have sent email to:', to, 'Subject:', subject);
-  return false;
-  
-  /* DISABLED: Email features temporarily disabled
   try {
     const sentFrom = new Sender(SENDER_EMAIL, SENDER_NAME);
     const recipients = [new Recipient(to)];
@@ -67,7 +59,6 @@ async function sendEmail(to, subject, html) {
     console.error('Failed to send email:', error);
     return false;
   }
-  */
 }
 
 /**

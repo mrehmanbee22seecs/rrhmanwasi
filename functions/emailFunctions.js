@@ -6,14 +6,11 @@
  * 2. Admin approval notifications
  * 3. Reminder scheduling and sending
  * 4. Volunteer confirmations
- * 
- * NOTE: Email features are currently disabled for deployment.
  */
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-// DISABLED: Email features temporarily disabled
-// const { MailerSend, EmailParams, Sender, Recipient } = require('mailersend');
+const { MailerSend, EmailParams, Sender, Recipient } = require('mailersend');
 
 // Initialize if not already initialized
 if (!admin.apps.length) {
@@ -23,9 +20,9 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 const { Timestamp } = admin.firestore;
 
-// DISABLED: MailerSend temporarily disabled
-const MAILERSEND_API_KEY = ''; // process.env.MAILERSEND_API_KEY || '';
-const mailerSend = null; // MAILERSEND_API_KEY ? new MailerSend({ apiKey: MAILERSEND_API_KEY }) : null;
+// Initialize MailerSend
+const MAILERSEND_API_KEY = process.env.MAILERSEND_API_KEY || '';
+const mailerSend = MAILERSEND_API_KEY ? new MailerSend({ apiKey: MAILERSEND_API_KEY }) : null;
 
 // Use MailerSend's free trial domain for testing
 // Replace with your own verified domain in production
@@ -43,13 +40,8 @@ const brand = {
 
 /**
  * Helper function to send email via MailerSend
- * DISABLED: Email features temporarily disabled
  */
 async function sendEmailViaMailerSend(emailData) {
-  console.log('Email features disabled. Would have sent email to:', emailData.to, 'Subject:', emailData.subject);
-  return false;
-  
-  /* DISABLED: Email features temporarily disabled
   if (!mailerSend) {
     console.log('MailerSend not configured; skipping email send');
     return false;
@@ -72,7 +64,6 @@ async function sendEmailViaMailerSend(emailData) {
     console.error('Failed to send email via MailerSend:', error);
     return false;
   }
-  */
 }
 
 /**
