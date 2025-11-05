@@ -20,12 +20,14 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 // Configure Google Auth Provider with custom parameters
+// 'select_account' forces the account selection screen to appear, preventing popup closure issues
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
 // Configure Facebook Auth Provider with custom parameters
+// 'popup' display parameter ensures proper popup window behavior and reduces auth/popup-closed-by-user errors
 export const facebookProvider = new FacebookAuthProvider();
 facebookProvider.setCustomParameters({
   display: 'popup'
