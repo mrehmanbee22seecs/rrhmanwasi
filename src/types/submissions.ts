@@ -252,3 +252,34 @@ export interface NewsletterSubscriberEntry {
   source?: string; // 'contact' | 'footer' | etc.
   subscribedAt: any;
 }
+
+// Edit Request Types
+export interface ProjectApplicationEditRequest {
+  id: string;
+  originalApplicationId: string;
+  projectId: string;
+  projectTitle: string;
+  userEmail: string;
+  originalData: ProjectApplicationEntry;
+  requestedChanges: Partial<ProjectApplicationEntry>;
+  status: 'pending' | 'approved' | 'rejected';
+  submittedAt: any;
+  reviewedAt?: any;
+  reviewedBy?: string;
+  reviewNotes?: string;
+}
+
+export interface EventRegistrationEditRequest {
+  id: string;
+  originalRegistrationId: string;
+  eventId: string;
+  eventTitle: string;
+  userEmail: string;
+  originalData: EventRegistrationEntry;
+  requestedChanges: Partial<EventRegistrationEntry>;
+  status: 'pending' | 'approved' | 'rejected';
+  submittedAt: any;
+  reviewedAt?: any;
+  reviewedBy?: string;
+  reviewNotes?: string;
+}

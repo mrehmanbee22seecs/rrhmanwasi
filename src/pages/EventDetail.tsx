@@ -764,7 +764,11 @@ const EventDetail = () => {
             {/* Sidebar */}
             <div className="space-y-8">
               {/* Capacity & Services */}
-              {(displayEvent.capacity || displayEvent.servicesIncluded || displayEvent.accessibilityInfo) && (
+              {(
+                (typeof displayEvent.capacity === 'number') ||
+                (Array.isArray(displayEvent.servicesIncluded) && displayEvent.servicesIncluded.length > 0) ||
+                (displayEvent.accessibilityInfo)
+              ) && (
                 <div className="luxury-card bg-cream-white p-8">
                   <h3 className="text-2xl font-luxury-heading text-black mb-4">Participation & Services</h3>
                   <div className="space-y-3 text-black">
@@ -789,7 +793,11 @@ const EventDetail = () => {
               )}
 
               {/* Logistics */}
-              {(displayEvent.materialsList || displayEvent.parkingInfo || displayEvent.certifications) && (
+              {(
+                (Array.isArray(displayEvent.materialsList) && displayEvent.materialsList.length > 0) ||
+                (displayEvent.parkingInfo) ||
+                (Array.isArray(displayEvent.certifications) && displayEvent.certifications.length > 0)
+              ) && (
                 <div className="luxury-card bg-cream-white p-8">
                   <h3 className="text-2xl font-luxury-heading text-black mb-4">Logistics</h3>
                   <div className="space-y-3 text-black">

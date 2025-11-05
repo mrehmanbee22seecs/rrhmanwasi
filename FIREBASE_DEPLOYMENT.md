@@ -1,315 +1,344 @@
-# Firebase Deployment Guide
+# Firebase Deployment Guide - Complete Copy-Paste Ready
 
-This guide will help you deploy the Firebase backend for your Waseela application.
-
-## Prerequisites
-
-1. Node.js and npm installed
-2. Firebase CLI installed (`npm install -g firebase-tools`)
-3. A Firebase project created in the Firebase Console
-4. Firebase project credentials
-
-## Step 1: Install Firebase CLI
+## 🚀 Quick Deploy (1 Command)
 
 ```bash
+firebase deploy --only firestore
+```
+
+This deploys both `firestore.rules` and `firestore.indexes.json` from your project.
+
+---
+
+## 📋 What's Being Deployed
+
+### Security Rules (`firestore.rules`)
+- ✅ 2 new edit request collections with complete security
+- ✅ Updated project_applications and event_registrations for user read access
+- ✅ Admin-only approval workflow enforced
+
+### Indexes (`firestore.indexes.json`)
+- ✅ 8 composite indexes total (6 new + 2 updated)
+- ✅ Optimized for all dashboard and admin panel queries
+- ✅ User-specific and status-based filtering
+
+---
+
+## 📖 Step-by-Step Deployment
+
+### Prerequisites
+
+```bash
+# 1. Install Firebase CLI (if not installed)
 npm install -g firebase-tools
-```
 
-## Step 2: Login to Firebase
-
-```bash
+# 2. Login to Firebase
 firebase login
+
+# 3. Verify you're in the correct project
+firebase use
 ```
 
-This will open a browser window for you to authenticate with Google.
+### Deployment Options
 
-## Step 3: Initialize Firebase in Your Project
-
-Navigate to your project directory and run:
+#### Option 1: Deploy Everything (Recommended)
 
 ```bash
-firebase init
+cd /path/to/your/project
+firebase deploy --only firestore
 ```
 
-Select the following services:
-- ✅ Firestore
-- ✅ Storage
-- ✅ Hosting (optional)
+**Output:**
+```
+✔ Deploy complete!
+✔ firestore: released rules firestore.rules
+✔ firestore: deployed indexes in firestore.indexes.json
+```
 
-### Firestore Setup
-- Use the `firestore.rules` file in the project root
-- Use the default `firestore.indexes.json` (will be created automatically)
-
-### Storage Setup
-- Use the `storage.rules` file in the project root
-
-### Hosting Setup (Optional)
-- Public directory: `dist`
-- Configure as single-page app: Yes
-- Set up automatic builds and deploys with GitHub: Optional
-
-## Step 4: Deploy Security Rules
-
-### Deploy Firestore Rules
+#### Option 2: Deploy Rules Only
 
 ```bash
 firebase deploy --only firestore:rules
 ```
 
-This will deploy the rules from `firestore.rules` to your Firebase project.
-
-### Deploy Storage Rules
+#### Option 3: Deploy Indexes Only
 
 ```bash
-firebase deploy --only storage:rules
+firebase deploy --only firestore:indexes
 ```
 
-This will deploy the rules from `storage.rules` to your Firebase project.
+---
 
-## Step 5: Create Required Indexes
+## 🔍 What's New in the Rules
 
-Some queries require composite indexes. Create these in the Firebase Console:
+### New Collections
 
-### Go to Firestore Console → Indexes
+#### `project_application_edit_requests`
+```javascript
+// Users can create edit requests for their own applications
+allow create: if isAuthenticated() && 
+                 request.resource.data.userEmail == request.auth.token.email &&
+                 request.resource.data.status == 'pending';
 
-**Project Submissions Index:**
-- Collection: `project_submissions`
-- Fields indexed:
-  - `submittedBy` (Ascending)
-  - `submittedAt` (Descending)
-- Query scope: Collection
+// Users can read their own, admins can read all
+allow read: if isAuthenticated() && 
+               (resource.data.userEmail == request.auth.token.email || isAdmin());
 
-**Another Index for Status:**
-- Collection: `project_submissions`
-- Fields indexed:
-  - `status` (Ascending)
-  - `submittedAt` (Descending)
-- Query scope: Collection
-
-**Event Submissions Index:**
-- Collection: `event_submissions`
-- Fields indexed:
-  - `submittedBy` (Ascending)
-  - `submittedAt` (Descending)
-- Query scope: Collection
-
-**Another Index for Status:**
-- Collection: `event_submissions`
-- Fields indexed:
-  - `status` (Ascending)
-  - `submittedAt` (Descending)
-- Query scope: Collection
-
-Alternatively, Firebase will prompt you with direct links to create these indexes when you run queries that need them.
-
-## Step 6: Enable Authentication Methods
-
-1. Go to Firebase Console → Authentication → Sign-in method
-2. Enable the following:
-   - ✅ Email/Password
-   - ✅ Google (Configure OAuth)
-   - ✅ Facebook (Configure OAuth with App ID and Secret)
-
-### Google OAuth Setup
-1. The Firebase Console will guide you through setting up Google OAuth
-2. Add authorized domains in the Firebase Console
-
-### Facebook OAuth Setup
-1. Create a Facebook App at https://developers.facebook.com
-2. Get App ID and App Secret
-3. Add them to Firebase Authentication settings
-4. Add OAuth redirect URI to Facebook App settings
-
-## Step 7: Configure Storage CORS
-
-Create a `cors.json` file:
-
-```json
-[
-  {
-    "origin": ["*"],
-    "method": ["GET"],
-    "maxAgeSeconds": 3600
-  }
-]
+// Only admins can approve/reject
+allow update: if isAdmin() &&
+                 (request.resource.data.status == 'approved' || 
+                  request.resource.data.status == 'rejected');
 ```
 
-Deploy CORS configuration:
+#### `event_registration_edit_requests`
+- Same rules as project_application_edit_requests
+- Ensures secure edit workflow for event registrations
+
+### Updated Collections
+
+#### `project_applications`
+```javascript
+// NEW: Users can read their own applications
+allow read: if isAuthenticated() && 
+  (request.auth.token.email == resource.data.email || isAdmin());
+
+// Only admins can update (for edit approval)
+allow update, delete: if isAdmin();
+```
+
+#### `event_registrations`
+- Same read access pattern as project_applications
+- Enables user dashboard functionality
+
+---
+
+## 📊 Indexes Overview
+
+### New Indexes (6)
+
+**For Edit Requests (Project Applications):**
+1. `userEmail` ↑ + `submittedAt` ↓
+2. `status` ↑ + `submittedAt` ↓
+3. `userEmail` ↑ + `status` ↑ + `submittedAt` ↓
+
+**For Edit Requests (Event Registrations):**
+4. `userEmail` ↑ + `submittedAt` ↓
+5. `status` ↑ + `submittedAt` ↓
+6. `userEmail` ↑ + `status` ↑ + `submittedAt` ↓
+
+### Updated Indexes (2)
+
+**For User Dashboard:**
+7. `project_applications`: `email` ↑ + `submittedAt` ↓
+8. `event_registrations`: `email` ↑ + `submittedAt` ↓
+
+---
+
+## ✅ Verification Steps
+
+### 1. Check Deployment Status
 
 ```bash
-gsutil cors set cors.json gs://your-project-id.appspot.com
+# View current rules
+firebase firestore:rules:get
+
+# List indexes
+firebase firestore:indexes
 ```
 
-Replace `your-project-id` with your actual Firebase project ID.
+### 2. Firebase Console Verification
 
-## Step 8: Set Up First Admin User
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Select your project
+3. **Firestore Database** → **Rules** → Verify rules are updated
+4. **Firestore Database** → **Indexes** → Check all 8 indexes show "Enabled"
 
-After deploying, you'll need to manually create the first admin user:
+### 3. Test Functionality
 
-1. Sign up a user through your application
-2. Go to Firebase Console → Firestore Database
-3. Find the user document in the `users` collection
-4. Edit the document and set `isAdmin: true`
+Run these tests in your application:
 
-Alternatively, use the admin credentials defined in the code:
-- Email: `admin@wasilah.org`
-- Password: `WasilahAdmin2024!`
-
-Sign up with these credentials, and the system will automatically grant admin privileges.
-
-## Step 9: Environment Variables
-
-Make sure your `.env` file has the correct Firebase configuration:
-
-```env
-VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
+#### Test 1: User Can View Own Applications ✅
+```javascript
+const q = query(
+  collection(db, 'project_applications'),
+  where('email', '==', currentUser.email)
+);
+const snapshot = await getDocs(q);
+// Should succeed and return user's applications
 ```
 
-You can find these values in:
-Firebase Console → Project Settings → General → Your apps → Web app
+#### Test 2: User Can Create Edit Request ✅
+```javascript
+await addDoc(collection(db, 'project_application_edit_requests'), {
+  userEmail: currentUser.email,
+  status: 'pending',
+  // ... other fields
+});
+// Should succeed
+```
 
-## Step 10: Test Your Deployment
+#### Test 3: User Cannot Approve Own Request ❌
+```javascript
+await updateDoc(doc(db, 'project_application_edit_requests', requestId), {
+  status: 'approved'
+});
+// Should fail: "Missing or insufficient permissions"
+```
 
-1. **Test Authentication:**
-   - Sign up a new user
-   - Sign in with email/password
-   - Sign in with Google
-   - Sign in with Facebook
+#### Test 4: Admin Can Approve Request ✅
+```javascript
+// As admin user
+await updateDoc(doc(db, 'project_application_edit_requests', requestId), {
+  status: 'approved',
+  reviewedAt: serverTimestamp()
+});
+// Should succeed
+```
 
-2. **Test Firestore:**
-   - Create a project/event submission
-   - Save as draft
-   - Edit the draft
-   - Submit for review
+---
 
-3. **Test Storage:**
-   - Upload an image for a project
-   - Upload a profile photo for an event organizer
-   - Verify images are accessible
+## 🛠 Troubleshooting
 
-4. **Test Admin Functions:**
-   - Sign in as admin
-   - Approve/reject submissions
-   - Manage content
+### Issue: "Missing or insufficient permissions"
 
-## Step 11: Deploy Your Application
+**Cause:** Rules not deployed or admin flag not set
 
-Build your application:
+**Fix:**
+```bash
+# Re-deploy rules
+firebase deploy --only firestore:rules
+
+# Verify admin user in Firestore:
+# users/{userId}/isAdmin = true
+```
+
+### Issue: "The query requires an index"
+
+**Cause:** Index not created or still building
+
+**Fix:**
+1. Click the error link to auto-create
+2. OR manually create in Console
+3. Wait 1-5 minutes for build
+4. Check status shows "Enabled"
+
+### Issue: Indexes stuck in "Building" state
+
+**Normal:** 1-5 minutes for small datasets
+
+**If longer than 10 minutes:**
+1. Check Firebase Console for errors
+2. Verify index configuration matches `firestore.indexes.json`
+3. Try deleting and recreating the index
+
+### Issue: Rules syntax error
+
+**Fix:**
+1. Copy rules from `firestore.rules` exactly as-is
+2. Don't modify the rules structure
+3. Verify in Firebase Console rules editor
+
+---
+
+## 📁 Files Updated
+
+```
+project-root/
+├── firestore.rules          ← Updated with edit request rules
+├── firestore.indexes.json   ← Updated with 8 indexes
+├── firebase.json            ← Points to above files (no change)
+└── FIREBASE_DEPLOYMENT.md   ← This guide
+```
+
+---
+
+## 🔐 Security Features
+
+**Authentication:**
+- ✅ Email-based access control
+- ✅ Admin role enforcement
+- ✅ User isolation (users only see their own data)
+
+**Data Integrity:**
+- ✅ Edit requests require 'pending' status on creation
+- ✅ Only admins can change status to 'approved' or 'rejected'
+- ✅ Original data never modified until admin approval
+
+**Audit Trail:**
+- ✅ All changes logged with timestamps
+- ✅ Reviewer information captured
+- ✅ Complete history maintained
+
+---
+
+## 📞 Support
+
+**Common Commands:**
 
 ```bash
-npm run build
+# Check which Firebase project you're using
+firebase use
+
+# Switch to different project
+firebase use [project-id]
+
+# View deployment history
+firebase deploy:history
+
+# Rollback to previous deployment
+firebase deploy:rollback firestore [version-id]
+
+# Test rules locally
+firebase emulators:start --only firestore
 ```
 
-Deploy to Firebase Hosting (if configured):
+**Getting Help:**
+- Firebase Docs: https://firebase.google.com/docs/firestore
+- Firebase Status: https://status.firebase.google.com
+- Community: https://firebase.community
 
-```bash
-firebase deploy --only hosting
-```
+---
 
-Or deploy to your preferred hosting service (Netlify, Vercel, etc.)
+## 📝 Deployment Checklist
 
-## Monitoring and Maintenance
+Before deployment:
+- [ ] Code changes committed and pushed
+- [ ] Built successfully (`npm run build`)
+- [ ] Reviewed `firestore.rules`
+- [ ] Reviewed `firestore.indexes.json`
+- [ ] Firebase CLI installed and logged in
+- [ ] Correct Firebase project selected
 
-### Set Up Budget Alerts
+After deployment:
+- [ ] Rules deployed (check Console)
+- [ ] All 8 indexes show "Enabled"
+- [ ] Tested user dashboard access
+- [ ] Tested edit request creation
+- [ ] Tested admin approval workflow
+- [ ] Verified no console errors
 
-1. Go to Firebase Console → Usage and billing
-2. Set budget alerts to avoid unexpected costs
-3. Recommended free tier limits:
-   - Firestore: 50,000 reads/day
-   - Storage: 5 GB stored, 1 GB downloaded/day
-   - Authentication: Unlimited
+---
 
-### Monitor Usage
+## 🎯 Quick Reference
 
-1. Firebase Console → Usage and billing
-2. Check Firestore, Storage, and Authentication usage
-3. Review Cloud Functions logs if added later
+| Action | Command |
+|--------|---------|
+| Deploy all | `firebase deploy --only firestore` |
+| Deploy rules only | `firebase deploy --only firestore:rules` |
+| Deploy indexes only | `firebase deploy --only firestore:indexes` |
+| View rules | `firebase firestore:rules:get` |
+| List indexes | `firebase firestore:indexes` |
+| Test locally | `firebase emulators:start` |
 
-### Backup Strategy
+---
 
-1. Set up automated Firestore exports
-2. Go to Firebase Console → Firestore Database → Import/Export
-3. Schedule regular exports to Cloud Storage
+**Last Updated:** November 5, 2025  
+**Version:** 2.0 - Edit Functionality  
+**Status:** ✅ Production Ready
 
-## Troubleshooting
-
-### Problem: "Permission Denied" errors
-
-**Solution:**
-- Check that security rules are deployed
-- Verify user authentication status
-- Check that user document has correct permissions
-
-### Problem: "Missing or insufficient permissions"
-
-**Solution:**
-- Verify Firestore rules are correct
-- Check that the user is authenticated
-- Ensure admin users have `isAdmin: true` in their user document
-
-### Problem: Images not uploading
-
-**Solution:**
-- Check Storage rules are deployed
-- Verify file size is under 5MB
-- Ensure file type is an image
-- Check browser console for specific errors
-
-### Problem: Queries failing
-
-**Solution:**
-- Check Firebase Console for index creation prompts
-- Create required composite indexes
-- Verify collection names match exactly
-
-### Problem: Authentication not working
-
-**Solution:**
-- Verify authentication methods are enabled in Firebase Console
-- Check OAuth credentials are correct
-- Ensure authorized domains are configured
-
-## Security Best Practices
-
-1. **Never commit Firebase credentials to git**
-   - Use `.env` files (already in `.gitignore`)
-   - Use environment variables in production
-
-2. **Regularly review security rules**
-   - Audit rules monthly
-   - Test with different user roles
-   - Use Firebase Emulator for testing
-
-3. **Keep Firebase SDK updated**
-   ```bash
-   npm update firebase
-   ```
-
-4. **Enable App Check** (Optional but recommended)
-   - Protects your backend from abuse
-   - Go to Firebase Console → App Check
-
-5. **Monitor authentication attempts**
-   - Set up alerts for suspicious activity
-   - Review authentication logs regularly
-
-## Additional Resources
-
-- [Firebase Documentation](https://firebase.google.com/docs)
-- [Firestore Security Rules](https://firebase.google.com/docs/firestore/security/rules-structure)
-- [Storage Security Rules](https://firebase.google.com/docs/storage/security)
-- [Firebase CLI Reference](https://firebase.google.com/docs/cli)
-
-## Support
-
-If you encounter issues:
-1. Check Firebase Console logs
-2. Review browser console errors
-3. Check Firebase Status Dashboard
-4. Consult Firebase documentation
-5. Ask in Firebase community forums
+**Summary:**
+- ✅ Complete copy-paste deployment guide
+- ✅ All security rules included in firestore.rules
+- ✅ All indexes included in firestore.indexes.json
+- ✅ Single command deployment
+- ✅ Comprehensive testing procedures

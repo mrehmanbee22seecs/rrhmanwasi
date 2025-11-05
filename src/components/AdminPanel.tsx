@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, MessageSquare, Mail, Calendar, Target, Settings, CreditCard as Edit3, Save, X, Plus, Trash2, Eye, EyeOff, Download, CheckCircle, XCircle, Clock, FileText, Mail as MailIcon, RefreshCw, Database, ExternalLink } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, query, orderBy, where } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, updateDoc, deleteDoc, addDoc, query, orderBy, where, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { ProjectSubmission, EventSubmission, SubmissionStatus, ProjectApplicationEntry, EventRegistrationEntry, VolunteerApplicationEntry, NewsletterSubscriberEntry } from '../types/submissions';
+import { ProjectSubmission, EventSubmission, SubmissionStatus, ProjectApplicationEntry, EventRegistrationEntry, VolunteerApplicationEntry, NewsletterSubscriberEntry, ProjectApplicationEditRequest, EventRegistrationEditRequest } from '../types/submissions';
 import { sendEmail, formatSubmissionStatusUpdateEmail } from '../utils/emailService';
 import { migrateApprovedSubmissions } from '../utils/migrateVisibility';
 import ChatsPanel from './Admin/ChatsPanel';
@@ -35,6 +35,21 @@ type SubmissionWithType = (ProjectSubmission | EventSubmission) & {
   submissionType: 'project' | 'event';
 };
 
+// Column headers for application tables
+const PROJECT_APPLICATION_COLUMNS = [
+  'Project', 'Name', 'Email', 'Phone', 'Preferred Role', 'Availability',
+  'Skills', 'Languages', 'Transport', 'Equipment', 'Accessibility',
+  'Emergency Contact', 'Consents', 'Contact Method', 'Portfolio',
+  'Heard About Us', 'WhatsApp', 'Experience', 'Motivation', 'Submitted'
+];
+
+const EVENT_REGISTRATION_COLUMNS = [
+  'Event', 'Name', 'Email', 'Phone', 'Emergency Contact', 'Dietary',
+  'Medical', 'Shift', 'Sessions', 'Team', 'T‑shirt', 'Accessibility',
+  'Consents', 'Contact Method', 'Heard About Us', 'WhatsApp',
+  'Experience', 'Submitted'
+];
+
 const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState('responses');
   const [responses, setResponses] = useState<Response[]>([]);
@@ -43,6 +58,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const [eventRegistrations, setEventRegistrations] = useState<EventRegistrationEntry[]>([]);
   const [volunteerApplications, setVolunteerApplications] = useState<VolunteerApplicationEntry[]>([]);
   const [newsletterSubscribers, setNewsletterSubscribers] = useState<NewsletterSubscriberEntry[]>([]);
+  const [projectEditRequests, setProjectEditRequests] = useState<ProjectApplicationEditRequest[]>([]);
+  const [eventEditRequests, setEventEditRequests] = useState<EventRegistrationEditRequest[]>([]);
   const [editableContent, setEditableContent] = useState<EditableContent[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingContent, setEditingContent] = useState<string | null>(null);
@@ -74,6 +91,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
       fetchResponses();
       fetchSubmissions();
       fetchApplications();
+      fetchEditRequests();
       fetchEditableContent();
     }
   }, [isOpen, isAdmin]);
@@ -110,7 +128,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
 
   const fetchApplications = async () => {
     try {
-      // Project Applications
+      // Project Applications - Fetch ALL fields
       const projQ = query(collection(db, 'project_applications'), orderBy('submittedAt', 'desc'));
       const projSnap = await getDocs(projQ);
       const projRows: ProjectApplicationEntry[] = [];
@@ -125,12 +143,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
           phone: data.phone || '',
           experience: data.experience || '',
           motivation: data.motivation || '',
+          preferredRole: data.preferredRole || '',
+          availability: data.availability || '',
+          skills: data.skills || [],
+          languageProficiency: data.languageProficiency || [],
+          transportAvailable: data.transportAvailable || false,
+          equipment: data.equipment || [],
+          accessibilityNeeds: data.accessibilityNeeds || '',
+          emergencyContact: data.emergencyContact || undefined,
+          consents: data.consents || undefined,
+          startAvailabilityDate: data.startAvailabilityDate || '',
+          endAvailabilityDate: data.endAvailabilityDate || '',
+          preferredContactMethod: data.preferredContactMethod || '',
+          portfolioUrls: data.portfolioUrls || [],
+          heardAboutUs: data.heardAboutUs || '',
+          emergencyContactRelation: data.emergencyContactRelation || '',
+          whatsappConsent: data.whatsappConsent || false,
           submittedAt: data.submittedAt,
         });
       });
       setProjectApplications(projRows);
 
-      // Event Registrations
+      // Event Registrations - Fetch ALL fields
       const evtQ = query(collection(db, 'event_registrations'), orderBy('submittedAt', 'desc'));
       const evtSnap = await getDocs(evtQ);
       const evtRows: EventRegistrationEntry[] = [];
@@ -147,12 +181,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
           emergencyContact: data.emergencyContact || '',
           dietaryRestrictions: data.dietaryRestrictions || '',
           experience: data.experience || '',
+          shiftPreference: data.shiftPreference || '',
+          sessionSelections: data.sessionSelections || [],
+          teamPreference: data.teamPreference || '',
+          tShirtSize: data.tShirtSize || '',
+          accessibilityNeeds: data.accessibilityNeeds || '',
+          consents: data.consents || undefined,
+          preferredContactMethod: data.preferredContactMethod || '',
+          heardAboutUs: data.heardAboutUs || '',
+          medicalConditions: data.medicalConditions || '',
+          whatsappConsent: data.whatsappConsent || false,
           submittedAt: data.submittedAt,
         });
       });
       setEventRegistrations(evtRows);
 
-      // Volunteer Applications
+      // Volunteer Applications - Fetch ALL fields
       const volQ = query(collection(db, 'volunteer_applications'), orderBy('submittedAt', 'desc'));
       const volSnap = await getDocs(volQ);
       const volRows: VolunteerApplicationEntry[] = [];
@@ -172,6 +216,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
           interests: Array.isArray(data.interests) ? data.interests : [],
           availability: data.availability || '',
           motivation: data.motivation || '',
+          preferredRole: data.preferredRole || '',
+          languages: data.languages || [],
+          tShirtSize: data.tShirtSize || '',
+          emergencyContact: data.emergencyContact || undefined,
+          heardAboutUs: data.heardAboutUs || '',
+          whatsappConsent: data.whatsappConsent || false,
           submittedAt: data.submittedAt,
         });
       });
@@ -193,6 +243,30 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
       setNewsletterSubscribers(nsRows);
     } catch (e) {
       console.error('Error fetching applications', e);
+    }
+  };
+
+  const fetchEditRequests = async () => {
+    try {
+      // Fetch project edit requests
+      const projEditQ = query(collection(db, 'project_application_edit_requests'), orderBy('submittedAt', 'desc'));
+      const projEditSnap = await getDocs(projEditQ);
+      const projEditReqs: ProjectApplicationEditRequest[] = [];
+      projEditSnap.forEach((d) => {
+        projEditReqs.push({ id: d.id, ...d.data() } as ProjectApplicationEditRequest);
+      });
+      setProjectEditRequests(projEditReqs);
+
+      // Fetch event edit requests
+      const evtEditQ = query(collection(db, 'event_registration_edit_requests'), orderBy('submittedAt', 'desc'));
+      const evtEditSnap = await getDocs(evtEditQ);
+      const evtEditReqs: EventRegistrationEditRequest[] = [];
+      evtEditSnap.forEach((d) => {
+        evtEditReqs.push({ id: d.id, ...d.data() } as EventRegistrationEditRequest);
+      });
+      setEventEditRequests(evtEditReqs);
+    } catch (e) {
+      console.error('Error fetching edit requests', e);
     }
   };
 
@@ -237,7 +311,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     try {
       const dateStr = new Date().toISOString().split('T')[0];
 
-      // Prepare rows
+      // Prepare rows with ALL fields
       const projectRows = projectApplications.map((p) => ({
         'Project Title': p.projectTitle,
         'Name': p.name,
@@ -245,7 +319,23 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
         'Phone': p.phone,
         'Preferred Role': p.preferredRole || '',
         'Availability': p.availability || '',
+        'Start Date': p.startAvailabilityDate || '',
+        'End Date': p.endAvailabilityDate || '',
         'Skills': Array.isArray(p.skills) ? p.skills.join('; ') : '',
+        'Languages': Array.isArray(p.languageProficiency) ? p.languageProficiency.join('; ') : '',
+        'Transport': p.transportAvailable ? 'Yes' : 'No',
+        'Equipment': Array.isArray(p.equipment) ? p.equipment.join('; ') : '',
+        'Accessibility': p.accessibilityNeeds || '',
+        'Emergency Contact Name': p.emergencyContact?.name || '',
+        'Emergency Contact Phone': p.emergencyContact?.phone || '',
+        'Emergency Contact Relation': p.emergencyContactRelation || '',
+        'Liability Consent': p.consents?.liability ? 'Yes' : 'No',
+        'Photo Consent': p.consents?.photo ? 'Yes' : 'No',
+        'Background Check Consent': p.consents?.backgroundCheck ? 'Yes' : 'No',
+        'Preferred Contact': p.preferredContactMethod || '',
+        'Portfolio URLs': Array.isArray(p.portfolioUrls) ? p.portfolioUrls.join('; ') : '',
+        'Heard About Us': p.heardAboutUs || '',
+        'WhatsApp Consent': p.whatsappConsent ? 'Yes' : 'No',
         'Experience': p.experience || '',
         'Motivation': p.motivation || '',
         'Submitted': formatTimestamp(p.submittedAt),
@@ -448,6 +538,75 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleApproveEditRequest = async (requestId: string, type: 'project' | 'event') => {
+    if (!confirm('Approve these changes? The original application/registration will be updated.')) {
+      return;
+    }
+
+    try {
+      const collectionName = type === 'project' ? 'project_application_edit_requests' : 'event_registration_edit_requests';
+      const originalCollectionName = type === 'project' ? 'project_applications' : 'event_registrations';
+      
+      // Get the edit request
+      const editRequestRef = doc(db, collectionName, requestId);
+      const editRequestSnap = await getDoc(editRequestRef);
+      
+      if (!editRequestSnap.exists()) {
+        alert('Edit request not found');
+        return;
+      }
+
+      const editRequest = editRequestSnap.data();
+      const originalId = editRequest.originalApplicationId || editRequest.originalRegistrationId;
+      
+      // Update the original record with requested changes
+      const originalRef = doc(db, originalCollectionName, originalId);
+      await updateDoc(originalRef, {
+        ...editRequest.requestedChanges,
+        updatedAt: serverTimestamp(),
+      });
+
+      // Mark edit request as approved
+      await updateDoc(editRequestRef, {
+        status: 'approved',
+        reviewedAt: serverTimestamp(),
+        reviewedBy: currentUser?.email || 'admin',
+      });
+
+      alert('Edit request approved and changes applied!');
+      await fetchEditRequests();
+      await fetchApplications();
+    } catch (error) {
+      console.error('Error approving edit request:', error);
+      alert('Error approving edit request. Please try again.');
+    }
+  };
+
+  const handleRejectEditRequest = async (requestId: string, type: 'project' | 'event', reason: string) => {
+    if (!reason.trim()) {
+      alert('Please provide a reason for rejection');
+      return;
+    }
+
+    try {
+      const collectionName = type === 'project' ? 'project_application_edit_requests' : 'event_registration_edit_requests';
+      const editRequestRef = doc(db, collectionName, requestId);
+      
+      await updateDoc(editRequestRef, {
+        status: 'rejected',
+        reviewedAt: serverTimestamp(),
+        reviewedBy: currentUser?.email || 'admin',
+        reviewNotes: reason,
+      });
+
+      alert('Edit request rejected');
+      await fetchEditRequests();
+    } catch (error) {
+      console.error('Error rejecting edit request:', error);
+      alert('Error rejecting edit request. Please try again.');
+    }
+  };
+
   const handleMigrateVisibility = async () => {
     if (!confirm('This will set isVisible=true for all approved submissions. Continue?')) {
       return;
@@ -587,6 +746,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  // Helper function to format emergency contact display
+  const formatEmergencyContact = (emergencyContact: any, relation?: string) => {
+    if (!emergencyContact) return '—';
+    const name = emergencyContact.name || '';
+    const phone = emergencyContact.phone || '';
+    const rel = relation ? `(${relation})` : '';
+    return `${name} ${rel} ${phone}`.trim() || '—';
+  };
+
   return (
     <>
       {/* Backdrop - Z-INDEX: 60 */}
@@ -621,6 +789,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
             { id: 'responses', label: 'Responses', shortLabel: 'Resp', icon: MessageSquare },
             { id: 'submissions', label: 'Submissions', shortLabel: 'Sub', icon: FileText },
             { id: 'applications', label: 'Applications', shortLabel: 'Apps', icon: Users },
+            { id: 'edit-requests', label: 'Edit Requests', shortLabel: 'Edits', icon: RefreshCw },
             { id: 'registered', label: 'Registered Users', shortLabel: 'Reg', icon: Users },
             { id: 'chats', label: 'Chats', shortLabel: 'Chat', icon: MessageSquare },
             { id: 'kb', label: 'Knowledge Base', shortLabel: 'KB', icon: Database },
@@ -880,7 +1049,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 <h4 className="text-xl font-luxury-heading text-black mb-4">Project Users</h4>
                 {renderGroupedTable(
                   groupBy(projectApplications, (a) => a.projectTitle || 'Untitled Project'),
-                  ['Project', 'Name', 'Email', 'Phone', 'Preferred Role', 'Availability', 'Skills', 'Languages', 'Transport', 'Equipment', 'Accessibility', 'Emergency Contact', 'Consents', 'Experience', 'Motivation', 'Submitted'],
+                  PROJECT_APPLICATION_COLUMNS,
                   (row) => [
                     row.projectId ? (<a href={`/projects/${row.projectId}`} className="text-blue-600 hover:underline" target="_blank" rel="noreferrer">Open</a>) : '—',
                     row.name,
@@ -893,8 +1062,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                     row.transportAvailable ? 'Yes' : 'No',
                     Array.isArray(row.equipment) ? row.equipment.join(', ') : '—',
                     row.accessibilityNeeds || '—',
-                    row.emergencyContact ? `${row.emergencyContact.name || ''} ${row.emergencyContact.phone || ''}`.trim() || '—' : '—',
+                    formatEmergencyContact(row.emergencyContact, row.emergencyContactRelation),
                     row.consents ? [row.consents.liability ? 'Liability' : null, row.consents.photo ? 'Photo' : null, row.consents.backgroundCheck ? 'Background' : null].filter(Boolean).join(', ') || '—' : '—',
+                    row.preferredContactMethod || '—',
+                    Array.isArray(row.portfolioUrls) ? row.portfolioUrls.join(', ') : '—',
+                    row.heardAboutUs || '—',
+                    row.whatsappConsent ? 'Yes' : 'No',
                     row.experience || '—',
                     row.motivation || '—',
                     formatTimestamp(row.submittedAt),
@@ -910,7 +1083,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 <h4 className="text-xl font-luxury-heading text-black mb-4">Event Users</h4>
                 {renderGroupedTable(
                   groupBy(eventRegistrations, (a) => a.eventTitle || 'Untitled Event'),
-                  ['Event', 'Name', 'Email', 'Phone', 'Emergency Contact', 'Dietary', 'Shift', 'Sessions', 'Team', 'T‑shirt', 'Accessibility', 'Consents', 'Experience', 'Submitted'],
+                  EVENT_REGISTRATION_COLUMNS,
                   (row) => [
                     row.eventId ? (<a href={`/events/${row.eventId}`} className="text-blue-600 hover:underline" target="_blank" rel="noreferrer">Open</a>) : '—',
                     row.name,
@@ -918,12 +1091,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                     row.phone,
                     row.emergencyContact || '—',
                     row.dietaryRestrictions || '—',
+                    row.medicalConditions || '—',
                     row.shiftPreference || '—',
                     Array.isArray(row.sessionSelections) ? row.sessionSelections.join(', ') : '—',
                     row.teamPreference || '—',
                     row.tShirtSize || '—',
                     row.accessibilityNeeds || '—',
                     row.consents ? [row.consents.liability ? 'Liability' : null, row.consents.photo ? 'Photo' : null].filter(Boolean).join(', ') || '—' : '—',
+                    row.preferredContactMethod || '—',
+                    row.heardAboutUs || '—',
+                    row.whatsappConsent ? 'Yes' : 'No',
                     row.experience || '—',
                     formatTimestamp(row.submittedAt),
                   ]
@@ -973,6 +1150,233 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                     </tbody>
                   </table>
                 </div>
+              </section>
+            </div>
+          )}
+          {activeTab === 'edit-requests' && (
+            <div className="space-y-8">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-luxury-heading text-black">Edit Requests</h3>
+                <button
+                  onClick={fetchEditRequests}
+                  className="flex items-center px-4 py-2 bg-logo-navy text-cream-elegant rounded-luxury hover:bg-logo-navy-light transition-colors"
+                >
+                  Refresh
+                </button>
+              </div>
+
+              {/* Project Application Edit Requests */}
+              <section>
+                <h4 className="text-xl font-luxury-heading text-black mb-4">Project Application Edits</h4>
+                {projectEditRequests.length === 0 ? (
+                  <div className="text-sm text-gray-600">No pending edit requests for project applications.</div>
+                ) : (
+                  <div className="space-y-4">
+                    {projectEditRequests.map((request) => (
+                      <div key={request.id} className="luxury-card bg-cream-white p-6 border-l-4 border-vibrant-orange">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <h5 className="text-lg font-luxury-semibold text-black">{request.projectTitle}</h5>
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                request.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                              </span>
+                            </div>
+                            <p className="text-sm text-black/70">User: {request.userEmail}</p>
+                            <p className="text-sm text-black/70">Submitted: {formatTimestamp(request.submittedAt)}</p>
+                          </div>
+                        </div>
+
+                        {/* Diff View */}
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <h6 className="font-luxury-semibold text-black mb-2 text-sm">Original Data</h6>
+                            <div className="bg-red-50 p-4 rounded-lg text-sm space-y-1">
+                              {Object.entries(request.originalData || {}).map(([key, value]: [string, any]) => {
+                                if (key === 'id' || key === 'submittedAt') return null;
+                                const newValue = request.requestedChanges?.[key];
+                                const hasChanged = JSON.stringify(value) !== JSON.stringify(newValue);
+                                if (!hasChanged) return null;
+                                
+                                return (
+                                  <div key={key} className="border-b border-red-200 pb-1">
+                                    <span className="font-medium text-black">{key}:</span>{' '}
+                                    <span className="text-black/80">{
+                                      Array.isArray(value) ? value.join(', ') :
+                                      typeof value === 'object' ? JSON.stringify(value) :
+                                      String(value || '—')
+                                    }</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <div>
+                            <h6 className="font-luxury-semibold text-black mb-2 text-sm">Requested Changes</h6>
+                            <div className="bg-green-50 p-4 rounded-lg text-sm space-y-1">
+                              {Object.entries(request.requestedChanges || {}).map(([key, value]: [string, any]) => {
+                                const oldValue = request.originalData?.[key];
+                                const hasChanged = JSON.stringify(value) !== JSON.stringify(oldValue);
+                                if (!hasChanged) return null;
+                                
+                                return (
+                                  <div key={key} className="border-b border-green-200 pb-1">
+                                    <span className="font-medium text-black">{key}:</span>{' '}
+                                    <span className="text-black/80">{
+                                      Array.isArray(value) ? value.join(', ') :
+                                      typeof value === 'object' ? JSON.stringify(value) :
+                                      String(value || '—')
+                                    }</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        {request.status === 'pending' && (
+                          <div className="mt-4 flex space-x-3">
+                            <button
+                              onClick={() => handleApproveEditRequest(request.id, 'project')}
+                              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-luxury hover:bg-green-700 transition-colors"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Approve Changes
+                            </button>
+                            <button
+                              onClick={() => {
+                                const reason = prompt('Reason for rejection:');
+                                if (reason) handleRejectEditRequest(request.id, 'project', reason);
+                              }}
+                              className="flex items-center px-4 py-2 bg-red-600 text-white rounded-luxury hover:bg-red-700 transition-colors"
+                            >
+                              <XCircle className="w-4 h-4 mr-2" />
+                              Reject
+                            </button>
+                          </div>
+                        )}
+
+                        {request.status === 'rejected' && request.reviewNotes && (
+                          <div className="mt-4 p-3 bg-red-50 border-l-4 border-red-500 rounded">
+                            <p className="text-sm text-black"><strong>Rejection Reason:</strong> {request.reviewNotes}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {/* Event Registration Edit Requests */}
+              <section>
+                <h4 className="text-xl font-luxury-heading text-black mb-4">Event Registration Edits</h4>
+                {eventEditRequests.length === 0 ? (
+                  <div className="text-sm text-gray-600">No pending edit requests for event registrations.</div>
+                ) : (
+                  <div className="space-y-4">
+                    {eventEditRequests.map((request) => (
+                      <div key={request.id} className="luxury-card bg-cream-white p-6 border-l-4 border-vibrant-orange">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <h5 className="text-lg font-luxury-semibold text-black">{request.eventTitle}</h5>
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                request.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                              </span>
+                            </div>
+                            <p className="text-sm text-black/70">User: {request.userEmail}</p>
+                            <p className="text-sm text-black/70">Submitted: {formatTimestamp(request.submittedAt)}</p>
+                          </div>
+                        </div>
+
+                        {/* Diff View */}
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <h6 className="font-luxury-semibold text-black mb-2 text-sm">Original Data</h6>
+                            <div className="bg-red-50 p-4 rounded-lg text-sm space-y-1">
+                              {Object.entries(request.originalData || {}).map(([key, value]: [string, any]) => {
+                                if (key === 'id' || key === 'submittedAt') return null;
+                                const newValue = request.requestedChanges?.[key];
+                                const hasChanged = JSON.stringify(value) !== JSON.stringify(newValue);
+                                if (!hasChanged) return null;
+                                
+                                return (
+                                  <div key={key} className="border-b border-red-200 pb-1">
+                                    <span className="font-medium text-black">{key}:</span>{' '}
+                                    <span className="text-black/80">{
+                                      Array.isArray(value) ? value.join(', ') :
+                                      typeof value === 'object' ? JSON.stringify(value) :
+                                      String(value || '—')
+                                    }</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <div>
+                            <h6 className="font-luxury-semibold text-black mb-2 text-sm">Requested Changes</h6>
+                            <div className="bg-green-50 p-4 rounded-lg text-sm space-y-1">
+                              {Object.entries(request.requestedChanges || {}).map(([key, value]: [string, any]) => {
+                                const oldValue = request.originalData?.[key];
+                                const hasChanged = JSON.stringify(value) !== JSON.stringify(oldValue);
+                                if (!hasChanged) return null;
+                                
+                                return (
+                                  <div key={key} className="border-b border-green-200 pb-1">
+                                    <span className="font-medium text-black">{key}:</span>{' '}
+                                    <span className="text-black/80">{
+                                      Array.isArray(value) ? value.join(', ') :
+                                      typeof value === 'object' ? JSON.stringify(value) :
+                                      String(value || '—')
+                                    }</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        {request.status === 'pending' && (
+                          <div className="mt-4 flex space-x-3">
+                            <button
+                              onClick={() => handleApproveEditRequest(request.id, 'event')}
+                              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-luxury hover:bg-green-700 transition-colors"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Approve Changes
+                            </button>
+                            <button
+                              onClick={() => {
+                                const reason = prompt('Reason for rejection:');
+                                if (reason) handleRejectEditRequest(request.id, 'event', reason);
+                              }}
+                              className="flex items-center px-4 py-2 bg-red-600 text-white rounded-luxury hover:bg-red-700 transition-colors"
+                            >
+                              <XCircle className="w-4 h-4 mr-2" />
+                              Reject
+                            </button>
+                          </div>
+                        )}
+
+                        {request.status === 'rejected' && request.reviewNotes && (
+                          <div className="mt-4 p-3 bg-red-50 border-l-4 border-red-500 rounded">
+                            <p className="text-sm text-black"><strong>Rejection Reason:</strong> {request.reviewNotes}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </section>
             </div>
           )}
