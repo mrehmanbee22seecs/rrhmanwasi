@@ -91,11 +91,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const createUserDocument = async (user: User, additionalData: any = {}) => {
     try {
+      console.log('📝 createUserDocument called for user:', user.email);
       const userRef = doc(db, 'users', user.uid);
+      console.log('Checking if user document exists...');
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {
         // New user - create document
+        console.log('New user detected, creating document...');
         const { displayName, email, photoURL } = user;
         const isAdminUser = email === ADMIN_EMAIL;
         
@@ -118,23 +121,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
         };
 
+        console.log('Writing new user document to Firestore...');
         await setDoc(userRef, userData);
+        console.log('✅ User document created successfully');
         
         // Fetch the document again to get server-resolved timestamps
         const newUserSnap = await getDoc(userRef);
-        return newUserSnap.data() as UserData;
+        const finalData = newUserSnap.data() as UserData;
+        console.log('✅ User document fetched:', finalData.email);
+        return finalData;
       } else {
         // Existing user - update last login
+        console.log('Existing user detected, updating last login...');
         await updateDoc(userRef, {
           lastLogin: serverTimestamp()
         });
+        console.log('✅ Last login updated');
         
         // Fetch the updated document
         const updatedUserSnap = await getDoc(userRef);
-        return updatedUserSnap.data() as UserData;
+        const finalData = updatedUserSnap.data() as UserData;
+        console.log('✅ User document fetched:', finalData.email);
+        return finalData;
       }
     } catch (error) {
-      console.error('Error creating/updating user document:', error);
+      console.error('❌ Error creating/updating user document:', error);
+      console.error('Error details:', {
+        message: (error as Error).message,
+        name: (error as Error).name,
+        stack: (error as Error).stack
+      });
       throw error;
     }
   };
