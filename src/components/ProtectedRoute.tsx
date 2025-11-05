@@ -8,6 +8,9 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
+// Paths where onboarding modal should not be shown
+const ONBOARDING_EXCLUDED_PATHS = ['/dashboard', '/my-applications', '/reminders'];
+
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { currentUser, isGuest, loading, userData } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -49,10 +52,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
     // Show onboarding for authenticated non-guest users who haven't completed it
     // But only if they're not on specific pages (dashboard, profile, etc.)
-    const excludedPaths = ['/dashboard', '/my-applications', '/reminders'];
     const shouldShow = !userData.isGuest && 
                        !userData.preferences?.onboardingCompleted &&
-                       !excludedPaths.includes(location.pathname);
+                       !ONBOARDING_EXCLUDED_PATHS.includes(location.pathname);
     setShowOnboarding(shouldShow);
   }, [currentUser, userData, navigate, location.pathname]);
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, User, Palette, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { X, User, Palette, CheckCircle, ArrowRight, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -16,6 +16,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose }) =>
   const [selectedTheme, setSelectedTheme] = useState('wasilah-classic');
   const [interests, setInterests] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const { currentUser, userData, refreshUserData } = useAuth();
   const { themes, setTheme } = useTheme();
@@ -50,6 +51,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose }) =>
     }
 
     setLoading(true);
+    setError(null);
     try {
       const userRef = doc(db, 'users', currentUser.uid);
       
@@ -87,7 +89,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose }) =>
       onClose();
     } catch (error) {
       console.error('Error completing onboarding:', error);
-      alert('Failed to save preferences. Please try again.');
+      setError('Failed to save preferences. Please try again.');
       setLoading(false);
     }
   };
@@ -127,6 +129,22 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose }) =>
         </div>
 
         <div className="p-8">
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-luxury flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-red-800 font-luxury-body">{error}</p>
+              </div>
+              <button 
+                onClick={() => setError(null)}
+                className="text-red-600 hover:text-red-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           {/* Step 1: Name */}
           {currentStep === 1 && (
             <div className="text-center">
