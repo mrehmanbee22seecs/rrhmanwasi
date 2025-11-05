@@ -2,7 +2,7 @@
 
 ## Critical: You Must Redeploy
 
-The fix requires **redeploying to Firebase Hosting** because the CORS headers are configured in `firebase.json` and only take effect after deployment.
+The fix requires **redeploying to Firebase Hosting** because the configuration changes in `firebase.json` only take effect after deployment.
 
 ## Quick Deploy (3 Steps)
 
@@ -26,46 +26,39 @@ firebase deploy --only hosting
 
 ### The Problem
 The OAuth popup authentication was failing because:
-- **Production** (Firebase Hosting) was missing CORS headers
-- Development worked because `vite.config.ts` had the headers
-- Production didn't work because `firebase.json` was missing the headers
+- Cross-Origin-Opener-Policy (COOP) headers were **blocking** Firebase Auth
+- Firebase Auth needs to check `window.closed` on the popup
+- COOP headers prevent cross-window communication
+- Error in console: "Cross-Origin-Opener-Policy policy would block the window.closed call"
 
 ### The Solution
-Added these headers to `firebase.json`:
-```json
-{
-  "key": "Cross-Origin-Opener-Policy",
-  "value": "same-origin-allow-popups"
-},
-{
-  "key": "Cross-Origin-Embedder-Policy",
-  "value": "unsafe-none"
-}
-```
+**Removed** the problematic CORS headers from both files:
+- Removed from `firebase.json` (production)
+- Removed from `vite.config.ts` (development)
+
+Firebase Auth popup requires the ability to communicate between windows. Setting COOP headers creates isolated browsing contexts that break this functionality.
 
 ## Verify the Fix
 
-After deploying, verify the headers are applied:
+After deploying, verify the popup works:
 
-### Using curl:
-```bash
-curl -I https://wasilah-new.web.app
-```
+### Test in Browser:
+1. Open your deployed site
+2. Open Browser DevTools (F12)
+3. Go to Console tab
+4. Click Google/Facebook login
+5. Verify popup opens and stays open
+6. Complete authentication
+7. Check console - should NOT see "Cross-Origin-Opener-Policy policy would block the window.closed call"
 
-Look for these headers in the response:
-```
-Cross-Origin-Opener-Policy: same-origin-allow-popups
-Cross-Origin-Embedder-Policy: unsafe-none
-```
-
-### Using Browser DevTools:
+### Using Browser DevTools Network Tab:
 1. Open your site
 2. Press F12 (DevTools)
 3. Go to Network tab
 4. Refresh page
 5. Click on the first request (your domain)
 6. Look at Response Headers
-7. Verify CORS headers are present
+7. Verify Cross-Origin-Opener-Policy is NOT present (this is correct)
 
 ## If It Still Doesn't Work After Deploy
 
