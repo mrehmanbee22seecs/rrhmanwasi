@@ -54,11 +54,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setError('');
     setLoading(true);
     try {
+      console.log('🟢 Calling loginWithGoogle from AuthModal...');
       await loginWithGoogle();
+      console.log('🟢 loginWithGoogle completed (redirect should happen)');
+      // Note: onClose() may not execute if redirect happens immediately
       onClose();
     } catch (error: any) {
-      setError(error.message);
-    } finally {
+      console.error('🔴 Error in handleGoogleLogin:', error);
+      setError(error.message || 'Failed to initiate Google login');
       setLoading(false);
     }
   };

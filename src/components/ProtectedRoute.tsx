@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocation } from 'react-router-dom';
 import AuthModal from './AuthModal';
 import OnboardingModal from './OnboardingModal';
 
@@ -7,10 +8,14 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
+// Paths where onboarding modal should not be shown
+const ONBOARDING_EXCLUDED_PATHS = ['/dashboard', '/my-applications', '/reminders'];
+
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { currentUser, isGuest, loading, userData } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const location = useLocation();
 
   // Manage onboarding modal visibility when user data is available
   useEffect(() => {
@@ -26,9 +31,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     }
 
     // Show onboarding for authenticated non-guest users who haven't completed it
-    const shouldShow = !userData.isGuest && !userData.preferences?.onboardingCompleted;
+    // But only if they're not on specific pages (dashboard, profile, etc.)
+    const shouldShow = !userData.isGuest && 
+                       !userData.preferences?.onboardingCompleted &&
+                       !ONBOARDING_EXCLUDED_PATHS.includes(location.pathname);
     setShowOnboarding(shouldShow);
-  }, [currentUser, userData]);
+  }, [currentUser, userData, location.pathname]);
 
   if (loading) {
     return (

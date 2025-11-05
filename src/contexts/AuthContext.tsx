@@ -160,15 +160,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     await updateProfile(user, { displayName });
 
     // Send email verification with action code settings for proper redirection
-    const actionCodeSettings = {
-      url: window.location.origin + '/dashboard',
-      handleCodeInApp: true
-    } as const;
-    await sendEmailVerification(user, actionCodeSettings);
+    try {
+      const actionCodeSettings = {
+        url: window.location.origin + '/dashboard',
+        handleCodeInApp: true
+      } as const;
+      await sendEmailVerification(user, actionCodeSettings);
+    } catch (error) {
+      console.error('Failed to send verification email:', error);
+      // Don't fail the signup if email verification fails
+    }
 
     await createUserDocument(user, { phoneNumber: phone });
     
-    // Send welcome email via Resend
+    // Send welcome email via MailerSend
     try {
       await sendWelcomeEmail({
         email: email,
@@ -185,9 +190,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
-    // Use redirect instead of popup to avoid COOP issues
-    await signInWithRedirect(auth, googleProvider);
-    // User will be handled by getRedirectResult in useEffect
+    try {
+      console.log('🔵 Starting Google login redirect...');
+      // Use redirect instead of popup to avoid COOP issues
+      await signInWithRedirect(auth, googleProvider);
+      console.log('🔵 Redirect initiated (this may not log if redirect is immediate)');
+      // User will be handled by getRedirectResult in useEffect
+    } catch (error) {
+      console.error('❌ Error during Google login redirect:', error);
+      throw error;
+    }
   };
 
   const loginWithFacebook = async () => {
@@ -288,6 +300,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Handle redirect result and set up auth listener
     const initAuth = async () => {
+      let isOAuthLogin = false;
+      
       try {
         // Check for redirect result first (from Google/Facebook login)
         console.log('Checking for redirect result...');
@@ -295,6 +309,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (result && result.user) {
           // User signed in via redirect - create/update their document
           console.log('✅ User authenticated via redirect:', result.user.email);
+          isOAuthLogin = true;
+          
+          // Set a flag in sessionStorage to indicate OAuth redirect just completed
+          // This will help us skip onboarding and go directly to dashboard
+          sessionStorage.setItem('oauthRedirectCompleted', 'true');
+          
           // The onAuthStateChanged listener below will handle the rest
         } else {
           console.log('No redirect result (normal page load)');
@@ -315,7 +335,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (user) {
             // User is authenticated, fetch/create their data
             console.log('Creating/updating user document...');
-            const userData = await createUserDocument(user);
+            
+            // For OAuth users, skip onboarding by default
+            const additionalData = isOAuthLogin ? {
+              preferences: {
+                onboardingCompleted: true
+              }
+            } : {};
+            
+            const userData = await createUserDocument(user, additionalData);
             console.log('✅ User data loaded:', userData.email);
             
             // Only update state if still mounted
