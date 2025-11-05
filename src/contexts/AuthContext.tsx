@@ -91,11 +91,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const createUserDocument = async (user: User, additionalData: any = {}) => {
     try {
+      console.log('📝 createUserDocument called for user:', user.email);
       const userRef = doc(db, 'users', user.uid);
+      console.log('Checking if user document exists...');
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {
         // New user - create document
+        console.log('New user detected, creating document...');
         const { displayName, email, photoURL } = user;
         const isAdminUser = email === ADMIN_EMAIL;
         
@@ -118,23 +121,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
         };
 
+        console.log('Writing new user document to Firestore...');
         await setDoc(userRef, userData);
+        console.log('✅ User document created successfully');
         
         // Fetch the document again to get server-resolved timestamps
         const newUserSnap = await getDoc(userRef);
-        return newUserSnap.data() as UserData;
+        const finalData = newUserSnap.data() as UserData;
+        console.log('✅ User document fetched:', finalData.email);
+        return finalData;
       } else {
         // Existing user - update last login
+        console.log('Existing user detected, updating last login...');
         await updateDoc(userRef, {
           lastLogin: serverTimestamp()
         });
+        console.log('✅ Last login updated');
         
         // Fetch the updated document
         const updatedUserSnap = await getDoc(userRef);
-        return updatedUserSnap.data() as UserData;
+        const finalData = updatedUserSnap.data() as UserData;
+        console.log('✅ User document fetched:', finalData.email);
+        return finalData;
       }
     } catch (error) {
-      console.error('Error creating/updating user document:', error);
+      console.error('❌ Error creating/updating user document:', error);
+      console.error('Error details:', {
+        message: (error as Error).message,
+        name: (error as Error).name,
+        stack: (error as Error).stack
+      });
       throw error;
     }
   };
@@ -268,50 +284,71 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
+    let isMounted = true;
 
     // Handle redirect result and set up auth listener
     const initAuth = async () => {
       try {
         // Check for redirect result first (from Google/Facebook login)
+        console.log('Checking for redirect result...');
         const result = await getRedirectResult(auth);
         if (result && result.user) {
           // User signed in via redirect - create/update their document
-          console.log('User authenticated via redirect');
-          // Don't set state here - let onAuthStateChanged handle it
-          // This prevents double-setting and ensures consistency
+          console.log('✅ User authenticated via redirect:', result.user.email);
+          // The onAuthStateChanged listener below will handle the rest
+        } else {
+          console.log('No redirect result (normal page load)');
         }
       } catch (error) {
-        console.error('Error handling redirect result:', error);
+        console.error('❌ Error handling redirect result:', error);
         // Continue to set up auth listener even if redirect fails
       }
 
       // Set up auth state listener (will catch redirect auth automatically)
       unsubscribe = onAuthStateChanged(auth, async (user) => {
+        // Only update state if component is still mounted
+        if (!isMounted) return;
+        
+        console.log('Auth state changed. User:', user ? user.email : 'null');
+        
         try {
           if (user) {
             // User is authenticated, fetch/create their data
+            console.log('Creating/updating user document...');
             const userData = await createUserDocument(user);
-            setCurrentUser(user);
-            setUserData(userData);
-            setIsAdmin(userData.isAdmin);
-            setIsGuest(false);
-            setLoading(false);
+            console.log('✅ User data loaded:', userData.email);
+            
+            // Only update state if still mounted
+            if (isMounted) {
+              setCurrentUser(user);
+              setUserData(userData);
+              setIsAdmin(userData.isAdmin);
+              setIsGuest(false);
+              setLoading(false);
+            }
           } else {
             // No user is logged in
+            console.log('No user authenticated, showing welcome screen');
+            
+            // Only update state if still mounted
+            if (isMounted) {
+              setCurrentUser(null);
+              setUserData(null);
+              setIsAdmin(false);
+              // Set loading to false regardless of guest mode
+              // Guest mode is handled separately by continueAsGuest()
+              setLoading(false);
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error in auth state change:', error);
+          // Even on error, stop loading to prevent infinite spinner
+          if (isMounted) {
+            setLoading(false);
             setCurrentUser(null);
             setUserData(null);
             setIsAdmin(false);
-            // Set loading to false regardless of guest mode
-            // Guest mode is handled separately by continueAsGuest()
-            setLoading(false);
           }
-        } catch (error) {
-          console.error('Error in auth state change:', error);
-          // Even on error, stop loading to prevent infinite spinner
-          setLoading(false);
-          setCurrentUser(null);
-          setUserData(null);
-          setIsAdmin(false);
         }
       });
     };
@@ -319,6 +356,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initAuth();
     
     return () => {
+      isMounted = false;
       if (unsubscribe) {
         unsubscribe();
       }
