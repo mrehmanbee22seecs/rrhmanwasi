@@ -153,12 +153,20 @@ service cloud.firestore {
     // === APPLICATIONS, REGISTRATIONS, NEWSLETTER, EVENTS ===
     match /project_applications/{id} {
       allow create: if true;
-      allow read, update, delete: if isAdmin();
+      // Users can read their own applications, admins can read all
+      allow read: if isAuthenticated() && 
+        (request.auth.token.email == resource.data.email || isAdmin());
+      // Only admins can update (for edit approval workflow)
+      allow update, delete: if isAdmin();
     }
 
     match /event_registrations/{id} {
       allow create: if true;
-      allow read, update, delete: if isAdmin();
+      // Users can read their own registrations, admins can read all
+      allow read: if isAuthenticated() && 
+        (request.auth.token.email == resource.data.email || isAdmin());
+      // Only admins can update (for edit approval workflow)
+      allow update, delete: if isAdmin();
     }
 
     match /newsletter_subscribers/{id} {
@@ -169,6 +177,47 @@ service cloud.firestore {
     match /events/{eventId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // === EDIT REQUEST COLLECTIONS ===
+    // Project Application Edit Requests
+    match /project_application_edit_requests/{requestId} {
+      // Users can create edit requests for their own applications
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userEmail == request.auth.token.email &&
+                       request.resource.data.status == 'pending';
+      
+      // Users can read their own edit requests, admins can read all
+      allow read: if isAuthenticated() && 
+                     (resource.data.userEmail == request.auth.token.email || isAdmin());
+      
+      // Only admins can update (approve/reject)
+      allow update: if isAdmin() &&
+                       (request.resource.data.status == 'approved' || 
+                        request.resource.data.status == 'rejected');
+      
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+    
+    // Event Registration Edit Requests
+    match /event_registration_edit_requests/{requestId} {
+      // Users can create edit requests for their own registrations
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userEmail == request.auth.token.email &&
+                       request.resource.data.status == 'pending';
+      
+      // Users can read their own edit requests, admins can read all
+      allow read: if isAuthenticated() && 
+                     (resource.data.userEmail == request.auth.token.email || isAdmin());
+      
+      // Only admins can update (approve/reject)
+      allow update: if isAdmin() &&
+                       (request.resource.data.status == 'approved' || 
+                        request.resource.data.status == 'rejected');
+      
+      // Only admins can delete
+      allow delete: if isAdmin();
     }
 
     match /{document=**} { allow read, write: if false; }
