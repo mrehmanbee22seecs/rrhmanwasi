@@ -3,19 +3,16 @@
  * 
  * This service handles scheduling of reminder emails using Upstash QStash
  * for delayed HTTP requests.
- * 
- * NOTE: Email and QStash features are currently disabled for deployment.
  */
 
-// DISABLED: QStash features temporarily disabled
-// import { Client } from '@upstash/qstash';
+import { Client } from '@upstash/qstash';
 import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { sendReminderEmail } from './mailerSendEmailService';
 
-// Initialize QStash client - DISABLED
-const qstashToken = null; // (import.meta as any)?.env?.VITE_QSTASH_TOKEN;
-const qstashClient = null; // qstashToken ? new Client({ token: qstashToken }) : null;
+// Initialize QStash client
+const qstashToken = (import.meta as any)?.env?.VITE_QSTASH_TOKEN;
+const qstashClient = qstashToken ? new Client({ token: qstashToken }) : null;
 
 export interface ReminderData {
   email: string;
@@ -69,10 +66,6 @@ export async function createReminder(params: ReminderData): Promise<{
     const docRef = await addDoc(collection(db, 'reminders'), reminderDoc);
     console.log('Reminder stored in Firestore with ID:', docRef.id);
 
-    // DISABLED: QStash scheduling temporarily disabled
-    console.warn('QStash features are disabled. Reminder stored in Firestore but will not be automatically sent.');
-    
-    /* DISABLED: QStash features temporarily disabled
     // Schedule with QStash if configured
     if (qstashClient) {
       try {
@@ -112,7 +105,6 @@ export async function createReminder(params: ReminderData): Promise<{
     } else {
       console.warn('QStash not configured, reminder will not be sent automatically');
     }
-    */
 
     return {
       success: true,
@@ -149,7 +141,7 @@ export async function sendReminder(reminderId: string): Promise<boolean> {
       return true;
     }
 
-    // Send the email (currently disabled - will return false)
+    // Send the email
     const success = await sendReminderEmail({
       email: reminder.email,
       name: reminder.name,

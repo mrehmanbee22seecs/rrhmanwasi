@@ -440,9 +440,7 @@ const ProjectDetail = () => {
               projectTitle: displayProject.title,
             })
           );
-        } catch (error) {
-          console.error('Failed to log project application activity:', error);
-        }
+        } catch {}
         alert(`Thank you for applying to ${displayProject.title}! We will contact you within 2-3 business days.`);
       } else {
         alert('There was an error with your application. Please try again or contact us directly.');
