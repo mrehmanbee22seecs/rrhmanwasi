@@ -266,55 +266,63 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Handle redirect result from Google/Facebook login
   useEffect(() => {
-    const handleRedirectResult = async () => {
+    let unsubscribe: (() => void) | null = null;
+
+    // Handle redirect result and set up auth listener
+    const initAuth = async () => {
       try {
+        // Check for redirect result first (from Google/Facebook login)
         const result = await getRedirectResult(auth);
         if (result && result.user) {
-          // User signed in via redirect
-          await createUserDocument(result.user);
+          // User signed in via redirect - create/update their document
           console.log('User authenticated via redirect');
+          // Don't set state here - let onAuthStateChanged handle it
+          // This prevents double-setting and ensures consistency
         }
       } catch (error) {
         console.error('Error handling redirect result:', error);
+        // Continue to set up auth listener even if redirect fails
       }
-    };
-    
-    handleRedirectResult();
-  }, []);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      try {
-        if (user) {
-          // User is authenticated, fetch/create their data
-          const userData = await createUserDocument(user);
-          setCurrentUser(user);
-          setUserData(userData);
-          setIsAdmin(userData.isAdmin);
-          setIsGuest(false);
+      // Set up auth state listener (will catch redirect auth automatically)
+      unsubscribe = onAuthStateChanged(auth, async (user) => {
+        try {
+          if (user) {
+            // User is authenticated, fetch/create their data
+            const userData = await createUserDocument(user);
+            setCurrentUser(user);
+            setUserData(userData);
+            setIsAdmin(userData.isAdmin);
+            setIsGuest(false);
+            setLoading(false);
+          } else {
+            // No user is logged in
+            setCurrentUser(null);
+            setUserData(null);
+            setIsAdmin(false);
+            // Set loading to false regardless of guest mode
+            // Guest mode is handled separately by continueAsGuest()
+            setLoading(false);
+          }
+        } catch (error) {
+          console.error('Error in auth state change:', error);
+          // Even on error, stop loading to prevent infinite spinner
           setLoading(false);
-        } else {
-          // No user is logged in
           setCurrentUser(null);
           setUserData(null);
           setIsAdmin(false);
-          // Set loading to false regardless of guest mode
-          // Guest mode is handled separately by continueAsGuest()
-          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error in auth state change:', error);
-        // Even on error, stop loading to prevent infinite spinner
-        setLoading(false);
-        setCurrentUser(null);
-        setUserData(null);
-        setIsAdmin(false);
-      }
-    });
+      });
+    };
 
-    return unsubscribe;
+    initAuth();
+    
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
     // Remove isGuest dependency to prevent listener recreation
     // Guest mode is independent of auth state changes
   }, []);
