@@ -19,6 +19,10 @@ export interface Theme {
   preview: string;
   // When true, we apply the global `.theme-dark` class for scoped overrides
   isDark?: boolean;
+  // Special theme features
+  hasHeroVideo?: boolean;
+  hasSectionBackgrounds?: boolean;
+  isSpecial?: boolean;
 }
 
 export const themes: Theme[] = [
@@ -142,6 +146,31 @@ export const themes: Theme[] = [
       textLight: '#6B7280'
     },
     preview: 'linear-gradient(135deg, #F43F5E, #BE185D)'
+  },
+  {
+    id: 'wasillah-special',
+    name: 'Wasillah Special',
+    description: 'Emotional community service theme with hero videos and section backgrounds',
+    colors: {
+      // Warm, emotional primary (coral-orange)
+      primary: '#FF7B54',
+      // Deep warm brown for depth
+      secondary: '#8B4513',
+      // Bright hopeful accent (golden yellow)
+      accent: '#FFB347',
+      // Soft cream background
+      background: '#FFF8F0',
+      // Warm white surface
+      surface: '#FFFFFF',
+      // Rich dark text
+      text: '#2C1810',
+      // Warm muted text
+      textLight: '#8B7355'
+    },
+    preview: 'linear-gradient(135deg, #FF7B54, #FFB347, #8B4513)',
+    hasHeroVideo: true,
+    hasSectionBackgrounds: true,
+    isSpecial: true
   }
 ];
 
