@@ -7,13 +7,16 @@
  * 3. Admin approval notifications
  * 4. Volunteer form confirmations
  * 5. Custom reminders
+ * 
+ * NOTE: Email features are currently disabled for deployment.
  */
 
-import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
+// DISABLED: Email features temporarily disabled
+// import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
 
 // Initialize MailerSend client
-const mailerSendApiKey = (import.meta as any)?.env?.VITE_MAILERSEND_API_KEY;
-const mailerSend = mailerSendApiKey ? new MailerSend({ apiKey: mailerSendApiKey }) : null;
+const mailerSendApiKey = null; // (import.meta as any)?.env?.VITE_MAILERSEND_API_KEY;
+const mailerSend = null; // mailerSendApiKey ? new MailerSend({ apiKey: mailerSendApiKey }) : null;
 
 // Use MailerSend's free trial domain for testing
 // Replace with your own verified domain in production
@@ -31,8 +34,13 @@ const brand = {
 
 /**
  * Helper function to send email via MailerSend
+ * DISABLED: Email features temporarily disabled
  */
 async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+  console.warn('Email features are disabled. Would have sent email to:', to, 'Subject:', subject);
+  return false;
+  
+  /* DISABLED: Email features temporarily disabled
   if (!mailerSend) {
     console.warn('MailerSend not configured, skipping email');
     return false;
@@ -55,6 +63,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<boo
     console.error('Failed to send email via MailerSend:', error);
     return false;
   }
+  */
 }
 
 /**
