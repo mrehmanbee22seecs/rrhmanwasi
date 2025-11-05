@@ -111,6 +111,42 @@ Requirements: You must be 16 years or older (parental consent needed for minors)
 }
 
 /**
+ * Get smart KB that auto-learns from website
+ * This function is now a re-export for backward compatibility
+ * The actual smart KB is loaded by autoLearnService
+ */
+export function getSmartKBCompat(): KBPage[] {
+  // Try to load auto-learned content from localStorage
+  try {
+    const scraped = localStorage.getItem('wasilah_scraped_kb');
+    if (scraped) {
+      const data = JSON.parse(scraped);
+      const scrapedPages = data.pages || [];
+      
+      // Merge with manual KB
+      const manualKB = getEnhancedKB();
+      const combined = [...manualKB];
+      
+      // Add scraped pages that aren't duplicates
+      for (const page of scrapedPages) {
+        const exists = combined.some(p => p.id === page.id || p.url === page.url);
+        if (!exists) {
+          combined.push(page);
+        }
+      }
+      
+      console.log(`🤖 Smart KB: ${manualKB.length} manual + ${scrapedPages.length} auto-learned = ${combined.length} total`);
+      return combined;
+    }
+  } catch (error) {
+    console.error('Error loading smart KB:', error);
+  }
+  
+  // Fallback to manual KB
+  return getEnhancedKB();
+}
+
+/**
  * Get quick stats about the KB
  */
 export function getKBStats() {
