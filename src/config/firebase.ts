@@ -18,7 +18,14 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
+
+// Configure Google Auth Provider with popup settings
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
+// Configure Facebook Auth Provider
 export const facebookProvider = new FacebookAuthProvider();
 
 // Initialize Cloud Firestore and get a reference to the service
