@@ -3,9 +3,12 @@
  * 
  * This endpoint is called by Upstash QStash when it's time to send a reminder.
  * It receives the reminder data, sends an email via MailerSend, and updates Firestore.
+ * 
+ * CURRENTLY DISABLED - Email features are temporarily disabled
  */
 
-import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
+// Email features temporarily disabled
+// import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
@@ -22,13 +25,13 @@ if (!getApps().length) {
 
 const db = getFirestore();
 
-// Initialize MailerSend
-const mailerSend = new MailerSend({
-  apiKey: process.env.MAILERSEND_API_KEY || '',
-});
+// Email features temporarily disabled
+// const mailerSend = new MailerSend({
+//   apiKey: process.env.MAILERSEND_API_KEY || '',
+// });
 
-const SENDER_EMAIL = process.env.MAILERSEND_SENDER_EMAIL || 'MS_qJLYQi@trial-0r83ql3jjz8lgwpz.mlsender.net';
-const SENDER_NAME = 'Wasillah Team';
+// const SENDER_EMAIL = process.env.MAILERSEND_SENDER_EMAIL || 'MS_qJLYQi@trial-0r83ql3jjz8lgwpz.mlsender.net';
+// const SENDER_NAME = 'Wasillah Team';
 
 // Brand styling for emails
 const brand = {
@@ -40,31 +43,25 @@ const brand = {
 
 /**
  * Send email via MailerSend
+ * CURRENTLY DISABLED - Email features are temporarily disabled
  */
 async function sendEmail(to, subject, html) {
-  try {
-    const sentFrom = new Sender(SENDER_EMAIL, SENDER_NAME);
-    const recipients = [new Recipient(to)];
-
-    const emailParams = new EmailParams()
-      .setFrom(sentFrom)
-      .setTo(recipients)
-      .setSubject(subject)
-      .setHtml(html);
-
-    await mailerSend.email.send(emailParams);
-    console.log('Email sent successfully to:', to);
-    return true;
-  } catch (error) {
-    console.error('Failed to send email:', error);
-    return false;
-  }
+  console.log('Email feature disabled - would have sent to:', to);
+  console.log('Subject:', subject);
+  return false; // Email features disabled
 }
 
 /**
  * Main handler for the serverless function
+ * CURRENTLY DISABLED - Email features are temporarily disabled
  */
 export default async function handler(req, res) {
+  // Email features temporarily disabled
+  return res.status(503).json({ 
+    error: 'Email features are currently disabled',
+    message: 'Reminder functionality is temporarily unavailable'
+  });
+
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });

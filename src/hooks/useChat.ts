@@ -47,7 +47,7 @@ try {
   findBestMatch = legacyMatch.findBestMatch;
   truncateAnswer = legacyMatch.truncateAnswer;
 } catch (e) {
-  console.log('Legacy FAQ system not available');
+  // Legacy FAQ system not available - using enhanced KB service instead
 }
 
 interface Message {

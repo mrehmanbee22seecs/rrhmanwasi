@@ -1,7 +1,6 @@
 {
   "type": "module",
   "dependencies": {
-    "mailersend": "^2.6.0",
     "firebase-admin": "^12.0.0"
   }
 }

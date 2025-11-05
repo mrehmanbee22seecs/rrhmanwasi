@@ -3,16 +3,20 @@
  * 
  * This service handles scheduling of reminder emails using Upstash QStash
  * for delayed HTTP requests.
+ * 
+ * CURRENTLY DISABLED - Email and reminder features are temporarily disabled
  */
 
-import { Client } from '@upstash/qstash';
+// Email features temporarily disabled
+// import { Client } from '@upstash/qstash';
 import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { sendReminderEmail } from './mailerSendEmailService';
 
-// Initialize QStash client
-const qstashToken = (import.meta as any)?.env?.VITE_QSTASH_TOKEN;
-const qstashClient = qstashToken ? new Client({ token: qstashToken }) : null;
+// Initialize QStash client - DISABLED
+// const qstashToken = (import.meta as any)?.env?.VITE_QSTASH_TOKEN;
+// const qstashClient = qstashToken ? new Client({ token: qstashToken }) : null;
+const qstashClient = null;
 
 export interface ReminderData {
   email: string;
@@ -33,12 +37,21 @@ export interface ReminderDocument extends ReminderData {
 
 /**
  * Create a reminder and schedule it with QStash
+ * CURRENTLY DISABLED - Email and reminder features are temporarily disabled
  */
 export async function createReminder(params: ReminderData): Promise<{
   success: boolean;
   reminderId?: string;
   error?: string;
 }> {
+  // Email and reminder features temporarily disabled
+  console.log('Reminder feature disabled - would have created reminder for:', params.email);
+  return {
+    success: false,
+    error: 'Reminder feature is currently disabled'
+  };
+
+  /* DISABLED CODE - uncomment when email features are re-enabled
   try {
     // Validate scheduledAt is in the future
     const scheduledDate = new Date(params.scheduledAt);
@@ -117,6 +130,7 @@ export async function createReminder(params: ReminderData): Promise<{
       error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
+  */
 }
 
 /**

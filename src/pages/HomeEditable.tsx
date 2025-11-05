@@ -5,6 +5,8 @@ import { useContent } from '../hooks/useContent';
 import EditButton from '../components/EditButton';
 import ContentEditor from '../components/ContentEditor';
 import { initializeDefaultContent } from '../utils/initializeContent';
+import ThemedHeroSection from '../components/ThemedHeroSection';
+import ThemedSection from '../components/ThemedSection';
 
 const HomeEditable = () => {
   const [editingSection, setEditingSection] = useState<string | null>(null);
@@ -125,21 +127,10 @@ const HomeEditable = () => {
   return (
     <div>
       {/* Hero Section */}
-      <section className="hero-luxury-bg min-h-screen flex items-center justify-center relative overflow-hidden">
+      <ThemedHeroSection className="text-center">
         <EditButton onClick={() => { setEditingSection('hero'); setEditingItem(hero); }} />
 
-        <div className="floating-3d-luxury"></div>
-        <div className="floating-3d-luxury"></div>
-        <div className="floating-3d-luxury"></div>
-        <div className="floating-3d-luxury"></div>
-        <div className="floating-3d-luxury"></div>
-        <div className="luxury-particle"></div>
-        <div className="luxury-particle"></div>
-        <div className="luxury-particle"></div>
-        <div className="luxury-particle"></div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 text-center relative z-10">
-          <div className="animate-cinematic-fade">
+        <div className="animate-cinematic-fade">
             <div className="mb-12">
               <div className="w-32 h-32 mx-auto mb-8">
                 <img
@@ -178,11 +169,10 @@ const HomeEditable = () => {
               </Link>
             </div>
           </div>
-        </div>
-      </section>
+      </ThemedHeroSection>
 
       {/* Impact Highlights */}
-      <section id="impact-stats" className="py-24 bg-cream-white relative overflow-hidden">
+      <ThemedSection id="impact-stats" className="py-24 relative overflow-hidden" backgroundType="community" bgColor="bg-cream-white">
         <EditButton onClick={() => { setEditingSection('impact'); setEditingItem(impactData || { stats: impactStats }); }} />
 
         <div className="absolute inset-0 bg-gradient-to-br from-cream-elegant/50 to-cream-white"></div>
@@ -214,10 +204,10 @@ const HomeEditable = () => {
             })}
           </div>
         </div>
-      </section>
+      </ThemedSection>
 
       {/* Who We Are Section */}
-      <section className="py-24 bg-cream-elegant relative overflow-hidden">
+      <ThemedSection className="py-24 relative overflow-hidden" backgroundType="helping" bgColor="bg-cream-elegant">
         <EditButton onClick={() => { setEditingSection('about'); setEditingItem(about); }} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -257,10 +247,10 @@ const HomeEditable = () => {
             </div>
           </div>
         </div>
-      </section>
+      </ThemedSection>
 
       {/* Programs & Services */}
-      <section className="py-24 bg-cream-white relative overflow-hidden">
+      <ThemedSection className="py-24 relative overflow-hidden" backgroundType="education" bgColor="bg-cream-white">
         <EditButton onClick={() => { setEditingSection('programs-list'); setEditingItem(null); }} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -290,10 +280,10 @@ const HomeEditable = () => {
             ))}
           </div>
         </div>
-      </section>
+      </ThemedSection>
 
       {/* Testimonials Slider */}
-      <section className="py-24 bg-cream-elegant relative overflow-hidden">
+      <ThemedSection className="py-24 relative overflow-hidden" backgroundType="teamwork" bgColor="bg-cream-elegant">
         <EditButton onClick={() => { setEditingSection('testimonials-list'); setEditingItem(null); }} />
 
         <div className="absolute inset-0 bg-gradient-to-br from-vibrant-orange/5 to-transparent"></div>
@@ -346,10 +336,10 @@ const HomeEditable = () => {
             ))}
           </div>
         </div>
-      </section>
+      </ThemedSection>
 
       {/* Call-to-Action Section */}
-      <section className="cta-parallax py-24 text-cream-elegant relative overflow-hidden">
+      <ThemedSection className="cta-parallax py-24 text-cream-elegant relative overflow-hidden" backgroundType="donation">
         <EditButton onClick={() => { setEditingSection('cta'); setEditingItem(cta); }} />
 
         <div className="absolute inset-0">
@@ -377,7 +367,7 @@ const HomeEditable = () => {
             </Link>
           </div>
         </div>
-      </section>
+      </ThemedSection>
 
       {/* Content Editors */}
       <ContentEditor

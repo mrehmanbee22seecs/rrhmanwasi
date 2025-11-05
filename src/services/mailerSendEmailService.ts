@@ -7,13 +7,17 @@
  * 3. Admin approval notifications
  * 4. Volunteer form confirmations
  * 5. Custom reminders
+ * 
+ * CURRENTLY DISABLED - Email features are temporarily disabled
  */
 
-import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
+// Email features temporarily disabled
+// import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
 
-// Initialize MailerSend client
-const mailerSendApiKey = (import.meta as any)?.env?.VITE_MAILERSEND_API_KEY;
-const mailerSend = mailerSendApiKey ? new MailerSend({ apiKey: mailerSendApiKey }) : null;
+// Initialize MailerSend client - DISABLED
+// const mailerSendApiKey = (import.meta as any)?.env?.VITE_MAILERSEND_API_KEY;
+// const mailerSend = mailerSendApiKey ? new MailerSend({ apiKey: mailerSendApiKey }) : null;
+const mailerSend = null;
 
 // Use MailerSend's free trial domain for testing
 // Replace with your own verified domain in production
@@ -31,30 +35,13 @@ const brand = {
 
 /**
  * Helper function to send email via MailerSend
+ * CURRENTLY DISABLED - Email features are temporarily disabled
  */
 async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
-  if (!mailerSend) {
-    console.warn('MailerSend not configured, skipping email');
-    return false;
-  }
-
-  try {
-    const sentFrom = new Sender(SENDER_EMAIL, SENDER_NAME);
-    const recipients = [new Recipient(to)];
-
-    const emailParams = new EmailParams()
-      .setFrom(sentFrom)
-      .setTo(recipients)
-      .setSubject(subject)
-      .setHtml(html);
-
-    await mailerSend.email.send(emailParams);
-    console.log('Email sent via MailerSend to:', to);
-    return true;
-  } catch (error) {
-    console.error('Failed to send email via MailerSend:', error);
-    return false;
-  }
+  // Email features temporarily disabled
+  console.log('Email feature disabled - would have sent to:', to);
+  console.log('Subject:', subject);
+  return false;
 }
 
 /**
