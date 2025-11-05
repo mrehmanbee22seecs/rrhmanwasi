@@ -268,11 +268,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
-    let redirectCheckCompleted = false;
 
     // Handle redirect result and set up auth listener
     const initAuth = async () => {
-      // Set up auth state listener first
+      try {
+        // Check for redirect result first (from Google/Facebook login)
+        const result = await getRedirectResult(auth);
+        if (result && result.user) {
+          // User signed in via redirect - create/update their document
+          console.log('User authenticated via redirect');
+          // Don't set state here - let onAuthStateChanged handle it
+          // This prevents double-setting and ensures consistency
+        }
+      } catch (error) {
+        console.error('Error handling redirect result:', error);
+        // Continue to set up auth listener even if redirect fails
+      }
+
+      // Set up auth state listener (will catch redirect auth automatically)
       unsubscribe = onAuthStateChanged(auth, async (user) => {
         try {
           if (user) {
@@ -284,17 +297,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setIsGuest(false);
             setLoading(false);
           } else {
-            // Only show welcome screen if redirect check is complete
-            // This prevents flashing the welcome screen during redirect processing
-            if (redirectCheckCompleted) {
-              // No user is logged in
-              setCurrentUser(null);
-              setUserData(null);
-              setIsAdmin(false);
-              // Set loading to false regardless of guest mode
-              // Guest mode is handled separately by continueAsGuest()
-              setLoading(false);
-            }
+            // No user is logged in
+            setCurrentUser(null);
+            setUserData(null);
+            setIsAdmin(false);
+            // Set loading to false regardless of guest mode
+            // Guest mode is handled separately by continueAsGuest()
+            setLoading(false);
           }
         } catch (error) {
           console.error('Error in auth state change:', error);
@@ -305,25 +314,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIsAdmin(false);
         }
       });
-
-      // Then check for redirect result (from Google/Facebook login)
-      try {
-        const result = await getRedirectResult(auth);
-        if (result && result.user) {
-          // User signed in via redirect - create/update their document
-          console.log('User authenticated via redirect');
-          // User document will be created/updated by onAuthStateChanged
-        }
-      } catch (error) {
-        console.error('Error handling redirect result:', error);
-      } finally {
-        // Mark redirect check as complete
-        redirectCheckCompleted = true;
-        // If still no user after redirect check, stop loading
-        if (!auth.currentUser) {
-          setLoading(false);
-        }
-      }
     };
 
     initAuth();
