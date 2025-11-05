@@ -174,13 +174,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         await createUserDocument(result.user);
       }
     } catch (error: any) {
-      // Handle popup closed by user gracefully
+      console.error('Google sign-in error:', error);
+      // Handle popup closed by user
       if (error.code === 'auth/popup-closed-by-user') {
-        console.log('User closed the popup before completing sign-in');
-        // Re-throw with a more user-friendly message
-        throw new Error('Sign-in cancelled. Please try again.');
+        throw new Error('The login popup was closed. Please allow popups and try again.');
       }
-      // Re-throw other errors
+      // Handle popup blocked
+      if (error.code === 'auth/popup-blocked') {
+        throw new Error('Pop-up blocked by your browser. Please allow pop-ups for this site.');
+      }
+      // Handle cancelled popup
+      if (error.code === 'auth/cancelled-popup-request') {
+        throw new Error('Another popup is already open. Please close it and try again.');
+      }
+      // Re-throw other errors with their original message
       throw error;
     }
   };
@@ -192,13 +199,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         await createUserDocument(result.user);
       }
     } catch (error: any) {
-      // Handle popup closed by user gracefully
+      console.error('Facebook sign-in error:', error);
+      // Handle popup closed by user
       if (error.code === 'auth/popup-closed-by-user') {
-        console.log('User closed the popup before completing sign-in');
-        // Re-throw with a more user-friendly message
-        throw new Error('Sign-in cancelled. Please try again.');
+        throw new Error('The login popup was closed. Please allow popups and try again.');
       }
-      // Re-throw other errors
+      // Handle popup blocked
+      if (error.code === 'auth/popup-blocked') {
+        throw new Error('Pop-up blocked by your browser. Please allow pop-ups for this site.');
+      }
+      // Handle cancelled popup
+      if (error.code === 'auth/cancelled-popup-request') {
+        throw new Error('Another popup is already open. Please close it and try again.');
+      }
+      // Re-throw other errors with their original message
       throw error;
     }
   };
