@@ -5,12 +5,12 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCAzJf4xhj8YHT6ArbmVdzkOpGKwFTHkCU",
-  authDomain: "wasilah-new.firebaseapp.com",
-  projectId: "wasilah-new",
-  storageBucket: "wasilah-new.firebasestorage.app",
-  messagingSenderId: "577353648201",
-  appId: "1:577353648201:web:322c63144b84db4d2c5798"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCAzJf4xhj8YHT6ArbmVdzkOpGKwFTHkCU",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "wasilah-new.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "wasilah-new",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "wasilah-new.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "577353648201",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:577353648201:web:322c63144b84db4d2c5798"
 };
 
 // Initialize Firebase
@@ -18,8 +18,18 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
+
+// Configure Google Auth Provider with custom parameters
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
+// Configure Facebook Auth Provider with custom parameters
 export const facebookProvider = new FacebookAuthProvider();
+facebookProvider.setCustomParameters({
+  display: 'popup'
+});
 
 // Initialize Cloud Firestore and get a reference to the service
 export const db = getFirestore(app);
