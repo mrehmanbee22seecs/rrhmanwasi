@@ -149,7 +149,7 @@ export async function sendReminder(reminderId: string): Promise<boolean> {
       return true;
     }
 
-    // Send the email
+    // Send the email (currently disabled - will return false)
     const success = await sendReminderEmail({
       email: reminder.email,
       name: reminder.name,
