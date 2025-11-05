@@ -1,7 +1,6 @@
 {
   "functions": {
     "api/**/*.js": {
-      "memory": 1024,
       "maxDuration": 10
     }
   },
@@ -15,10 +14,6 @@
     {
       "source": "/(.*)",
       "headers": [
-        {
-          "key": "Cross-Origin-Opener-Policy",
-          "value": "same-origin-allow-popups"
-        },
         {
           "key": "Cross-Origin-Embedder-Policy",
           "value": "unsafe-none"
