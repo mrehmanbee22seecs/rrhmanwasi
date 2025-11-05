@@ -1735,7 +1735,9 @@ function formatTimestamp(ts: any): string {
     if (typeof ts === 'string') return new Date(ts).toLocaleString();
     if (typeof ts?.toDate === 'function') return ts.toDate().toLocaleString();
     if (ts?.seconds) return new Date(ts.seconds * 1000).toLocaleString();
-  } catch {}
+  } catch (error) {
+    console.error('Failed to format timestamp:', error);
+  }
   return '—';
 }
 
