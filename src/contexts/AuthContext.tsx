@@ -3,7 +3,8 @@ import {
   User,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   onAuthStateChanged,
   updateProfile,
@@ -168,13 +169,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
-    const { user } = await signInWithPopup(auth, googleProvider);
-    await createUserDocument(user);
+    // Use redirect instead of popup to avoid COOP issues
+    await signInWithRedirect(auth, googleProvider);
+    // User will be handled by getRedirectResult in useEffect
   };
 
   const loginWithFacebook = async () => {
-    const { user } = await signInWithPopup(auth, facebookProvider);
-    await createUserDocument(user);
+    // Use redirect instead of popup to avoid COOP issues
+    await signInWithRedirect(auth, facebookProvider);
+    // User will be handled by getRedirectResult in useEffect
   };
 
   const logout = async () => {
@@ -262,6 +265,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw error;
     }
   };
+
+  // Handle redirect result from Google/Facebook login
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && result.user) {
+          // User signed in via redirect
+          await createUserDocument(result.user);
+          console.log('User authenticated via redirect');
+        }
+      } catch (error) {
+        console.error('Error handling redirect result:', error);
+      }
+    };
+    
+    handleRedirectResult();
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
