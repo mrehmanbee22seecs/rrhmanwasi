@@ -19,6 +19,16 @@ import { matchIntent, detectLanguage, adminOfferMessage, adminConfirmMessage } f
 import { fastMatch, matchWithTiming } from '../utils/fastMatcher';
 import { detectLanguage as detectLang, getResponse, getContextualEnding } from '../utils/multiLanguageResponses';
 
+// Chat Enhancements (context, cache, suggestions, sentiment)
+import { 
+  ResponseCache, 
+  ConversationContext, 
+  correctTypos, 
+  detectSentiment, 
+  enhanceResponseBySentiment,
+  getSmartSuggestions
+} from '../utils/chatEnhancements';
+
 // KB Matcher (fallback)
 import * as kbMatcher from '../utils/kbMatcher';
 const findBestMatchKb: any = kbMatcher?.findBestMatch;
@@ -195,10 +205,19 @@ export function useChat(userId: string | null, chatId?: string) {
         );
       }
 
-      const filteredText = filterProfanity(text).trim();
+      let filteredText = filterProfanity(text).trim();
       if (!filteredText) return;
 
-      console.log('🤖 Processing message:', filteredText);
+      // Enhancement 1: Typo correction for better matching
+      filteredText = correctTypos(filteredText);
+
+      // Enhancement 2: Detect sentiment for context-aware responses
+      const sentiment = detectSentiment(filteredText);
+
+      // Enhancement 3: Detect language
+      const userLanguage = detectLang(filteredText);
+
+      console.log(`🤖 Processing: "${filteredText}" [${userLanguage}, ${sentiment}]`);
 
       let activeChatId = currentChatId;
 
@@ -256,74 +275,103 @@ export function useChat(userId: string | null, chatId?: string) {
           }, 10000); // 10 second timeout
           
           try {
-            // 1) Ultra-fast multi-language matcher (NEW! - optimized for speed & accuracy)
-            // Handles English, Urdu, and Roman Urdu with <100ms response time
-            const fastMatchResult = matchWithTiming(filteredText, kbPages);
-            
-            if (fastMatchResult.result && fastMatchResult.result.confidence > 0.4) {
-              botResponseText = fastMatchResult.result.text;
+            // Enhancement 4: Check response cache first (instant for common queries)
+            const cachedResponse = ResponseCache.get(filteredText, userLanguage);
+            if (cachedResponse) {
+              botResponseText = enhanceResponseBySentiment(cachedResponse, sentiment, userLanguage);
               botMeta = {
-                matchType: fastMatchResult.result.matchType,
-                confidence: fastMatchResult.result.confidence,
-                language: fastMatchResult.result.language,
-                responseTime: fastMatchResult.performance.totalTime,
-                optimized: true
+                matchType: 'cached',
+                confidence: 1.0,
+                language: userLanguage,
+                responseTime: 0,
+                cached: true
               };
-              console.log(`⚡ Fast match in ${fastMatchResult.performance.totalTime.toFixed(2)}ms (${fastMatchResult.result.matchType})`);
+              console.log('⚡ Instant response from cache');
             }
-            // 2) Quick intent-based replies (fallback for edge cases)
+            // 1) Ultra-fast multi-language matcher (optimized for speed & accuracy)
+            // Handles English, Urdu, and Roman Urdu with <100ms response time
             else {
-              const intent = matchIntent(filteredText);
-              if (intent.handled) {
-                botResponseText = intent.reply!;
-                botMeta = { matchType: 'intent' };
-              }
-              // 3) Traditional KB matching (fallback for complex queries)
-              else if (kbPages.length > 0 && typeof findBestMatchKb === 'function' && typeof formatResponse === 'function') {
-                console.log('🤖 Using traditional KB matching (fallback)');
-                const match = findBestMatchKb(filteredText, kbPages, 0.12);
-                const response = formatResponse(match);
+              const fastMatchResult = matchWithTiming(filteredText, kbPages);
+              
+              if (fastMatchResult.result && fastMatchResult.result.confidence > 0.4) {
+                // Enhancement 5: Apply sentiment-aware enhancements
+                botResponseText = enhanceResponseBySentiment(
+                  fastMatchResult.result.text,
+                  sentiment,
+                  userLanguage
+                );
                 
-                botResponseText = (response.text || '').trim();
-                if (botResponseText.length < 10) {
-                  const lang = detectLang(filteredText);
-                  botResponseText = getResponse('howToVolunteer', lang);
-                  botMeta = { needsAdminOffer: true, matchType: 'fallback' };
-                } else {
-                  botMeta = {
-                    sourceUrl: response.sourceUrl,
-                    sourcePage: response.sourcePage,
-                    confidence: response.confidence,
-                    needsAdmin: response.needsAdmin,
-                    matchType: 'traditional'
-                  };
-                }
+                botMeta = {
+                  matchType: fastMatchResult.result.matchType,
+                  confidence: fastMatchResult.result.confidence,
+                  language: fastMatchResult.result.language,
+                  responseTime: fastMatchResult.performance.totalTime,
+                  sentiment,
+                  optimized: true
+                };
+                
+                // Enhancement 6: Cache successful responses
+                ResponseCache.set(filteredText, fastMatchResult.result.text, userLanguage);
+                
+                // Enhancement 7: Add to conversation context
+                ConversationContext.add(filteredText, fastMatchResult.result.text);
+                
+                console.log(`⚡ Fast match in ${fastMatchResult.performance.totalTime.toFixed(2)}ms (${fastMatchResult.result.matchType})`);
               }
-              // 4) Fallback to legacy FAQ matching
-              else if (faqs.length > 0 && findBestMatch && truncateAnswer) {
-                console.log('📚 Using legacy FAQ matching');
-                const recentMessages = messages.slice(-6);
-                const context = recentMessages.map((m) => m.text).join(' ');
-                const searchQuery = `${context} ${filteredText}`;
-                const match = findBestMatch(searchQuery, faqs);
-
-                if (match) {
-                  botResponseText = truncateAnswer(match.answer, 800);
-                  if (match.answer.length > 800) {
-                    botResponseText += '\n\n[Read more in our FAQ section]';
+              // 2) Quick intent-based replies (fallback for edge cases)
+              else {
+                const intent = matchIntent(filteredText);
+                if (intent.handled) {
+                  botResponseText = intent.reply!;
+                  botMeta = { matchType: 'intent' };
+                }
+                // 3) Traditional KB matching (fallback for complex queries)
+                else if (kbPages.length > 0 && typeof findBestMatchKb === 'function' && typeof formatResponse === 'function') {
+                  console.log('🤖 Using traditional KB matching (fallback)');
+                  const match = findBestMatchKb(filteredText, kbPages, 0.12);
+                  const response = formatResponse(match);
+                  
+                  botResponseText = (response.text || '').trim();
+                  if (botResponseText.length < 10) {
+                    const lang = detectLang(filteredText);
+                    botResponseText = getResponse('howToVolunteer', lang);
+                    botMeta = { needsAdminOffer: true, matchType: 'fallback' };
+                  } else {
+                    botMeta = {
+                      sourceUrl: response.sourceUrl,
+                      sourcePage: response.sourcePage,
+                      confidence: response.confidence,
+                      needsAdmin: response.needsAdmin,
+                      matchType: 'traditional'
+                    };
                   }
-                  botMeta = { faqId: match.id, matchType: 'legacy' };
-                } else {
+                }
+                // 4) Fallback to legacy FAQ matching
+                else if (faqs.length > 0 && findBestMatch && truncateAnswer) {
+                  console.log('📚 Using legacy FAQ matching');
+                  const recentMessages = messages.slice(-6);
+                  const context = recentMessages.map((m) => m.text).join(' ');
+                  const searchQuery = `${context} ${filteredText}`;
+                  const match = findBestMatch(searchQuery, faqs);
+
+                  if (match) {
+                    botResponseText = truncateAnswer(match.answer, 800);
+                    if (match.answer.length > 800) {
+                      botResponseText += '\n\n[Read more in our FAQ section]';
+                    }
+                    botMeta = { faqId: match.id, matchType: 'legacy' };
+                  } else {
+                    const lang = detectLang(filteredText);
+                    botResponseText = getResponse('adminOffer', lang);
+                    botMeta = { needsAdminOffer: true, matchType: 'legacy' };
+                  }
+                }
+                // No matching system available
+                else {
                   const lang = detectLang(filteredText);
                   botResponseText = getResponse('adminOffer', lang);
-                  botMeta = { needsAdminOffer: true, matchType: 'legacy' };
+                  botMeta = { needsAdminOffer: true, matchType: 'none' };
                 }
-              }
-              // No matching system available
-              else {
-                const lang = detectLang(filteredText);
-                botResponseText = getResponse('adminOffer', lang);
-                botMeta = { needsAdminOffer: true, matchType: 'none' };
               }
             }
 
@@ -342,15 +390,21 @@ export function useChat(userId: string | null, chatId?: string) {
             
             // Ensure we don't save empty/undefined text
             if (botResponseText && botResponseText.trim().length > 0) {
+              // Enhancement 8: Add smart suggestions for follow-up questions
+              const suggestions = getSmartSuggestions(filteredText, userLanguage === 'ur-roman' ? 'ur-roman' : 'en');
+              
               await addDoc(messagesRef, {
                 sender: 'bot',
                 text: botResponseText,
                 createdAt: serverTimestamp(),
-                meta: botMeta,
+                meta: {
+                  ...botMeta,
+                  suggestions, // Add contextual suggestions
+                },
               });
 
               await updateDoc(chatRef, { lastActivityAt: serverTimestamp() });
-              console.log('✅ Bot response sent successfully');
+              console.log('✅ Bot response sent with smart suggestions');
             }
           } catch (error) {
             console.error('Bot response error:', error);
