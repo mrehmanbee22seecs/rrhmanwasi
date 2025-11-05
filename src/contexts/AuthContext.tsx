@@ -190,9 +190,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
-    // Use redirect instead of popup to avoid COOP issues
-    await signInWithRedirect(auth, googleProvider);
-    // User will be handled by getRedirectResult in useEffect
+    try {
+      console.log('🔵 Starting Google login redirect...');
+      // Use redirect instead of popup to avoid COOP issues
+      await signInWithRedirect(auth, googleProvider);
+      console.log('🔵 Redirect initiated (this may not log if redirect is immediate)');
+      // User will be handled by getRedirectResult in useEffect
+    } catch (error) {
+      console.error('❌ Error during Google login redirect:', error);
+      throw error;
+    }
   };
 
   const loginWithFacebook = async () => {
