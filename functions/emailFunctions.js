@@ -1,19 +1,16 @@
 /**
  * Enhanced Firebase Functions for Wasillah Email Automation
  * 
- * These functions integrate with MailerSend for email delivery and handle:
+ * These functions integrate with Resend for email delivery and handle:
  * 1. Submission confirmations (projects/events)
  * 2. Admin approval notifications
  * 3. Reminder scheduling and sending
  * 4. Volunteer confirmations
- * 
- * CURRENTLY DISABLED - Email features are temporarily disabled
  */
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-// Email features temporarily disabled
-// const { MailerSend, EmailParams, Sender, Recipient } = require('mailersend');
+const { Resend } = require('resend');
 
 // Initialize if not already initialized
 if (!admin.apps.length) {
@@ -23,14 +20,12 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 const { Timestamp } = admin.firestore;
 
-// Initialize MailerSend - DISABLED
-// const MAILERSEND_API_KEY = process.env.MAILERSEND_API_KEY || '';
-// const mailerSend = MAILERSEND_API_KEY ? new MailerSend({ apiKey: MAILERSEND_API_KEY }) : null;
-const mailerSend = null;
+// Initialize Resend
+const RESEND_API_KEY = process.env.RESEND_API_KEY || 're_TWHg3zaz_7KQnXVULcpgG57GtJxohNxve';
+const resend = new Resend(RESEND_API_KEY);
 
-// Use MailerSend's free trial domain for testing
-// Replace with your own verified domain in production
-const SENDER_EMAIL = 'test-ywj2lpn1kvpg7oqz.mlsender.net/';
+// Sender configuration
+const SENDER_EMAIL = 'noreply@resend.dev';
 const SENDER_NAME = 'Wasillah Team';
 
 // Brand styling constants
@@ -43,38 +38,28 @@ const brand = {
 };
 
 /**
- * Helper function to send email via MailerSend
- * CURRENTLY DISABLED - Email features are temporarily disabled
+ * Helper function to send email via Resend
  */
 async function sendEmailViaMailerSend(emailData) {
-  // Email features temporarily disabled
-  console.log('Email feature disabled - would have sent to:', emailData.to);
-  return false;
-
-  /* DISABLED CODE
-  if (!mailerSend) {
-    console.log('MailerSend not configured; skipping email send');
-    return false;
-  }
-
   try {
-    const sentFrom = new Sender(SENDER_EMAIL, SENDER_NAME);
-    const recipients = [new Recipient(emailData.to)];
+    const { data, error } = await resend.emails.send({
+      from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
+      to: [emailData.to],
+      subject: emailData.subject,
+      html: emailData.html,
+    });
 
-    const emailParams = new EmailParams()
-      .setFrom(sentFrom)
-      .setTo(recipients)
-      .setSubject(emailData.subject)
-      .setHtml(emailData.html);
+    if (error) {
+      console.error('Resend error:', error);
+      return false;
+    }
 
-    const result = await mailerSend.email.send(emailParams);
-    console.log('Email sent via MailerSend:', result);
+    console.log('Email sent successfully via Resend:', data);
     return true;
   } catch (error) {
-    console.error('Failed to send email via MailerSend:', error);
+    console.error('Failed to send email via Resend:', error);
     return false;
   }
-  */
 }
 
 /**

@@ -2,13 +2,10 @@
  * Vercel Serverless Function for QStash Reminder Callback
  * 
  * This endpoint is called by Upstash QStash when it's time to send a reminder.
- * It receives the reminder data, sends an email via MailerSend, and updates Firestore.
- * 
- * CURRENTLY DISABLED - Email features are temporarily disabled
+ * It receives the reminder data, sends an email via Resend, and updates Firestore.
  */
 
-// Email features temporarily disabled
-// import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
+import { Resend } from 'resend';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
@@ -25,13 +22,11 @@ if (!getApps().length) {
 
 const db = getFirestore();
 
-// Email features temporarily disabled
-// const mailerSend = new MailerSend({
-//   apiKey: process.env.MAILERSEND_API_KEY || '',
-// });
+// Initialize Resend client
+const resend = new Resend(process.env.RESEND_API_KEY || 're_TWHg3zaz_7KQnXVULcpgG57GtJxohNxve');
 
-// const SENDER_EMAIL = process.env.MAILERSEND_SENDER_EMAIL || 'MS_qJLYQi@trial-0r83ql3jjz8lgwpz.mlsender.net';
-// const SENDER_NAME = 'Wasillah Team';
+const SENDER_EMAIL = process.env.SENDER_EMAIL || 'noreply@resend.dev';
+const SENDER_NAME = 'Wasillah Team';
 
 // Brand styling for emails
 const brand = {
@@ -42,26 +37,34 @@ const brand = {
 };
 
 /**
- * Send email via MailerSend
- * CURRENTLY DISABLED - Email features are temporarily disabled
+ * Send email via Resend
  */
 async function sendEmail(to, subject, html) {
-  console.log('Email feature disabled - would have sent to:', to);
-  console.log('Subject:', subject);
-  return false; // Email features disabled
+  try {
+    const { data, error } = await resend.emails.send({
+      from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
+      to: [to],
+      subject: subject,
+      html: html,
+    });
+
+    if (error) {
+      console.error('Resend error:', error);
+      return false;
+    }
+
+    console.log('Email sent successfully via Resend:', data);
+    return true;
+  } catch (error) {
+    console.error('Failed to send email via Resend:', error);
+    return false;
+  }
 }
 
 /**
  * Main handler for the serverless function
- * CURRENTLY DISABLED - Email features are temporarily disabled
  */
 export default async function handler(req, res) {
-  // Email features temporarily disabled
-  return res.status(503).json({ 
-    error: 'Email features are currently disabled',
-    message: 'Reminder functionality is temporarily unavailable'
-  });
-
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
