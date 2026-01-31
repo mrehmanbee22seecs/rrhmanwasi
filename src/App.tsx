@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryProvider } from './contexts/QueryProvider';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AdminProvider } from './contexts/AdminContext';
@@ -71,17 +72,19 @@ const AppContent = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <AdminProvider>
-        <ThemeProvider>
-          <Router>
-            <ProtectedRoute>
-              <AppContent />
-            </ProtectedRoute>
-          </Router>
-        </ThemeProvider>
-      </AdminProvider>
-    </AuthProvider>
+    <QueryProvider>
+      <AuthProvider>
+        <AdminProvider>
+          <ThemeProvider>
+            <Router>
+              <ProtectedRoute>
+                <AppContent />
+              </ProtectedRoute>
+            </Router>
+          </ThemeProvider>
+        </AdminProvider>
+      </AuthProvider>
+    </QueryProvider>
   );
 }
 
