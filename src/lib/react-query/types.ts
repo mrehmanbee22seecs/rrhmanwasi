@@ -39,7 +39,7 @@ export interface PaginationParams {
 export interface FilterParams {
   search?: string;
   status?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
